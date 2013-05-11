@@ -5,6 +5,7 @@
 
 #include "nassl_SSL_CTX.h"
 #include "nassl_SSL.h"
+#include "nassl_X509.h"
 
 
 
@@ -34,10 +35,8 @@ PyMODINIT_FUNC initnassl(void) {
     m = Py_InitModule3("nassl", nassl_methods,
                        "Example module that creates an extension type.");
 
-    // nassl.SSL_CTX class
     module_add_SSL_CTX(m);
-
-    // nassl.SSL class
     module_add_SSL(m);
+    module_add_X509(m);
 
 }
