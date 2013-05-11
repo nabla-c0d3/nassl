@@ -125,7 +125,7 @@ static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args) 
     int result;
 
     // TODO: Add a BIO class
-    BIO_set_conn_hostname(self->socketBio, "www.isecpartners.com:443");
+    BIO_set_conn_hostname(self->socketBio, "localhost:8444");
 
     result = SSL_do_handshake(self->ssl);
     switch (result) {
@@ -205,6 +205,82 @@ static PyObject* nassl_SSL_pending(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
+static PyObject* nassl_SSL_get_secure_renegotiation_support(nassl_SSL_Object *self, PyObject *args) {
+ 
+    if (SSL_get_secure_renegotiation_support(self->ssl))
+        Py_RETURN_TRUE;
+    else
+        Py_RETURN_FALSE;
+}
+
+
+static PyObject* nassl_SSL_get_current_compression_name(nassl_SSL_Object *self, PyObject *args) {
+    const COMP_METHOD *compMethod;
+
+    compMethod = SSL_get_current_compression(self->ssl); // TODO: test it
+    if (compMethod == NULL)
+        Py_RETURN_NONE;
+
+    return PyString_FromString(compMethod->name);
+}
+
+
+
+static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
+    int verifyMode;
+
+    if (!PyArg_ParseTuple(args, "I", &verifyMode)) {
+        return NULL;
+    }
+
+    switch (verifyMode) {
+        case SSL_VERIFY_NONE:
+        case SSL_VERIFY_PEER:
+        case SSL_VERIFY_FAIL_IF_NO_PEER_CERT:
+        case SSL_VERIFY_CLIENT_ONCE:
+            SSL_set_verify(self->ssl, verifyMode, NULL);
+            break;
+        default:
+            PyErr_SetString(PyExc_IndexError, "Invalid value for verification mode");
+            return NULL;
+    }
+    
+    Py_RETURN_NONE;
+}
+
+
+
+
+static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject *args) {
+    int nameIndicationSize;
+    char *nameIndication;
+
+    if (!PyArg_ParseTuple(args, "t#", &nameIndication, &nameIndicationSize)) {
+        return NULL;
+    }
+
+    if (!SSL_set_tlsext_host_name(self->ssl, nameIndication))
+        {
+            Py_RETURN_FALSE;
+        //BIO_printf(bio_err,"Unable to set TLS servername extension.\n");
+        //ERR_print_errors(bio_err);
+        }  
+
+    Py_RETURN_TRUE;
+}
+
+
+static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject *args) {
+    X509 *cert;
+
+    cert = SSL_get_peer_certificate(self->ssl);
+    if (cert == NULL) // Anonymous cipher suite ?
+        Py_RETURN_NONE;
+    else
+        return Py_BuildValue("I", (int) cert); // TODO: Directly create the X509 object
+}
+
+
 
 static PyMethodDef nassl_SSL_Object_methods[] = {
     {"do_handshake", (PyCFunction)nassl_SSL_do_handshake, METH_NOARGS,
@@ -218,6 +294,21 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"pending", (PyCFunction)nassl_SSL_pending, METH_NOARGS,
      "OpenSSL's SSL_pending()."
+    },
+    {"get_secure_renegotiation_support", (PyCFunction)nassl_SSL_get_secure_renegotiation_support, METH_NOARGS,
+     "OpenSSL's SSL_get_secure_renegotiation_support()."
+    },
+    {"get_current_compression_name", (PyCFunction)nassl_SSL_get_current_compression_name, METH_NOARGS,
+     "Recovers the name of the compression method being used by calling SSL_get_current_compression()."
+    },
+    {"set_verify", (PyCFunction)nassl_SSL_set_verify, METH_VARARGS,
+     "OpenSSL's SSL_set_verify() with a NULL verify_callback."
+    },
+    {"set_tlsext_host_name", (PyCFunction)nassl_SSL_set_tlsext_host_name, METH_VARARGS,
+     "OpenSSL's SSL_set_tlsext_host_name()."
+    },
+    {"get_peer_certificate", (PyCFunction)nassl_SSL_get_peer_certificate, METH_NOARGS,
+     "OpenSSL's SSL_get_peer_certificate(). Returns an nassl.X509 object."
     },
     {NULL}  // Sentinel
 };

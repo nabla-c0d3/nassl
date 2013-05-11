@@ -2,7 +2,7 @@
 
 #include "nassl_SSL_CTX.h"
 
-// nasslyze.SSL Python class
+// nassl.SSL Python class
 typedef struct {
     PyObject_HEAD
     SSL *ssl;
