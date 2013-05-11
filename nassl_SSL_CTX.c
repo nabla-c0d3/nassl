@@ -100,7 +100,6 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
             break;
         default:
             PyErr_SetString(PyExc_IndexError, "Invalid value for verification mode");
-            Py_DECREF(self);
             return NULL;
     }
 	
@@ -108,11 +107,53 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
 }
 
 
+static PyObject* nassl_SSL_CTX_set_cipher_list(nassl_SSL_CTX_Object *self, PyObject *args) {
+    int cipherListSize;
+    char *cipherList;
+
+    if (!PyArg_ParseTuple(args, "t#", &cipherList, &cipherListSize)) {
+        return NULL;
+    }
+
+    if (!SSL_CTX_set_cipher_list(self->sslCtx, cipherList)) { 
+        PyErr_SetString(PyExc_RuntimeError, "Error setting cipher list");
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args) {
+    int caFileSize;
+    char *caFile;
+
+    if (!PyArg_ParseTuple(args, "t#", &caFile, &caFileSize)) {
+        return NULL;
+    }
+
+    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL)) { 
+        PyErr_SetString(PyExc_RuntimeError, "Error setting verify locations");
+        //ERR_print_errors(bio_err); TODO Raise an OpenSSLError with the content of the error queue
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+
 
 
 static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
     {"set_verify", (PyCFunction)nassl_SSL_CTX_set_verify, METH_VARARGS,
      "OpenSSL's SSL_CTX_set_verify() with a NULL verify_callback."
+    },
+    {"set_cipher_list", (PyCFunction)nassl_SSL_CTX_set_cipher_list, METH_VARARGS,
+     "OpenSSL's SSL_CTX_set_cipher_list()."
+    },
+    {"load_verify_locations", (PyCFunction)nassl_SSL_CTX_load_verify_locations, METH_VARARGS,
+     "OpenSSL's SSL_CTX_load_verify_locations() with a NULL CAPath."
     },
     {NULL}  // Sentinel
 };
