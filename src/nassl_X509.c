@@ -3,6 +3,7 @@
 
 #include <openssl/ssl.h>
 
+#include "nassl_errors.h"
 #include "nassl_X509.h"
 
 
