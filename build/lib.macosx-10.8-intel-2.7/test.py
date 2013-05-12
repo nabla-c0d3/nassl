@@ -1,7 +1,6 @@
 import nassl
 
 
-
 testCTX = nassl.SSL_CTX(nassl.SSLV23)
 testCTX.set_verify(nassl.SSL_VERIFY_NONE)
 
@@ -33,6 +32,8 @@ print testSSL.get_secure_renegotiation_support()
 
 print testSSL.get_current_compression_name()
 
+
+raise nassl.OpenSSLError
 
 # Wrong ssl version
 test = nassl.SSL_CTX(1,2)

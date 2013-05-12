@@ -3,6 +3,7 @@
 
 #include <openssl/ssl.h>
 
+#include "nassl_errors.h"
 #include "nassl_SSL_CTX.h"
 
 
@@ -62,7 +63,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 			return NULL;
 	}
 	if (sslCtx == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "Error calling SSL_CTX_new()");
+        raise_OpenSSL_error();
         Py_DECREF(self);
 		return NULL;
 	}
@@ -116,7 +117,7 @@ static PyObject* nassl_SSL_CTX_set_cipher_list(nassl_SSL_CTX_Object *self, PyObj
     }
 
     if (!SSL_CTX_set_cipher_list(self->sslCtx, cipherList)) { 
-        PyErr_SetString(PyExc_RuntimeError, "Error setting cipher list");
+        raise_OpenSSL_error();
         return NULL;
     }
 
@@ -133,8 +134,7 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
     }
 
     if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL)) { 
-        PyErr_SetString(PyExc_RuntimeError, "Error setting verify locations");
-        //ERR_print_errors(bio_err); TODO Raise an OpenSSLError with the content of the error queue
+        raise_OpenSSL_error();
         return NULL;
     }
 

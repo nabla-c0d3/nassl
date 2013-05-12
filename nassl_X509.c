@@ -54,7 +54,7 @@ static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args) {
 
     memBio = BIO_new(BIO_s_mem());
     if (memBio == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "Could not create a memory BIO.");
+        raise_OpenSSL_error();
         return NULL;
     }
 

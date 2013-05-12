@@ -5,9 +5,10 @@
 #include <openssl/err.h>
 #include <sys/errno.h>
 
+#include "nassl_errors.h"
 #include "nassl_SSL.h"
 
-
+extern PyObject *nassl_OpenSSLError_Exception;
 
 
 // nassl.SSL.new()
@@ -261,9 +262,8 @@ static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject
 
     if (!SSL_set_tlsext_host_name(self->ssl, nameIndication))
         {
-            Py_RETURN_FALSE;
-        //BIO_printf(bio_err,"Unable to set TLS servername extension.\n");
-        //ERR_print_errors(bio_err);
+            raise_OpenSSL_error();
+            return NULL;
         }  
 
     Py_RETURN_TRUE;
