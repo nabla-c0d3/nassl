@@ -242,7 +242,7 @@ static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
             SSL_set_verify(self->ssl, verifyMode, NULL);
             break;
         default:
-            PyErr_SetString(PyExc_IndexError, "Invalid value for verification mode");
+            PyErr_SetString(PyExc_ValueError, "Invalid value for verification mode");
             return NULL;
     }
     

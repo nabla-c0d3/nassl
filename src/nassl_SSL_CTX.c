@@ -7,12 +7,6 @@
 #include "nassl_SSL_CTX.h"
 
 
-
-
-
-
-
-
 typedef enum {
 	sslv23,
 	sslv2,
@@ -58,7 +52,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 			sslCtx = SSL_CTX_new(TLSv1_2_client_method());
 			break;
 		default:
-        	PyErr_SetString(PyExc_IndexError, "Invalid value for ssl version");
+        	PyErr_SetString(PyExc_ValueError, "Invalid value for ssl version");
         	Py_DECREF(self);
 			return NULL;
 	}
@@ -100,7 +94,7 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
             SSL_CTX_set_verify(self->sslCtx, verifyMode, NULL);
             break;
         default:
-            PyErr_SetString(PyExc_IndexError, "Invalid value for verification mode");
+            PyErr_SetString(PyExc_ValueError, "Invalid value for verification mode");
             return NULL;
     }
 	
