@@ -1,11 +1,18 @@
 import nassl
-
+import tempfile
 
 testCTX = nassl.SSL_CTX(nassl.SSLV23)
 testCTX.set_verify(nassl.SSL_VERIFY_NONE)
 
 testCTX.set_cipher_list("LOW")
-testCTX.load_verify_locations("lol")
+
+testCTX = nassl.SSL_CTX(nassl.SSLV23)
+
+
+#print testFile.read(100)
+testFile.close()
+print testCTX.load_verify_locations(testFile.name)
+
 
 testSSL = nassl.SSL(testCTX)
 print testSSL
