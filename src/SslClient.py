@@ -56,7 +56,6 @@ class SslClient:
 
 
     def read(self, size):
-
         while True:
             # Receive available encrypted data from the peer
             encData = self._sock.recv(DEFAULT_BUFFER_SIZE)
@@ -75,7 +74,6 @@ class SslClient:
         
 
     def write(self, data):
-
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
         
@@ -83,7 +81,7 @@ class SslClient:
         lenToRead = self._networkBio.pending()
         while lenToRead:
             encData = self._networkBio.read(lenToRead)
-            # Send the encrypted data to the other end
+            # Send the encrypted data to the peer
             self._sock.send(encData)
             lenToRead = self._networkBio.pending()
 
