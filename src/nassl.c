@@ -6,6 +6,7 @@
 #include "nassl_errors.h"
 #include "nassl_SSL_CTX.h"
 #include "nassl_SSL.h"
+#include "nassl_BIO.h"
 #include "nassl_X509.h"
 
 
@@ -39,11 +40,15 @@ PyMODINIT_FUNC initnassl(void) {
     m = Py_InitModule3("nassl", nassl_methods,
                        "Example module that creates an extension type.");
 
-
-
     module_add_errors(m);
     module_add_SSL_CTX(m);
     module_add_SSL(m);
+    module_add_BIO(m);
     module_add_X509(m);
+
+    if (PyErr_Occurred())
+    {
+        PyErr_SetString(PyExc_ImportError, "nassl init failed");
+    }
 
 }

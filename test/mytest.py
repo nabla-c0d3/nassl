@@ -1,5 +1,18 @@
 import nassl
+from SslClient import SslClient
 import tempfile
+import socket
+
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.settimeout(5)
+sock.connect(("www.google.com", 443))
+
+sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
+sslClient.do_handshake()
+sslClient.write('GET / HTTP/1.0\r\n\r\n')
+print sslClient.read(4096)
+
+raise Exception
 
 testCTX = nassl.SSL_CTX(nassl.SSLV23)
 testCTX.set_verify(nassl.SSL_VERIFY_NONE)

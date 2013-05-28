@@ -5,6 +5,9 @@
 *.lib
 *.a
 
+# Python
+*.pyc
+
 # Shared objects (inc. Windows DLLs)
 *.dll
 *.so

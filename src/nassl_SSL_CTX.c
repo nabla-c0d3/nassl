@@ -34,22 +34,22 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 
     switch (sslVersion) {
 		case sslv23:
-			sslCtx = SSL_CTX_new(SSLv23_client_method());
+			sslCtx = SSL_CTX_new(SSLv23_method());
 			break;
 		case sslv2:
-			sslCtx = SSL_CTX_new(SSLv2_client_method());
+			sslCtx = SSL_CTX_new(SSLv2_method());
 			break;
 		case sslv3:
-			sslCtx = SSL_CTX_new(SSLv3_client_method());
+			sslCtx = SSL_CTX_new(SSLv3_method());
 			break;
 		case tlsv1:
-			sslCtx = SSL_CTX_new(TLSv1_client_method());
+			sslCtx = SSL_CTX_new(TLSv1_method());
 			break;
 		case tlsv1_1:
-			sslCtx = SSL_CTX_new(TLSv1_1_client_method());
+			sslCtx = SSL_CTX_new(TLSv1_1_method());
 			break;
 		case tlsv1_2:
-			sslCtx = SSL_CTX_new(TLSv1_2_client_method());
+			sslCtx = SSL_CTX_new(TLSv1_2_method());
 			break;
 		default:
         	PyErr_SetString(PyExc_ValueError, "Invalid value for ssl version");
@@ -158,7 +158,7 @@ static PyMemberDef nassl_SSL_CTX_Object_members[] = {
 };
 */
 
-static PyTypeObject nassl_SSL_CTX_Type = {
+PyTypeObject nassl_SSL_CTX_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "nassl.SSL_CTX",             /*tp_name*/

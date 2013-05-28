@@ -2,11 +2,10 @@
 #include <Python.h>
 
 #include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <sys/errno.h>
 
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
+#include "nassl_BIO.h"
 
 extern PyObject *nassl_OpenSSLError_Exception;
 
@@ -16,7 +15,6 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 	nassl_SSL_Object *self;
     nassl_SSL_CTX_Object *sslCtx_Object;
 	SSL *ssl;
-    BIO *socketBio;
 
     self = (nassl_SSL_Object *)type->tp_alloc(type, 0);
     if (self == NULL) 
@@ -24,7 +22,7 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
 
     // Recover and store the corresponding ssl_ctx
-	if (!PyArg_ParseTuple(args, "O", &sslCtx_Object)) {
+	if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object)) {
 		Py_DECREF(self);
     	return NULL;
     }
@@ -34,32 +32,27 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
         Py_DECREF(self);
 		return NULL;
 	}
-
     Py_INCREF(sslCtx_Object);
-	self->sslCtx_Object = sslCtx_Object; 
 
-
-    // Create the socket BIO to be used for data transmission
-    socketBio = BIO_new_ssl_connect(self->sslCtx_Object->sslCtx);
-    BIO_get_ssl(socketBio, &ssl); 
-    if(ssl == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "BIO_get_ssl() returned a NULL ssl reference");
+    ssl = SSL_new(sslCtx_Object->sslCtx);
+    if (ssl == NULL) {
         Py_DECREF(self);
-        return NULL;
+        return raise_OpenSSL_error();
     }
-    self->socketBio = socketBio;
+
+	self->sslCtx_Object = sslCtx_Object; 
     self->ssl = ssl;
+    self->bio_Object = NULL;
 
     return (PyObject *)self;
 } 
 
 
-
 static void nassl_SSL_dealloc(nassl_SSL_Object *self) {
- 	if (self->socketBio != NULL) {
-  		BIO_free_all(self->socketBio); // this will free the ssl structure as well
-        self->socketBio = NULL;
-  		self->ssl = NULL;
+ 	if (self->ssl != NULL) {
+  		SSL_free(self->ssl);
+        self->ssl = NULL;
+        self->bio_Object->bio = NULL; // BIO is freed by SSL_free()
   	}
 
     Py_DECREF(self->sslCtx_Object);
@@ -67,82 +60,33 @@ static void nassl_SSL_dealloc(nassl_SSL_Object *self) {
 }
 
 
+static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args) {
+    nassl_BIO_Object* bioObject;
 
-static int error_handler(SSL *ssl, int returnValue) {
-    // TODO: Better error handling
-    int sslError = SSL_get_error(ssl, returnValue);
-
-    switch(sslError) {
-        unsigned long openSslError;
-        char *errorString;
-
-        case SSL_ERROR_NONE:
-            break;
-
-        case SSL_ERROR_SSL:
-            openSslError = ERR_get_error();
-            errorString = ERR_error_string(openSslError, NULL);
-            PyErr_SetString(PyExc_IOError, errorString);
-            return -1;
-        
-        case SSL_ERROR_SYSCALL:
-            openSslError = ERR_get_error();
-            
-            if (openSslError == 0) {
-                if (returnValue == 0) {
-                    PyErr_SetString(PyExc_IOError, "An EOF was observed that violates the protocol");
-                    return -1;
-                }
-                else if (returnValue == -1) {
-                    // TODO: Windows
-                    PyErr_SetFromErrno(PyExc_IOError);
-                    return -1;
-                }
-                else {
-                    PyErr_SetString(PyExc_IOError, "SSL_ERROR_SYSCALL");
-                    return -1;
-                }
-            } 
-            else {
-                errorString = ERR_error_string(openSslError, NULL);
-                PyErr_SetString(PyExc_IOError, errorString);
-                return -1;
-            }
-
-        case SSL_ERROR_ZERO_RETURN:
-            PyErr_SetString(PyExc_IOError, "Connection was shut down by peer");
-            return -1;
-
-        default:
-            PyErr_SetString(PyExc_IOError, "TODO: Better error handling");
-            return -1;
+    if (!PyArg_ParseTuple(args, "O!", &nassl_BIO_Type, &bioObject)) {
+        return NULL;
     }
-    
-    return 0;
+
+    self->bio_Object = bioObject;
+    SSL_set_bio(self->ssl, bioObject->bio, bioObject->bio);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_set_connect_state(nassl_SSL_Object *self, PyObject *args) {
+    SSL_set_connect_state(self->ssl);
+    Py_RETURN_NONE;
 }
 
 
 static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args) {
-    int result;
-
-    // TODO: Add a BIO class
-    BIO_set_conn_hostname(self->socketBio, "localhost:8444");
-
-    result = SSL_do_handshake(self->ssl);
-    switch (result) {
-
-        case 1: // Handshake successful
-            break;
-
-        case 0: // Handshake failed - protocol error
-        default: // Handshake failed - fatal error
-            if (error_handler(self->ssl, result) != 0) 
-                return NULL;
+    int result = SSL_do_handshake(self->ssl);
+    if (result != 1) {
+        return raise_OpenSSL_ssl_error(self->ssl, result);
     }
-    
-    Py_RETURN_NONE;
-}
 
+    return Py_BuildValue("I", result);
+}
 
 
 static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args) {
@@ -160,13 +104,10 @@ static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args) {
 
     returnValue = SSL_read(self->ssl, readBuffer, readSize);
     if (returnValue > 0) { // Read OK
-        res = PyString_FromString(readBuffer);
-    }
-    else if (returnValue == 0) { // Read failed
-        error_handler(self->ssl, returnValue);
+        res = PyString_FromStringAndSize(readBuffer, readSize);
     }
     else {  // Read failed
-        error_handler(self->ssl, returnValue);
+        raise_OpenSSL_ssl_error(self->ssl, returnValue);
     }    
 
     PyMem_Free(readBuffer);
@@ -187,11 +128,8 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args) {
     if (returnValue > 0) { // Write OK
         res = Py_BuildValue("I", returnValue);
     }
-    else if (returnValue == 0) { // Write failed
-        error_handler(self->ssl, returnValue);
-    }
     else { // Write failed
-        error_handler(self->ssl, returnValue);
+        raise_OpenSSL_ssl_error(self->ssl, returnValue);
     }    
 
     return res;
@@ -283,8 +221,14 @@ static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject
 
 
 static PyMethodDef nassl_SSL_Object_methods[] = {
+    {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
+     "OpenSSL's SSL_set_bio() on the internal BIO of an nassl.BIO_Pair object."
+    },
     {"do_handshake", (PyCFunction)nassl_SSL_do_handshake, METH_NOARGS,
      "OpenSSL's SSL_do_handshake()."
+    },
+    {"set_connect_state", (PyCFunction)nassl_SSL_set_connect_state, METH_NOARGS,
+     "OpenSSL's SSL_set_connect_state()."
     },
     {"read", (PyCFunction)nassl_SSL_read, METH_VARARGS,
      "OpenSSL's SSL_read()."

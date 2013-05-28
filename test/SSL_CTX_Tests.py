@@ -61,9 +61,6 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
         self.assertRaises(nassl.OpenSSLError, testCTX.load_verify_locations, ("test"))
 
 
-
-
-
 def main():
     unittest.main()
 
