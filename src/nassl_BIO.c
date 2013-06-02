@@ -9,7 +9,7 @@
 // nassl.BIO.new()
 static PyObject* nassl_BIO_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
     nassl_BIO_Object *self;
-    BIO *memBio;
+    BIO *sBio;
 
     self = (nassl_BIO_Object *)type->tp_alloc(type, 0);
     if (self == NULL) 
