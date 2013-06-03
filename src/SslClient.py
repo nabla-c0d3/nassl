@@ -1,4 +1,4 @@
-
+#!/usr/bin/python
 from nassl import SSL_CTX, SSL, BIO, WantReadError, SSLV23, SSL_VERIFY_PEER
 
 DEFAULT_BUFFER_SIZE = 4096
