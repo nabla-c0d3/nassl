@@ -1,19 +1,30 @@
 
-from nassl import SSL_CTX, SSL, BIO, WantReadError
+from nassl import SSL_CTX, SSL, BIO, WantReadError, SSLV23, SSL_VERIFY_PEER
 
 DEFAULT_BUFFER_SIZE = 4096
 
 
 class SslClient:
 
-    def __init__(self, sslVersion, sock=None):
+    def __init__(self, sock=None, sslVersion=SSLV23, sslVerifyLocations=None):
         # A Python socket handles transmission of the data
-        self._socket = sock 
+        self._sock = sock 
         
         # OpenSSL objects
-        self._sock = sock
+        # SSL_CTX
         self._sslCtx = SSL_CTX(sslVersion)
+        if sslVerifyLocations:
+            self._sslCtx.load_verify_locations(sslVerifyLocations)
+            self._sslCtx.set_verify(SSL_VERIFY_PEER)
+        
+        # SSL
         self._ssl = SSL(self._sslCtx)
+        # Specific servers do not reply to a client hello that is bigger than 255 bytes
+        # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
+        # So we make the default cipher list smaller (to make the client hello smaller)
+        self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA') 
+        
+        # BIOs
         self._internalBio = BIO()
         self._networkBio = BIO()
         
@@ -86,10 +97,27 @@ class SslClient:
             lenToRead = self._networkBio.pending()
 
         
-
     def shutdown(self):
         pass
 
-
-
+    
+    def get_secure_renegotiation_support(self):
+        return self._ssl.get_secure_renegotiation_support()
+    
+    
+    def get_current_compression_name(self):
+        #TODO: test this
+        return self._ssl.get_current_compression_name()
+    
+    
+    def set_verify(self, verifyMode):
+        return self._ssl.set_verify(verifyMode)
+    
+    
+    def set_tlsext_host_name(self, nameIndication):
+        return self._ssl.set_tlsext_host_name(nameIndication)    
+    
+    
+    def get_peer_certificate(self):
+        return self._ssl.get_peer_certificate()
 
