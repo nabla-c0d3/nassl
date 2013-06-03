@@ -27,6 +27,8 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
     if (self == NULL) 
     	return NULL;
 
+    self->sslCtx = NULL;
+
 	if (!PyArg_ParseTuple(args, "I", &sslVersion)) {
 		Py_DECREF(self);
     	return NULL;

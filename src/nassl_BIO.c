@@ -15,6 +15,8 @@ static PyObject* nassl_BIO_new(PyTypeObject *type, PyObject *args, PyObject *kwd
     if (self == NULL) 
         return NULL;
 
+    self->bio = NULL;
+
     if (!PyArg_ParseTuple(args, "")) {
         Py_DECREF(self);
         return NULL;
@@ -26,7 +28,7 @@ static PyObject* nassl_BIO_new(PyTypeObject *type, PyObject *args, PyObject *kwd
         Py_DECREF(self);
         return NULL;
     }
-    //BIO_set_nbio(sBio, 1);
+
     self->bio = sBio;
     return (PyObject *)self;
 } 

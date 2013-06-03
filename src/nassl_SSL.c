@@ -19,7 +19,10 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
     self = (nassl_SSL_Object *)type->tp_alloc(type, 0);
     if (self == NULL) 
     	return NULL;
-
+    
+    self->ssl = NULL;
+    self->sslCtx_Object = NULL;
+    self->bio_Object = NULL;
 
     // Recover and store the corresponding ssl_ctx
 	if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object)) {
@@ -52,10 +55,15 @@ static void nassl_SSL_dealloc(nassl_SSL_Object *self) {
  	if (self->ssl != NULL) {
   		SSL_free(self->ssl);
         self->ssl = NULL;
-        self->bio_Object->bio = NULL; // BIO is freed by SSL_free()
-  	}
+        if (self->bio_Object != NULL) {
+            // BIO is implicitely freed by SSL_free()
+            self->bio_Object->bio = NULL;
+  	    }
+    }
 
-    Py_DECREF(self->sslCtx_Object);
+    if (self->sslCtx_Object != NULL) {
+        Py_DECREF(self->sslCtx_Object);
+    }
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -204,7 +212,7 @@ static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject
             return NULL;
         }  
 
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 
