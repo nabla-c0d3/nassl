@@ -20,15 +20,6 @@ class SSL_CTX_Tests(unittest.TestCase):
     	testCTX = nassl.SSL_CTX(nassl.SSLV23)
         self.assertRaises(ValueError,testCTX.set_verify, (1235))
 
-    def test_set_cipher_list(self):
-    	testCTX = nassl.SSL_CTX(nassl.SSLV23)
-        self.assertIsNone(testCTX.set_cipher_list("LOW"))
-
-    def test_set_cipher_list_bad(self):
-    	# Invalid cipher string
-    	testCTX = nassl.SSL_CTX(nassl.SSLV23)
-        self.assertRaises(nassl.OpenSSLError,testCTX.set_cipher_list, ("badcipherstring"))
-
     def test_load_verify_locations(self):
     	testCTX = nassl.SSL_CTX(nassl.SSLV23)
     	testFile = tempfile.NamedTemporaryFile(delete=False)

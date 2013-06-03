@@ -7,7 +7,7 @@
 
 #include "nassl_errors.h"
 
-// TODO: Add type hierarchy
+
 static PyObject *nassl_OpenSSLError_Exception;
 static PyObject *nassl_SslError_Exception;
 static PyObject *nassl_WantReadError_Exception;

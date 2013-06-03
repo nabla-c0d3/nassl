@@ -102,22 +102,6 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
 }
 
 
-static PyObject* nassl_SSL_CTX_set_cipher_list(nassl_SSL_CTX_Object *self, PyObject *args) {
-    int cipherListSize;
-    char *cipherList;
-
-    if (!PyArg_ParseTuple(args, "t#", &cipherList, &cipherListSize)) {
-        return NULL;
-    }
-
-    if (!SSL_CTX_set_cipher_list(self->sslCtx, cipherList)) { 
-        raise_OpenSSL_error();
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
-}
-
 
 static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args) {
     int caFileSize;
@@ -142,9 +126,6 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
 static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
     {"set_verify", (PyCFunction)nassl_SSL_CTX_set_verify, METH_VARARGS,
      "OpenSSL's SSL_CTX_set_verify() with a NULL verify_callback."
-    },
-    {"set_cipher_list", (PyCFunction)nassl_SSL_CTX_set_cipher_list, METH_VARARGS,
-     "OpenSSL's SSL_CTX_set_cipher_list()."
     },
     {"load_verify_locations", (PyCFunction)nassl_SSL_CTX_load_verify_locations, METH_VARARGS,
      "OpenSSL's SSL_CTX_load_verify_locations() with a NULL CAPath."
