@@ -12,25 +12,12 @@
 // nassl.X509.new()
 static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	nassl_X509_Object *self;
-	X509 *x509 = NULL;
 
     self = (nassl_X509_Object *)type->tp_alloc(type, 0);
     if (self == NULL) 
     	return NULL;
 
-	if (!PyArg_ParseTuple(args, "I", &x509)) { // TODO Proper pointer type
-		Py_DECREF(self);
-    	return NULL;
-    }
-
-
-	if (x509 == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "Received a NULL X509 pointer.");
-        Py_DECREF(self);
-		return NULL;
-	}
-
-	self->x509 = x509;
+	self->x509 = NULL;
 
     return (PyObject *)self;
 } 
@@ -47,10 +34,12 @@ static void nassl_X509_dealloc(nassl_X509_Object *self) {
 }
 
 
-static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args) {
+// Takes an XXX_print() function and a pointer to the structure to be printed
+// Returns a Python string
+static PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const void *a), void *dataStruct) {
     BIO *memBio;
-    char *certTxtBuffer;
-    int certTxtSize;
+    char *dataTxtBuffer;
+    int dataTxtSize;
     PyObject* res;
 
     memBio = BIO_new(BIO_s_mem());
@@ -59,19 +48,50 @@ static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args) {
         return NULL;
     }
 
-    X509_print(memBio, self->x509);
-    certTxtSize = BIO_pending(memBio);
+    openSslPrintFunction(memBio, dataStruct);
+    dataTxtSize = BIO_pending(memBio);
 
-    certTxtBuffer = (char *) PyMem_Malloc(certTxtSize);
-    if (certTxtBuffer == NULL)
+    dataTxtBuffer = (char *) PyMem_Malloc(dataTxtSize);
+    if (dataTxtBuffer == NULL)
         return PyErr_NoMemory();
 
     // Extract the text from the BIO
-    BIO_read(memBio, certTxtBuffer, certTxtSize);
-    res = PyString_FromString(certTxtBuffer);
-    PyMem_Free(certTxtBuffer);
+    BIO_read(memBio, dataTxtBuffer, dataTxtSize);
+    res = PyString_FromString(dataTxtBuffer);
+    PyMem_Free(dataTxtBuffer);
     return res;
 }
+
+static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args) {
+    return generic_print_to_string((int (*)(BIO *, const void *)) &X509_print, self->x509);
+}
+
+
+static PyObject* nassl_X509_get_notBefore(nassl_X509_Object *self, PyObject *args) {
+    ASN1_TIME *asn1Time = X509_get_notBefore(self->x509);
+    return generic_print_to_string((int (*)(BIO *, const void *)) &ASN1_TIME_print, asn1Time);
+}
+
+
+static PyObject* nassl_X509_get_notAfter(nassl_X509_Object *self, PyObject *args) {
+    ASN1_TIME *asn1Time = X509_get_notAfter(self->x509);
+    return generic_print_to_string((int (*)(BIO *, const void *)) &ASN1_TIME_print, asn1Time);
+}
+
+
+static PyObject* nassl_X509_get_version(nassl_X509_Object *self, PyObject *args) {
+    long version = X509_get_version(self->x509);
+    return Py_BuildValue("I", version);
+}
+
+
+static PyObject* nassl_X509_get_serialNumber(nassl_X509_Object *self, PyObject *args) {
+    ASN1_INTEGER *serialNum = X509_get_serialNumber(self->x509);
+    return generic_print_to_string((int (*)(BIO *, const void *)) &i2a_ASN1_INTEGER, serialNum);
+}
+
+
+
 
 
 
@@ -81,12 +101,24 @@ static PyMethodDef nassl_X509_Object_methods[] = {
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
      "OpenSSL's X509_print()."
     },
+    {"get_version", (PyCFunction)nassl_X509_get_version, METH_NOARGS,
+     "OpenSSL's X509_get_version()."
+    },
+    {"get_notBefore", (PyCFunction)nassl_X509_get_notBefore, METH_NOARGS,
+     "OpenSSL's X509_get_notBefore()."
+    },
+    {"get_notAfter", (PyCFunction)nassl_X509_get_notAfter, METH_NOARGS,
+     "OpenSSL's X509_get_notAfter()."
+    },
+    {"get_serialNumber", (PyCFunction)nassl_X509_get_serialNumber, METH_NOARGS,
+     "OpenSSL's 509_get_serialNumber()."
+    },
 
     {NULL}  // Sentinel
 };
 
 
-static PyTypeObject nassl_X509_Type = {
+PyTypeObject nassl_X509_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
     "nassl.X509",             /*tp_name*/

@@ -5,14 +5,20 @@ import socket
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(5)
-sock.connect(("www.google.net", 443))
+sock.connect(("www.google.com", 443))
 
 sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
 sslClient.do_handshake()
 sslClient.write('GET / HTTP/1.0\r\n\r\n')
 print sslClient.read(4096)
-print sslClient._ssl.get_secure_renegotiation_support()
-print sslClient._ssl.get_current_compression_name()
+cert = sslClient.get_peer_certificate()
+print cert.as_text()
+print cert.get_version()
+print cert.get_notBefore()
+print cert.get_notAfter()
+print cert.get_serialNumber()
+print sslClient.get_secure_renegotiation_support()
+print sslClient.get_current_compression_name()
 
 raise Exception
 

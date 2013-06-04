@@ -6,6 +6,7 @@
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
+#include "nassl_X509.h"
 
 extern PyObject *nassl_OpenSSLError_Exception;
 
@@ -222,8 +223,16 @@ static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject
     cert = SSL_get_peer_certificate(self->ssl);
     if (cert == NULL) // Anonymous cipher suite ?
         Py_RETURN_NONE;
-    else
-        return Py_BuildValue("I", (int) cert); // TODO: Directly create the X509 object
+    else {
+        // Return an nassl.X509 object
+        nassl_X509_Object *x509_Object;
+        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
+        if (x509_Object == NULL) 
+            return PyErr_NoMemory();
+
+        x509_Object->x509 = cert;
+        return (PyObject *) x509_Object;
+    }
 }
 
 
