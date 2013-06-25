@@ -12,20 +12,23 @@ sslClient.do_handshake()
 sslClient.write('GET / HTTP/1.0\r\n\r\n')
 #print sslClient.read(4096)
 cert = sslClient.get_peer_certificate()
-print cert.as_text()
-print cert.get_version()
-print cert.get_notBefore()
-print cert.get_notAfter()
-print cert.get_serialNumber()
+#print cert.as_text()
+#print cert.get_version()
+#print cert.get_notBefore()
+#print cert.get_notAfter()
+#print cert.get_serialNumber()
 print sslClient.get_secure_renegotiation_support()
 print sslClient.get_current_compression_name()
 
 #print cert.digest()
 #print cert.as_pem()
-print cert.get_ext_count()
-print cert.get_ext(1).get_object()
-print cert.get_ext(1).get_data()
+#print cert.get_ext_count()
+#print cert.get_ext(1).get_object()
+#print cert.get_ext(1).get_data()
 
+
+
+print cert.as_dict()
 
 raise Exception
 

@@ -1,10 +1,15 @@
 #!/usr/bin/python
 from nassl import SSL_CTX, SSL, BIO, WantReadError, SSLV23, SSL_VERIFY_PEER
+from X509Certificate import X509Certificate
 
 DEFAULT_BUFFER_SIZE = 4096
 
 
 class SslClient:
+    """
+    High level API implementing an SSL client.
+    """
+    
 
     def __init__(self, sock=None, sslVersion=SSLV23, sslVerifyLocations=None):
         # A Python socket handles transmission of the data
@@ -119,5 +124,5 @@ class SslClient:
     
     
     def get_peer_certificate(self):
-        return self._ssl.get_peer_certificate()
+        return X509Certificate(self._ssl.get_peer_certificate())
 

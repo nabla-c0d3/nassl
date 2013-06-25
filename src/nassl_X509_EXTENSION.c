@@ -44,7 +44,7 @@ static PyObject* nassl_X509_EXTENSION_get_object(nassl_X509_EXTENSION_Object *se
 
     // Extract the text representation
     OBJ_obj2txt(objTxtBuffer, objTxtSize, x509extObj, 0);
-    res = PyString_FromStringAndSize(objTxtBuffer, objTxtSize);
+    res = PyString_FromStringAndSize(objTxtBuffer, objTxtSize - 1);
     PyMem_Free(objTxtBuffer);
     return res;
 }
