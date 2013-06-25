@@ -2,17 +2,23 @@
 #include <Python.h>
 
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
 
 #include "nassl_errors.h"
 #include "nassl_X509.h"
-
+#include "nassl_X509_EXTENSION.h"
 
 
 
 // nassl.X509.new()
 static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-	nassl_X509_Object *self;
 
+    // For now X509.new() is not supposed to be called directly
+    PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509 object. Get it from SSL.get_peer_certificate()");
+    return NULL;
+
+    /*
+    nassl_X509_Object *self;
     self = (nassl_X509_Object *)type->tp_alloc(type, 0);
     if (self == NULL) 
     	return NULL;
@@ -20,6 +26,7 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
 	self->x509 = NULL;
 
     return (PyObject *)self;
+    */
 } 
 
 
@@ -36,7 +43,7 @@ static void nassl_X509_dealloc(nassl_X509_Object *self) {
 
 // Takes an XXX_print() function and a pointer to the structure to be printed
 // Returns a Python string
-static PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const void *a), void *dataStruct) {
+static PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const void *a), const void *dataStruct) {
     BIO *memBio;
     char *dataTxtBuffer;
     int dataTxtSize;
@@ -57,7 +64,7 @@ static PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, co
 
     // Extract the text from the BIO
     BIO_read(memBio, dataTxtBuffer, dataTxtSize);
-    res = PyString_FromString(dataTxtBuffer);
+    res = PyString_FromStringAndSize(dataTxtBuffer, dataTxtSize);
     PyMem_Free(dataTxtBuffer);
     return res;
 }
@@ -91,15 +98,67 @@ static PyObject* nassl_X509_get_serialNumber(nassl_X509_Object *self, PyObject *
 }
 
 
+static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args) {
+    unsigned char *readBuffer;
+    unsigned int digestLen;
+    PyObject *res = NULL;
+
+    readBuffer = (unsigned char *) PyMem_Malloc(EVP_MAX_MD_SIZE);
+    if (readBuffer == NULL)
+        return PyErr_NoMemory();
+
+    // Only support SHA1 for now
+    if (X509_digest(self->x509, EVP_sha1(), readBuffer, &digestLen) == 1) { // Read OK
+        res = PyString_FromStringAndSize((char *)readBuffer, digestLen);
+    }
+    else {
+        PyErr_SetString(nassl_OpenSSLError_Exception, "X509_digest() failed.");
+    }    
+
+    PyMem_Free(readBuffer);
+    return res;
+}
 
 
+static PyObject* nassl_X509_as_pem(nassl_X509_Object *self, PyObject *args) {
+    return generic_print_to_string((int (*)(BIO *, const void *)) &PEM_write_bio_X509, self->x509);
+}
+
+
+static PyObject* nassl_X509_get_ext_count(nassl_X509_Object *self, PyObject *args) {
+    return Py_BuildValue("I", X509_get_ext_count(self->x509));
+}
+
+
+static PyObject* nassl_X509_get_ext(nassl_X509_Object *self, PyObject *args) {
+    int location;
+    X509_EXTENSION *x509ext = NULL;
+
+    if (!PyArg_ParseTuple(args, "I", &location)) {
+        return NULL;
+    }
+
+    x509ext = X509_get_ext(self->x509, location);
+    if (x509ext == NULL)
+        Py_RETURN_NONE;
+    else {
+        // Return an nassl.X509_EXTENSION object
+        nassl_X509_EXTENSION_Object *x509ext_Object;
+        x509ext_Object = (nassl_X509_EXTENSION_Object *)nassl_X509_EXTENSION_Type.tp_alloc(&nassl_X509_EXTENSION_Type, 0);
+        if (x509ext_Object == NULL) 
+            return PyErr_NoMemory();
+
+        x509ext_Object->x509ext = x509ext;
+        return (PyObject *) x509ext_Object;
+    }
+}
 
 
 
 
 static PyMethodDef nassl_X509_Object_methods[] = {
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
-     "OpenSSL's X509_print()."
+     "Returns a string containing the result of OpenSSL's X509_print()."
     },
     {"get_version", (PyCFunction)nassl_X509_get_version, METH_NOARGS,
      "OpenSSL's X509_get_version()."
@@ -111,7 +170,19 @@ static PyMethodDef nassl_X509_Object_methods[] = {
      "OpenSSL's X509_get_notAfter()."
     },
     {"get_serialNumber", (PyCFunction)nassl_X509_get_serialNumber, METH_NOARGS,
-     "OpenSSL's 509_get_serialNumber()."
+     "OpenSSL's x509_get_serialNumber()."
+    },
+    {"digest", (PyCFunction)nassl_X509_digest, METH_NOARGS,
+     "OpenSSL's X509_digest() with SHA1 hardcoded."
+    },
+    {"as_pem", (PyCFunction)nassl_X509_as_pem, METH_NOARGS,
+     "OpenSSL's PEM_write_bio_X509()."
+    },
+    {"get_ext_count", (PyCFunction)nassl_X509_get_ext_count, METH_NOARGS,
+     "OpenSSL's X509_get_ext_count()."
+    },
+    {"get_ext", (PyCFunction)nassl_X509_get_ext, METH_VARARGS,
+     "OpenSSL's X509_get_ext(). Returns an X509_EXTENSION object."
     },
 
     {NULL}  // Sentinel

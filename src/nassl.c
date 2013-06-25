@@ -8,6 +8,7 @@
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
 #include "nassl_X509.h"
+#include "nassl_X509_EXTENSION.h"
 
 
 
@@ -45,6 +46,7 @@ PyMODINIT_FUNC initnassl(void) {
     module_add_SSL(m);
     module_add_BIO(m);
     module_add_X509(m);
+    module_add_X509_EXTENSION(m);
 
     if (PyErr_Occurred())
     {
