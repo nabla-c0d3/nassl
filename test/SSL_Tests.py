@@ -22,16 +22,6 @@ class SSL_Tests(unittest.TestCase):
         self.assertRaises(ValueError,testSsl.set_verify, (1235))
 
 
-    def test_set_cipher_list(self):
-        testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
-        self.assertIsNone(testSsl.set_cipher_list("LOW"))
-
-    def test_set_cipher_list_bad(self):
-    	# Invalid cipher string
-        testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
-        self.assertRaises(nassl.OpenSSLError,testSsl.set_cipher_list, ("badcipherstring"))
-
-
     def test_set_bio(self):
         testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
         testBio = nassl.BIO()
@@ -93,7 +83,22 @@ class SSL_Tests(unittest.TestCase):
         testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
         self.assertRaises(TypeError, testSsl.set_tlsext_host_name, (None))
         
-        
+
+    def test_get_peer_certificate_bad(self):
+        testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
+        self.assertIsNone(testSsl.get_peer_certificate())
+
+
+    def test_set_cipher_list(self):
+        testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
+        self.assertIsNone(testSsl.set_cipher_list("LOW"))
+
+    def test_set_cipher_list_bad(self):
+        # Invalid cipher string
+        testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
+        self.assertRaises(nassl.OpenSSLError,testSsl.set_cipher_list, ("badcipherstring"))
+ 
+
 
 def main():
     unittest.main()
