@@ -2,6 +2,7 @@
 
 #include "nassl_SSL_CTX.h"
 #include "nassl_BIO.h"
+
 // nassl.SSL Python class
 typedef struct {
     PyObject_HEAD

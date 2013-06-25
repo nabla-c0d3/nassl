@@ -8,7 +8,7 @@
 #include "nassl_errors.h"
 
 
-static PyObject *nassl_OpenSSLError_Exception;
+PyObject *nassl_OpenSSLError_Exception;
 static PyObject *nassl_SslError_Exception;
 static PyObject *nassl_WantReadError_Exception;
 static PyObject *nassl_WantWriteError_Exception;

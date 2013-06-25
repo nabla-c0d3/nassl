@@ -8,8 +8,6 @@
 #include "nassl_BIO.h"
 #include "nassl_X509.h"
 
-extern PyObject *nassl_OpenSSLError_Exception;
-
 
 // nassl.SSL.new()
 static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
@@ -173,7 +171,6 @@ static PyObject* nassl_SSL_get_current_compression_name(nassl_SSL_Object *self, 
 }
 
 
-
 static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
     int verifyMode;
 
@@ -195,8 +192,6 @@ static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
     
     Py_RETURN_NONE;
 }
-
-
 
 
 static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject *args) {
