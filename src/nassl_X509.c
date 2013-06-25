@@ -148,7 +148,11 @@ static PyObject* nassl_X509_get_ext(nassl_X509_Object *self, PyObject *args) {
         if (x509ext_Object == NULL) 
             return PyErr_NoMemory();
 
-        x509ext_Object->x509ext = x509ext;
+        // We need a copy of the X509_EXTENSION OpenSSL structure, 
+        // otherwise the X509 object might get garbage collected 
+        // (resulting in a call to X509_free()) while we're still 
+        // using the X509_EXTENSION, resulting in a seg fault
+        x509ext_Object->x509ext = X509_EXTENSION_dup(x509ext);
         return (PyObject *) x509ext_Object;
     }
 }

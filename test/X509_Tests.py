@@ -4,7 +4,7 @@ import socket
 from SslClient import SslClient
 
 
-class X509_Tests_Tests(unittest.TestCase):
+class X509_Tests(unittest.TestCase):
 
     def test_new_bad(self):
         self.assertRaises(NotImplementedError, nassl.X509, (None))
@@ -48,6 +48,10 @@ class X509_Tests_Online(unittest.TestCase):
 
     def test_get_ext_count(self):
         self.assertIsNotNone(self.cert.get_ext_count())
+
+
+    def test_get_ext(self):
+        self.assertIsNotNone(self.cert.get_ext(1))
 
 
 

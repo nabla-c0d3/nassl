@@ -19,8 +19,8 @@ static PyObject* nassl_X509_EXTENSION_new(PyTypeObject *type, PyObject *args, Py
 
 static void nassl_X509_EXTENSION_dealloc(nassl_X509_EXTENSION_Object *self) {
     if (self->x509ext != NULL) {
-        // Not sure if we have to free the X509_EXTENSION
-        // OpenSSL documentation doesn't say anything
+        X509_EXTENSION_free(self->x509ext);
+        self->x509ext = NULL; 
     }
 
     self->ob_type->tp_free((PyObject*)self);
