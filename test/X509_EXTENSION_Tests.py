@@ -19,7 +19,7 @@ class X509_EXTENSION_Tests_Online(unittest.TestCase):
 
         sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
         sslClient.do_handshake()
-        self.x509ext = sslClient.get_peer_certificate().get_ext(1)
+        self.x509ext = sslClient.get_peer_certificate()._x509.get_ext(1)
 
 
     def test_get_data(self):
@@ -28,6 +28,10 @@ class X509_EXTENSION_Tests_Online(unittest.TestCase):
 
     def test_get_object(self):
         self.assertIsNotNone(self.x509ext.get_object())
+        
+
+    def test_get_critical(self):
+        self.assertIsNotNone(self.x509ext.get_critical())
         
 
 def main():

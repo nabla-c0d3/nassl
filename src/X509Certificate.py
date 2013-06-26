@@ -14,6 +14,14 @@ class X509Certificate:
     def as_text(self):
         return self._x509.as_text()
         
+    
+    def as_pem(self):
+        return self._x509.as_pem()
+
+
+    def get_SHA1_fingerprint(self):
+        return self._x509.digest()
+        
         
     def as_dict(self):
         certDict = \
@@ -23,20 +31,75 @@ class X509Certificate:
              'validity': {'notBefore': self._x509.get_notBefore() ,
                          'notAfter' : self._x509.get_notAfter()} ,
              #'subject': self._x509.get_subject_name().get_all_entries() ,
-             #'subjectPublicKeyInfo':{'publicKeyAlgorithm': self._x509.get_pubkey_algorithm() ,
-             #                        'publicKeySize': str( self._x509.get_pubkey_size()*8) ,
-             #                        'publicKey': {'modulus': self._x509.get_pubkey_modulus_as_text(),
-             #                                      'exponent': self._x509.get_pubkey_exponent_as_text()}
-             #                        },
+             'subjectPublicKeyInfo': self._parse_pubkey(),
              'extensions': self._parse_x509_extensions() ,
-             #'signatureAlgorithm': self._x509.get_signature_algorithm() ,
-             #'signatureValue': self._x509.get_signature_as_text() 
+             'signatureAlgorithm': self._parse_signature_algorithm() ,
+             'signatureValue': self._parse_signature() 
              }
         
         return certDict
+    
+    
+
+    def _extract_cert_value(self, key):
+        certValue = self.as_text().split(key)
+        return certValue[1].split('\n')[0].strip()
+
+
+    def _parse_signature_algorithm(self):
+        return self._extract_cert_value('Signature Algorithm: ')    
+    
+    def _parse_signature(self):
+        cert_txt = self.as_text()
+        sig_txt = cert_txt.split('Signature Algorithm:', 1)[1].split('Signature Algorithm:')[1].split('\n',1)[1]
+        sig_parts = sig_txt.split('\n')
+        signature = ''
+        for part in sig_parts:
+            signature += part.strip()         
+        return signature.strip()
+    
+
+# Public Key Parsing Functions
+# The easiest and ugliest way to do this is to just parse OpenSSL's text output
+# I don't want to create an EVP_PKEY class in C just for this
+        
+    def _parse_pubkey(self):
+                
+        pubkeyDict = {
+            'publicKeyAlgorithm': self._parse_pubkey_algorithm() ,
+            'publicKeySize': str( self._parse_pubkey_size()) ,
+            'publicKey': {'modulus': self._parse_pubkey_modulus(),
+                          'exponent': self._parse_pubkey_exponent() } 
+                      }
+        return pubkeyDict
+
+
+    def _parse_pubkey_modulus(self):
+        cert =  self.as_text()
+        modulus_lines = cert.split('Modulus')[1].split('\n',1)[1].split('Exponent:')[0].strip().split('\n')
+        pubkey_modulus_txt = ''
+    
+        for line in modulus_lines:
+            pubkey_modulus_txt += line.strip()
+        return pubkey_modulus_txt
+        
+        
+    def _parse_pubkey_exponent(self):
+        exp = self._extract_cert_value('Exponent:')
+        return exp.split('(')[0].strip()
+    
+    
+    def _parse_pubkey_size(self):
+        exp = self._extract_cert_value('Public-Key: ')
+        return exp.strip(' ()')
+        
+
+    def _parse_pubkey_algorithm(self):
+        return self._extract_cert_value('Public Key Algorithm: ')
 
         
-    
+
+# Extension Parsing Functions
     def _parse_x509_extensions(self):
         x509extParsingFunctions = {
             'X509v3 Subject Alternative Name': self._parse_multi_valued_extension,
@@ -45,7 +108,7 @@ class X509Certificate:
             'X509v3 Key Usage': self._parse_multi_valued_extension,
             'X509v3 Extended Key Usage': self._parse_multi_valued_extension,
             'X509v3 Certificate Policies' : self._parse_crl_distribution_points,
-            'X509v3 Issuer Alternative Name' : self._parse_crl_distribution_points}
+            'X509v3 Issuer Alternative Name' : self._parse_crl_distribution_points }
         
         extCount = self._x509.get_ext_count()
         extDict = {}
@@ -54,15 +117,16 @@ class X509Certificate:
             x509ext = self._x509.get_ext(i)
             extName = x509ext.get_object()
             extData = x509ext.get_data()
+            # TODO: Should we output the critical field ?
+            extCrit = x509ext.get_critical()
             if extName in x509extParsingFunctions.keys():
                 extDict[extName] = x509extParsingFunctions[extName](extData)
             else:
-                extDict[extName] = extData
+                extDict[extName] = extData.strip()
                 
         return extDict
 
 
-# X509 Extension Parsing Functions
     def _parse_multi_valued_extension(self, extension):
         
         extension = extension.split(', ')

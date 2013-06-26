@@ -77,11 +77,23 @@ static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self
 }
 
 
+static PyObject* nassl_X509_EXTENSION_get_critical(nassl_X509_EXTENSION_Object *self) {
+    if (X509_EXTENSION_get_critical(self->x509ext))
+        Py_RETURN_TRUE;
+    else
+        Py_RETURN_FALSE;
+}
+
+
 static PyMethodDef nassl_X509_EXTENSION_Object_methods[] = {
     {"get_object", (PyCFunction)nassl_X509_EXTENSION_get_object, METH_NOARGS,
      "Returns a string containing the result of OpenSSL's X509_EXTENSION_get_object() and OBJ_obj2txt()."
-    },{"get_data", (PyCFunction)nassl_X509_EXTENSION_get_data, METH_NOARGS,
+    },
+    {"get_data", (PyCFunction)nassl_X509_EXTENSION_get_data, METH_NOARGS,
      "Returns a string containing the result of OpenSSL's X509V3_EXT_print()."
+    },
+    {"get_critical", (PyCFunction)nassl_X509_EXTENSION_get_critical, METH_NOARGS,
+     "OpenSSL's X509_EXTENSION_get_critical()."
     },
 
     {NULL}  // Sentinel
