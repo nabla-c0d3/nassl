@@ -110,8 +110,9 @@ class SslClient:
 
         
     def shutdown(self):
-        # TODO
-        pass
+        self._ssl.shutdown()
+        self._sock.shutdown(socket.SHUT_RDWR)
+        self._sock.close()
 
     
     def get_secure_renegotiation_support(self):

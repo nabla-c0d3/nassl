@@ -97,6 +97,11 @@ class SSL_Tests(unittest.TestCase):
         # Invalid cipher string
         testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
         self.assertRaises(nassl.OpenSSLError,testSsl.set_cipher_list, ("badcipherstring"))
+
+    def test_shutdown_bad(self):
+        testSsl = nassl.SSL(nassl.SSL_CTX(nassl.SSLV23))
+        self.assertRaisesRegexp(nassl.OpenSSLError, 'uninitialized', testSsl.shutdown)
+
  
 
 

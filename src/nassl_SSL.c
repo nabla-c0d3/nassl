@@ -143,6 +143,21 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
+static PyObject* nassl_SSL_shutdown(nassl_SSL_Object *self, PyObject *args) {
+    int returnValue = SSL_shutdown(self->ssl);
+    PyObject *res = NULL;
+
+    if (returnValue >= 0) {
+        res = Py_BuildValue("I", returnValue);
+    }
+    else { 
+        raise_OpenSSL_ssl_error(self->ssl, returnValue);
+    }    
+
+    return res;
+}
+
+
 static PyObject* nassl_SSL_pending(nassl_SSL_Object *self, PyObject *args) {
     int returnValue;
 
@@ -267,6 +282,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"pending", (PyCFunction)nassl_SSL_pending, METH_NOARGS,
      "OpenSSL's SSL_pending()."
+    },
+    {"shutdown", (PyCFunction)nassl_SSL_shutdown, METH_NOARGS,
+     "OpenSSL's SSL_shutdown()."
     },
     {"get_secure_renegotiation_support", (PyCFunction)nassl_SSL_get_secure_renegotiation_support, METH_NOARGS,
      "OpenSSL's SSL_get_secure_renegotiation_support()."

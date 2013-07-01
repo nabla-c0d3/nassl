@@ -39,8 +39,13 @@ class SslClient_Tests_Online(unittest.TestCase):
         self.sslClient.write('GET / HTTP/1.0\r\n\r\n')
         self.assertRegexpMatches(self.sslClient.read(1024), 'google')
 
+
     def test_get_peer_certificate(self):
         self.assertIsNotNone(self.sslClient.get_peer_certificate())
+        
+
+    def test_shutdown(self):
+        self.assertIsNone(self.sslClient.shutdown())
         
 
 
