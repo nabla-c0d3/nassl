@@ -1,27 +1,27 @@
 import unittest
 import tempfile
-import nassl
+from nassl import _nassl, SSLV23, SSL_VERIFY_PEER
 
 class SSL_CTX_Tests(unittest.TestCase):
 
     def test_new(self):
-        self.assertTrue(nassl.SSL_CTX(nassl.SSLV23))
+        self.assertTrue(_nassl.SSL_CTX(SSLV23))
 
     def test_new_bad(self):
     	# Invalid protocol constant
-        self.assertRaises(ValueError, nassl.SSL_CTX, (1234))
+        self.assertRaises(ValueError, _nassl.SSL_CTX, (1234))
 
     def test_set_verify(self):
-    	testCTX = nassl.SSL_CTX(nassl.SSLV23)
-        self.assertIsNone(testCTX.set_verify(nassl.SSL_VERIFY_PEER))
+    	testCTX = _nassl.SSL_CTX(SSLV23)
+        self.assertIsNone(testCTX.set_verify(SSL_VERIFY_PEER))
 
     def test_set_verify_bad(self):
     	# Invalid verify constant
-    	testCTX = nassl.SSL_CTX(nassl.SSLV23)
+    	testCTX = _nassl.SSL_CTX(SSLV23)
         self.assertRaises(ValueError,testCTX.set_verify, (1235))
 
     def test_load_verify_locations(self):
-    	testCTX = nassl.SSL_CTX(nassl.SSLV23)
+    	testCTX = _nassl.SSL_CTX(SSLV23)
     	testFile = tempfile.NamedTemporaryFile(delete=False)
     	testFile.write("""-----BEGIN CERTIFICATE-----
 MIIDIDCCAomgAwIBAgIENd70zzANBgkqhkiG9w0BAQUFADBOMQswCQYDVQQGEwJV
@@ -48,8 +48,8 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
 
     def test_load_verify_locations_bad(self):
     	# Certificate file doesn't exist
-    	testCTX = nassl.SSL_CTX(nassl.SSLV23)
-        self.assertRaises(nassl.OpenSSLError, testCTX.load_verify_locations, ("test"))
+    	testCTX = _nassl.SSL_CTX(SSLV23)
+        self.assertRaises(_nassl.OpenSSLError, testCTX.load_verify_locations, ("test"))
 
 
 def main():

@@ -253,7 +253,7 @@ static PyMethodDef nassl_X509_Object_methods[] = {
 PyTypeObject nassl_X509_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "nassl.X509",             /*tp_name*/
+    "_nassl.X509",             /*tp_name*/
     sizeof(nassl_X509_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)nassl_X509_dealloc, /*tp_dealloc*/

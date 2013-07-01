@@ -1,13 +1,13 @@
 import unittest
-import nassl
 import socket
-from SslClient import SslClient
+from nassl.SslClient import SslClient
+from nassl import _nassl
 
 
 class X509_Tests(unittest.TestCase):
 
     def test_new_bad(self):
-        self.assertRaises(NotImplementedError, nassl.X509, (None))
+        self.assertRaises(NotImplementedError, _nassl.X509, (None))
 
 
 class X509_Tests_Online(unittest.TestCase):
@@ -17,7 +17,7 @@ class X509_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
+        sslClient = SslClient(sock=sock)
         sslClient.do_handshake()
         self.cert = sslClient.get_peer_certificate()._x509
 

@@ -1,5 +1,6 @@
 #!/usr/bin/python
-from nassl import SSL_CTX, SSL, BIO, WantReadError, SSLV23, SSL_VERIFY_PEER
+from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError
+from nassl import SSLV23, SSL_VERIFY_PEER
 from X509Certificate import X509Certificate
 
 DEFAULT_BUFFER_SIZE = 4096
@@ -111,7 +112,7 @@ class SslClient:
         
     def shutdown(self):
         self._ssl.shutdown()
-        self._sock.shutdown(socket.SHUT_RDWR)
+        #self._sock.shutdown(socket.SHUT_RDWR)
         self._sock.close()
 
     
@@ -134,4 +135,20 @@ class SslClient:
     
     def get_peer_certificate(self):
         return X509Certificate(self._ssl.get_peer_certificate())
+    
+    
+    def set_cipher_list(self, cipherList):
+        return self._ssl.set_cipher_list(cipherList)
+    
+    
+    def get_cipher_list(self):
+        return self._ssl.get_cipher_list()
+
+
+    def get_cipher_name(self):
+        return self._ssl.get_cipher_name()
+    
+    
+    def get_cipher_bits(self):
+        return self._ssl.get_cipher_bits()
 

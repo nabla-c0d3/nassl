@@ -219,8 +219,7 @@ static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject
 
     if (!SSL_set_tlsext_host_name(self->ssl, nameIndication))
         {
-            raise_OpenSSL_error();
-            return NULL;
+            return raise_OpenSSL_error();
         }  
 
     Py_RETURN_NONE;
@@ -255,13 +254,94 @@ static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *arg
     }
 
     if (!SSL_set_cipher_list(self->ssl, cipherList)) { 
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
 
     Py_RETURN_NONE;
 }
 
+
+static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *args) {
+    int priority = 0;
+    PyObject* ciphersPyList = NULL;
+
+    if (SSL_get_cipher_list(self->ssl, 0) == NULL) 
+        Py_RETURN_NONE;
+
+    // Return a list of cipher strings
+    ciphersPyList = PyList_New(0);
+    if (ciphersPyList == NULL)
+        return PyErr_NoMemory();
+
+   do { // Extract each cipher name
+        PyObject *cipherPyString = NULL;
+        const char *cipherName = SSL_get_cipher_list(self->ssl, priority);
+        
+        cipherPyString = PyString_FromString(cipherName);
+        if (cipherPyString == NULL)
+            return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+
+        if (PyList_Append(ciphersPyList, cipherPyString) == -1)
+            return NULL;
+        
+        priority++;
+    } while (SSL_get_cipher_list(self->ssl, priority) != NULL) ;
+    
+    return ciphersPyList;
+}
+
+
+static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *args) {
+    int returnValue = SSL_get_cipher_bits(self->ssl, NULL);
+    return Py_BuildValue("I", returnValue);
+}
+
+
+static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *args) {
+    const char *cipherName = SSL_get_cipher_name(self->ssl);
+    return PyString_FromString(cipherName);
+}
+
+
+static PyObject* nassl_SSL_use_certificate_file(nassl_SSL_Object *self, PyObject *args) {
+    const char *filePath;
+    int filePathLen, certType;
+
+    if (!PyArg_ParseTuple(args, "t#I", &filePath, &filePathLen, &certType)) {
+        return NULL;
+    } 
+
+    if (SSL_use_certificate_file(self->ssl, filePath, certType) != 1 ){
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_use_PrivateKey_file(nassl_SSL_Object *self, PyObject *args) {
+    const char *filePath;
+    int filePathLen, certType;
+
+    if (!PyArg_ParseTuple(args, "t#I", &filePath, &filePathLen, &certType)) {
+        return NULL;
+    } 
+
+    if (SSL_use_PrivateKey_file(self->ssl, filePath, certType) != 1 ){
+    return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *args) {
+    if (SSL_check_private_key(self->ssl) != 1 ){
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
 
 
 static PyMethodDef nassl_SSL_Object_methods[] = {
@@ -304,6 +384,24 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     {"set_cipher_list", (PyCFunction)nassl_SSL_set_cipher_list, METH_VARARGS,
      "OpenSSL's SSL_set_cipher_list()."
     },
+    {"get_cipher_list", (PyCFunction)nassl_SSL_get_cipher_list, METH_NOARGS,
+     "Returns a list of cipher strings using OpenSSL's SSL_get_cipher_list()."
+    },
+    {"get_cipher_bits", (PyCFunction)nassl_SSL_get_cipher_bits, METH_NOARGS,
+     "OpenSSL's SSL_get_cipher_bits()."
+    },
+    {"get_cipher_name", (PyCFunction)nassl_SSL_get_cipher_name, METH_NOARGS,
+     "OpenSSL's SSL_get_cipher_name()."
+    },
+    {"use_certificate_file", (PyCFunction)nassl_SSL_use_certificate_file, METH_VARARGS,
+     "OpenSSL's SSL_use_certificate_file()."
+    },
+    {"use_PrivateKey_file", (PyCFunction)nassl_SSL_use_PrivateKey_file, METH_VARARGS,
+     "OpenSSL's SSL_use_PrivateKey_file()."
+    },
+    {"check_private_key", (PyCFunction)nassl_SSL_check_private_key, METH_NOARGS,
+     "OpenSSL's SSL_check_private_key()."
+    },
     {NULL}  // Sentinel
 };
 /*
@@ -316,7 +414,7 @@ static PyMemberDef nassl_SSL_Object_members[] = {
 static PyTypeObject nassl_SSL_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "nassl.SSL",             /*tp_name*/
+    "_nassl.SSL",             /*tp_name*/
     sizeof(nassl_SSL_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)nassl_SSL_dealloc, /*tp_dealloc*/

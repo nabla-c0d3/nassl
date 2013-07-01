@@ -24,7 +24,7 @@ static PyMethodDef nassl_methods[] = {
 
 
 
-PyMODINIT_FUNC initnassl(void) {
+PyMODINIT_FUNC init_nassl(void) {
     PyObject* m;
 
     // Initialize OpenSSL
@@ -39,7 +39,7 @@ PyMODINIT_FUNC initnassl(void) {
 
 
     // Initalize the module
-    m = Py_InitModule3("nassl", nassl_methods,
+    m = Py_InitModule3("_nassl", nassl_methods,
                        "Example module that creates an extension type.");
 
     module_add_errors(m);
@@ -52,7 +52,7 @@ PyMODINIT_FUNC initnassl(void) {
 
     if (PyErr_Occurred())
     {
-        PyErr_SetString(PyExc_ImportError, "nassl init failed");
+        PyErr_SetString(PyExc_ImportError, "_nassl init failed");
     }
 
 }

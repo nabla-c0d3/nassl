@@ -79,16 +79,16 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue) {
 
 
 void module_add_errors(PyObject* m) {
-    nassl_OpenSSLError_Exception = PyErr_NewException("nassl.OpenSSLError", NULL, NULL);
+    nassl_OpenSSLError_Exception = PyErr_NewException("_nassl.OpenSSLError", NULL, NULL);
     Py_INCREF(nassl_OpenSSLError_Exception);
     PyModule_AddObject(m, "OpenSSLError", nassl_OpenSSLError_Exception);
-    nassl_SslError_Exception = PyErr_NewException("nassl.SslError", nassl_OpenSSLError_Exception, NULL);
+    nassl_SslError_Exception = PyErr_NewException("_nassl.SslError", nassl_OpenSSLError_Exception, NULL);
     Py_INCREF(nassl_SslError_Exception);
     PyModule_AddObject(m, "SslError", nassl_SslError_Exception);
-    nassl_WantWriteError_Exception = PyErr_NewException("nassl.WantWriteError", nassl_SslError_Exception, NULL);
+    nassl_WantWriteError_Exception = PyErr_NewException("_nassl.WantWriteError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantWriteError_Exception);
     PyModule_AddObject(m, "WantWriteError", nassl_WantWriteError_Exception);
-    nassl_WantReadError_Exception = PyErr_NewException("nassl.WantReadError", nassl_SslError_Exception, NULL);
+    nassl_WantReadError_Exception = PyErr_NewException("_nassl.WantReadError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantReadError_Exception);
     PyModule_AddObject(m, "WantReadError", nassl_WantReadError_Exception);
 }

@@ -1,7 +1,7 @@
 import unittest
-import nassl
+from nassl import SSLV23
 import socket
-from SslClient import SslClient
+from nassl.SslClient import SslClient
 
 
 
@@ -12,7 +12,7 @@ class SslClient_Tests_Handshake(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
+        sslClient = SslClient(sslVersion=SSLV23, sock=sock)
         self.sslClient = sslClient
 
     def test_do_handshake(self):
@@ -26,7 +26,7 @@ class SslClient_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
+        sslClient = SslClient(sslVersion=SSLV23, sock=sock)
         sslClient.do_handshake()
         self.sslClient = sslClient
 

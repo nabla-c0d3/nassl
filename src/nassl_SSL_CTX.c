@@ -144,7 +144,7 @@ static PyMemberDef nassl_SSL_CTX_Object_members[] = {
 PyTypeObject nassl_SSL_CTX_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                         /*ob_size*/
-    "nassl.SSL_CTX",             /*tp_name*/
+    "_nassl.SSL_CTX",             /*tp_name*/
     sizeof(nassl_SSL_CTX_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)nassl_SSL_CTX_dealloc, /*tp_dealloc*/
@@ -193,20 +193,5 @@ void module_add_SSL_CTX(PyObject* m) {
     
     Py_INCREF(&nassl_SSL_CTX_Type);
     PyModule_AddObject(m, "SSL_CTX", (PyObject *)&nassl_SSL_CTX_Type);
-
-    // Verify constants
-    PyModule_AddIntConstant(m, "SSL_VERIFY_NONE", SSL_VERIFY_NONE);
-    PyModule_AddIntConstant(m, "SSL_VERIFY_PEER", SSL_VERIFY_PEER);
-    PyModule_AddIntConstant(m, "SSL_VERIFY_FAIL_IF_NO_PEER_CERT", SSL_VERIFY_FAIL_IF_NO_PEER_CERT);
-    PyModule_AddIntConstant(m, "SSL_VERIFY_CLIENT_ONCE", SSL_VERIFY_CLIENT_ONCE);
-
-    // SSL version constants
-    PyModule_AddIntConstant(m, "SSLV23", sslv23);
-    PyModule_AddIntConstant(m, "SSLV2", sslv2);
-    PyModule_AddIntConstant(m, "SSLV3", sslv3);
-    PyModule_AddIntConstant(m, "TLSV1", tlsv1);
-    PyModule_AddIntConstant(m, "TLSV1_1", tlsv1_1);
-    PyModule_AddIntConstant(m, "TLSV1_2", tlsv1_2);
-
 }
 
