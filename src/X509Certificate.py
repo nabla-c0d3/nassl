@@ -3,7 +3,7 @@
 
 class X509Certificate:
     """
-    High level API implementing an X509 certificate.
+    High level API for parsing an X509 certificate.
     """
 
 
@@ -27,10 +27,10 @@ class X509Certificate:
         certDict = \
             {'version': self._x509.get_version() ,
              'serialNumber': self._x509.get_serialNumber() ,
-             #'issuer': self._x509.get_issuer_name().get_all_entries() ,
+             'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
              'validity': {'notBefore': self._x509.get_notBefore() ,
                          'notAfter' : self._x509.get_notAfter()} ,
-             #'subject': self._x509.get_subject_name().get_all_entries() ,
+             'subject': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
              'subjectPublicKeyInfo': self._parse_pubkey(),
              'extensions': self._parse_x509_extensions() ,
              'signatureAlgorithm': self._parse_signature_algorithm() ,
@@ -40,6 +40,7 @@ class X509Certificate:
         return certDict
     
     
+# "Private" methods
 
     def _extract_cert_value(self, key):
         certValue = self.as_text().split(key)
@@ -48,6 +49,7 @@ class X509Certificate:
 
     def _parse_signature_algorithm(self):
         return self._extract_cert_value('Signature Algorithm: ')    
+    
     
     def _parse_signature(self):
         cert_txt = self.as_text()
@@ -58,6 +60,13 @@ class X509Certificate:
             signature += part.strip()         
         return signature.strip()
     
+
+    def _parse_x509_name(self, nameEntries):
+        nameEntriesDict= {}
+        for entry in nameEntries:
+            nameEntriesDict[entry.get_object()] = entry.get_data()
+        return nameEntriesDict
+
 
 # Public Key Parsing Functions
 # The easiest and ugliest way to do this is to just parse OpenSSL's text output
@@ -109,12 +118,10 @@ class X509Certificate:
             'X509v3 Extended Key Usage': self._parse_multi_valued_extension,
             'X509v3 Certificate Policies' : self._parse_crl_distribution_points,
             'X509v3 Issuer Alternative Name' : self._parse_crl_distribution_points }
-        
-        extCount = self._x509.get_ext_count()
+
         extDict = {}
 
-        for i in xrange(0,extCount):
-            x509ext = self._x509.get_ext(i)
+        for x509ext in self._x509.get_extensions():
             extName = x509ext.get_object()
             extData = x509ext.get_data()
             # TODO: Should we output the critical field ?

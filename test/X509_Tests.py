@@ -19,7 +19,7 @@ class X509_Tests_Online(unittest.TestCase):
 
         sslClient = SslClient(sslVersion=nassl.SSLV23, sock=sock)
         sslClient.do_handshake()
-        self.cert = sslClient.get_peer_certificate()
+        self.cert = sslClient.get_peer_certificate()._x509
 
 
     def test_as_text(self):
@@ -46,12 +46,16 @@ class X509_Tests_Online(unittest.TestCase):
         self.assertIsNotNone(self.cert.as_pem())
 
 
-    def test_get_ext_count(self):
-        self.assertIsNotNone(self.cert.get_ext_count())
+    def test_get_extensions(self):
+        self.assertIsNotNone(self.cert.get_extensions())
 
 
-    def test_get_ext(self):
-        self.assertIsNotNone(self.cert.get_ext(1))
+    def test_get_issuer_name_entries(self):
+        self.assertIsNotNone(self.cert.get_issuer_name_entries())
+
+
+    def test_get_subject_name_entries(self):
+        self.assertIsNotNone(self.cert.get_subject_name_entries())
 
 
 

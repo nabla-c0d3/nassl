@@ -1,6 +1,5 @@
 #pragma once
 
-// nassl.X509 Python class
 typedef struct {
     PyObject_HEAD
     X509_EXTENSION *x509ext; // OpenSSL X509_EXTENSION C struct

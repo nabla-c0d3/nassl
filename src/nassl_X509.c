@@ -7,6 +7,7 @@
 #include "nassl_errors.h"
 #include "nassl_X509.h"
 #include "nassl_X509_EXTENSION.h"
+#include "nassl_X509_NAME_ENTRY.h"
 
 
 
@@ -125,39 +126,92 @@ static PyObject* nassl_X509_as_pem(nassl_X509_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_X509_get_ext_count(nassl_X509_Object *self, PyObject *args) {
-    return Py_BuildValue("I", X509_get_ext_count(self->x509));
-}
+static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *args) {
+    PyObject* extensionsPyList = NULL;
+    int extCount = X509_get_ext_count(self->x509);
 
 
-static PyObject* nassl_X509_get_ext(nassl_X509_Object *self, PyObject *args) {
-    int location;
-    X509_EXTENSION *x509ext = NULL;
+   // We'll return a Python list containing each extension
+    extensionsPyList = PyList_New(extCount);
+    if (extensionsPyList == NULL)
+        return PyErr_NoMemory();
+    
 
-    if (!PyArg_ParseTuple(args, "I", &location)) {
-        return NULL;
-    }
-
-    x509ext = X509_get_ext(self->x509, location);
-    if (x509ext == NULL)
-        Py_RETURN_NONE;
-    else {
-        // Return an nassl.X509_EXTENSION object
+    // Return a list of X509_EXTENSION Python objects
+    for (int i=0;i<extCount;i++) {
         nassl_X509_EXTENSION_Object *x509ext_Object;
+        X509_EXTENSION *x509ext = X509_get_ext(self->x509, i);
+        if (x509ext == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Could not extract a X509_EXTENSION from the certificate. Exotic certificate ?");
+            return NULL;
+        }
+
         x509ext_Object = (nassl_X509_EXTENSION_Object *)nassl_X509_EXTENSION_Type.tp_alloc(&nassl_X509_EXTENSION_Type, 0);
         if (x509ext_Object == NULL) 
             return PyErr_NoMemory();
 
         // We need a copy of the X509_EXTENSION OpenSSL structure, 
-        // otherwise the X509 object might get garbage collected 
+        // otherwise the X509 Python object might get garbage collected 
         // (resulting in a call to X509_free()) while we're still 
-        // using the X509_EXTENSION, resulting in a seg fault
+        // using the X509_EXTENSION Python object, resulting in a seg fault
         x509ext_Object->x509ext = X509_EXTENSION_dup(x509ext);
-        return (PyObject *) x509ext_Object;
+        PyList_SET_ITEM(extensionsPyList, i, (PyObject *) x509ext_Object);
     }
+
+    return extensionsPyList;
 }
 
 
+// Generic function to extract the list of X509_NAME_ENTRY from an X509_NAME.
+// Used to get the subject name entries and the issuer name entries. Returns a Python list
+static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a), nassl_X509_Object *self) {
+
+    X509_NAME * x509Name = NULL;
+    int nameEntryCount = 0;
+    PyObject* nameEntriesPyList = NULL;
+
+    // Extract the name field
+    x509Name = X509GetNameFunc(self->x509);
+    if (x509Name == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Could not extract a X509_NAME from the certificate. Exotic certificate ?");
+        return NULL;
+    }
+    nameEntryCount = X509_NAME_entry_count(x509Name);
+
+   // We'll return a Python list containing each name entry
+    nameEntriesPyList = PyList_New(nameEntryCount);
+    if (nameEntriesPyList == NULL)
+        return PyErr_NoMemory();
+
+    // Extract each name entry and create a Python object
+    for (int i=0;i<nameEntryCount;i++) {
+        nassl_X509_NAME_ENTRY_Object *nameEntry_Object;
+        X509_NAME_ENTRY *nameEntry = X509_NAME_get_entry(x509Name, i);
+        if (nameEntry == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Could not extract a X509_NAME_ENTRY from the certificate. Exotic certificate ?");
+            return NULL;
+        }
+
+        nameEntry_Object = (nassl_X509_NAME_ENTRY_Object *)nassl_X509_NAME_ENTRY_Type.tp_alloc(&nassl_X509_NAME_ENTRY_Type, 0);
+        if (nameEntry_Object == NULL) 
+            return PyErr_NoMemory();
+
+        nameEntry_Object->x509NameEntry = X509_NAME_ENTRY_dup(nameEntry);
+        PyList_SET_ITEM(nameEntriesPyList, i, (PyObject *) nameEntry_Object);
+    }
+
+    return nameEntriesPyList;
+}
+
+
+static PyObject* nassl_X509_get_issuer_name_entries(nassl_X509_Object *self, PyObject *args) {
+    return generic_get_name_entries(&X509_get_issuer_name, self);
+}
+
+
+static PyObject* nassl_X509_get_subject_name_entries(nassl_X509_Object *self, PyObject *args) {
+    return generic_get_name_entries(&X509_get_subject_name, self);
+}
 
 
 static PyMethodDef nassl_X509_Object_methods[] = {
@@ -182,11 +236,14 @@ static PyMethodDef nassl_X509_Object_methods[] = {
     {"as_pem", (PyCFunction)nassl_X509_as_pem, METH_NOARGS,
      "OpenSSL's PEM_write_bio_X509()."
     },
-    {"get_ext_count", (PyCFunction)nassl_X509_get_ext_count, METH_NOARGS,
-     "OpenSSL's X509_get_ext_count()."
+    {"get_extensions", (PyCFunction)nassl_X509_get_extensions, METH_NOARGS,
+     "Returns a list of X509_EXTENSION objects using OpenSSL's X509_get_ext()."
     },
-    {"get_ext", (PyCFunction)nassl_X509_get_ext, METH_VARARGS,
-     "OpenSSL's X509_get_ext(). Returns an X509_EXTENSION object."
+    {"get_issuer_name_entries", (PyCFunction)nassl_X509_get_issuer_name_entries, METH_NOARGS,
+     "Returns a list of X509_NAME_ENTRY objects extracted from the issuer name using OpenSSL's X509_get_issuer_name() and X509_NAME_get_entry()."
+    },
+    {"get_subject_name_entries", (PyCFunction)nassl_X509_get_subject_name_entries, METH_NOARGS,
+     "Returns a list of X509_NAME_ENTRY objects extracted from the subject name using OpenSSL's X509_get_subject_name() and X509_NAME_get_entry()."
     },
 
     {NULL}  // Sentinel
