@@ -134,6 +134,12 @@ Pd2eQ9+DkopOz3UGU7c=
         testFile.close()
         self.assertIsNone(testSsl.use_certificate_file(testFile.name, SSL_FILETYPE_PEM))
 
+    def test_use_certificate_file_bad(self):
+        # Bad filename
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'system lib', testSsl.use_certificate_file, 'invalidPath', SSL_FILETYPE_PEM)
+
+
     def test_use_PrivateKey_file(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         testFile = tempfile.NamedTemporaryFile(delete=False)
@@ -156,6 +162,12 @@ jsXbhxAIkrdmpg==
 """)
         testFile.close()
         self.assertIsNone(testSsl.use_PrivateKey_file(testFile.name, SSL_FILETYPE_PEM))
+
+    def test_use_PrivateKey_file_bad(self):
+        # Bad filename
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'system lib', testSsl.use_PrivateKey_file, 'invalidPath', SSL_FILETYPE_PEM)
+
 
     def test_check_private_key(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
@@ -204,6 +216,11 @@ Pd2eQ9+DkopOz3UGU7c=
         self.assertIsNone(testSsl.use_PrivateKey_file(testFile.name, SSL_FILETYPE_PEM))
         self.assertIsNone(testSsl.check_private_key())
 
+
+    def test_check_private_key_bad(self):
+        # Bad filename
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', testSsl.check_private_key)
 
 def main():
     unittest.main()
