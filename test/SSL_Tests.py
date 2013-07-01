@@ -103,9 +103,20 @@ class SSL_Tests(unittest.TestCase):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'uninitialized', testSsl.shutdown)
 
+
     def test_get_cipher_list(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertIsNotNone(testSsl.get_cipher_list()) 
+
+
+    def test_get_cipher_name(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertIsNotNone(testSsl.get_cipher_name()) 
+
+
+    def test_get_cipher_bits(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertIsNotNone(testSsl.get_cipher_bits()) 
 
 
     def test_use_certificate_file(self):
