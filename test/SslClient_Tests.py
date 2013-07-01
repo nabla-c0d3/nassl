@@ -15,6 +15,7 @@ class SslClient_Tests_Handshake(unittest.TestCase):
         sslClient = SslClient(sslVersion=SSLV23, sock=sock)
         self.sslClient = sslClient
 
+
     def test_do_handshake(self):
         self.assertTrue(self.sslClient.do_handshake())
 
@@ -46,6 +47,7 @@ class SslClient_Tests_Online(unittest.TestCase):
 
     def test_shutdown(self):
         self.assertIsNone(self.sslClient.shutdown())
+
         
 
 

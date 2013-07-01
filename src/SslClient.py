@@ -28,7 +28,8 @@ class SslClient:
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA') 
+        # TODO: This makes SSLv2 fail
+        #self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA') 
         
         # BIOs
         self._internalBio = BIO()
@@ -151,4 +152,16 @@ class SslClient:
     
     def get_cipher_bits(self):
         return self._ssl.get_cipher_bits()
+
+
+    def use_certificate_file(self, certFile, certType):
+        return self._ssl.use_certificate_file(certFile, certType)
+
+
+    def use_PrivateKey_file(self, keyFile, keyType):
+        return self._ssl.use_PrivateKey_file(keyFile, keyType)
+
+
+    def check_private_key(self):
+        return self._ssl.check_private_key()
 
