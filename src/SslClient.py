@@ -43,7 +43,7 @@ class SslClient:
         while True:
             try:
                 if self._ssl.do_handshake() == 1:
-                    break # Handshake was successful
+                    return True # Handshake was successful
 
             except WantReadError:
                 # OpenSSL is expecting more data from the peer
@@ -90,16 +90,23 @@ class SslClient:
         
 
     def write(self, data):
+        """
+        Returns the number of (encrypted) bytes sent.
+        """
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
         
         # Recover the corresponding encrypted data
         lenToRead = self._networkBio.pending()
+        finalLen = lenToRead
         while lenToRead:
             encData = self._networkBio.read(lenToRead)
             # Send the encrypted data to the peer
             self._sock.send(encData)
             lenToRead = self._networkBio.pending()
+            finalLen += lenToRead
+            
+        return finalLen
 
         
     def shutdown(self):

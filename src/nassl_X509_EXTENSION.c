@@ -12,10 +12,10 @@
 
 static PyObject* nassl_X509_EXTENSION_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 
-    PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509_EXTENSION object. Get it from X509.get_ext()");
+    PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509_EXTENSION object. Get it from X509.get_extensions()");
     return NULL;
 } 
-
+    
 
 static void nassl_X509_EXTENSION_dealloc(nassl_X509_EXTENSION_Object *self) {
     if (self->x509ext != NULL) {
