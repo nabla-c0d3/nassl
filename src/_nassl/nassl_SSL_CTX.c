@@ -28,6 +28,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
     	return NULL;
 
     self->sslCtx = NULL;
+    self->pkeyPasswordBuf = NULL;
 
 	if (!PyArg_ParseTuple(args, "I", &sslVersion)) {
 		Py_DECREF(self);
@@ -76,7 +77,12 @@ static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self) {
   		SSL_CTX_free(self->sslCtx);
   		self->sslCtx = NULL;
   	}
-
+    
+    if (self->pkeyPasswordBuf != NULL) {
+        PyMem_Free(self->pkeyPasswordBuf);
+        self->pkeyPasswordBuf = NULL;
+    }
+    
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -122,7 +128,51 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
 }
 
 
+// passwd callback for encrypted PEM file handling 
+static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
+    // This is a hack to allow callers to provide the password to unlock
+    // a PEM private key whenever they want instead of when the SSL_CTX
+    // object gets created (which would be less hacky and convenient)
+    // The pointer to the buffer containing the user's password is at userdata
+    size_t passwordSize = 0;
+    char *passwordBuf = (char *)userdata;
+        
+    if ((userdata == NULL) || (buf == NULL)) {
+        return 0;
+    }
 
+    // Assuming NULL-terminated string as it will come from Python
+    passwordSize = strlen(passwordBuf);
+    if (passwordSize > size){  // Not enough space in OpenSSL's buffer
+        return 0;
+    }
+
+    strncpy(buf, passwordBuf, passwordSize);
+    return (int) passwordSize; 
+}
+
+
+static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *self, PyObject *args) {
+    int passwordSize;
+    char *passwordStr;
+
+    if (!PyArg_ParseTuple(args, "t#", &passwordStr, &passwordSize)) {
+        return NULL;
+    }
+
+    // Store the password
+    self->pkeyPasswordBuf = (char *) PyMem_Malloc(passwordSize);
+    if (self->pkeyPasswordBuf == NULL)
+        return PyErr_NoMemory();
+
+    strncpy(self->pkeyPasswordBuf, passwordStr, passwordSize);
+
+    // Set up the OpenSSL callbacks
+    SSL_CTX_set_default_passwd_cb(self->sslCtx, &pem_passwd_cb);
+    SSL_CTX_set_default_passwd_cb_userdata(self->sslCtx, self->pkeyPasswordBuf);
+    
+    Py_RETURN_NONE;
+}
 
 
 static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
@@ -131,6 +181,9 @@ static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
     },
     {"load_verify_locations", (PyCFunction)nassl_SSL_CTX_load_verify_locations, METH_VARARGS,
      "OpenSSL's SSL_CTX_load_verify_locations() with a NULL CAPath."
+    },
+    {"set_private_key_password", (PyCFunction)nassl_SSL_CTX_set_private_key_password, METH_VARARGS,
+     "Sets up a default callback for encrypted PEM file handling using OpenSSL's SSL_CTX_set_default_passwd_cb() with a hardcoded callback, and then stores the supplied password to be used for subsequent PEM decryption operations."
     },
     {NULL}  // Sentinel
 };

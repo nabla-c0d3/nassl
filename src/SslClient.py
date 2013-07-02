@@ -1,6 +1,6 @@
 #!/usr/bin/python
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError
-from nassl import SSLV23, SSL_VERIFY_PEER
+from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER
 from X509Certificate import X509Certificate
 
 DEFAULT_BUFFER_SIZE = 4096
@@ -29,8 +29,8 @@ class SslClient(object):
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        # TODO: This makes SSLv2 fail
-        #self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA') 
+        if sslVersion != SSLV2: # This makes SSLv2 fail
+            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA') 
         
         # BIOs
         self._internalBio = BIO()
@@ -167,7 +167,12 @@ class SslClient(object):
         return self._ssl.use_certificate_file(certFile, certType)
 
 
-    def use_PrivateKey_file(self, keyFile, keyType):
+    def use_privateKey_file(self, keyFile, keyType, keyPassword=''):
+        if isinstance(keyPassword, basestring):
+            self._sslCtx.set_private_key_password(keyPassword)
+        else: 
+            raise TypeError('keyPassword is not a string')
+
         return self._ssl.use_PrivateKey_file(keyFile, keyType)
 
 
