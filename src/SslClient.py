@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError
+from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError
 from nassl import SSLV23, SSL_VERIFY_PEER
 from X509Certificate import X509Certificate
 
@@ -14,7 +14,8 @@ class SslClient(object):
 
     def __init__(self, sock=None, sslVersion=SSLV23, sslVerifyLocations=None):
         # A Python socket handles transmission of the data
-        self._sock = sock 
+        self._sock = sock
+        self._handshakeDone = False
         
         # OpenSSL objects
         # SSL_CTX
@@ -41,10 +42,15 @@ class SslClient(object):
 
 
     def do_handshake(self):
+        if (self._sock == None):
+            # TODO: Auto create a socket ?
+            raise IOError('Internal socket set to None; cannot perform handshake.')
+
         self._ssl.set_connect_state()
         while True:
             try:
                 if self._ssl.do_handshake() == 1:
+                    self._handshakeDone = True
                     return True # Handshake was successful
 
             except WantReadError:
@@ -66,14 +72,10 @@ class SslClient(object):
                 self._networkBio.write(handshakeDataIn)
 
 
-    def set_socket(self):
-        pass
-    
-    def get_socket(self):
-        pass
-
-
     def read(self, size):
+        if (self._handshakeDone == False):
+            raise IOError('SSL Handshake was not completed; cannot read data.')
+
         while True:
             # Receive available encrypted data from the peer
             encData = self._sock.recv(DEFAULT_BUFFER_SIZE)
@@ -95,6 +97,9 @@ class SslClient(object):
         """
         Returns the number of (encrypted) bytes sent.
         """
+        if (self._handshakeDone == False):
+            raise IOError('SSL Handshake was not completed; cannot send data.')
+
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
         
@@ -112,9 +117,13 @@ class SslClient(object):
 
         
     def shutdown(self):
-        self._ssl.shutdown()
-        #self._sock.shutdown(socket.SHUT_RDWR)
-        self._sock.close()
+        self._handshakeDone = False
+        try:
+            self._ssl.shutdown()
+        except OpenSSLError as e:
+            # Ignore "uninitialized" exception
+            if 'SSL_shutdown:uninitialized' not in str(e):
+                raise
 
     
     def get_secure_renegotiation_support(self):
