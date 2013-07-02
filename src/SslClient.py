@@ -67,7 +67,7 @@ class SslClient(object):
                 # Recover the peer's encrypted response
                 handshakeDataIn = self._sock.recv(DEFAULT_BUFFER_SIZE)
                 if len(handshakeDataIn) == 0:
-                    raise IOError('Handshake failed: Unexpected EOF')
+                    raise IOError('Nassl SSL handshake failed: unexpected EOF')
                 # Pass the data to the SSL engine
                 self._networkBio.write(handshakeDataIn)
 
@@ -177,4 +177,4 @@ class SslClient(object):
 
     def get_client_CA_list(self):
         return self._ssl.get_client_CA_list()
-        
+
