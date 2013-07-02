@@ -6,7 +6,7 @@ from X509Certificate import X509Certificate
 DEFAULT_BUFFER_SIZE = 4096
 
 
-class SslClient:
+class SslClient(object):
     """
     High level API implementing an SSL client.
     """
