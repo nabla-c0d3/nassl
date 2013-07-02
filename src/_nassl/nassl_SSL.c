@@ -282,7 +282,7 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
 
         if (PyList_Append(ciphersPyList, cipherPyString) == -1)
-            return NULL;
+            return NULL; // PyList_Append() set an exception
         
         priority++;
     } while (SSL_get_cipher_list(self->ssl, priority) != NULL) ;
@@ -344,6 +344,42 @@ static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *a
 }
 
 
+static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
+    PyObject* namesPyList = NULL;
+    int x509NamesNum = 0;
+    STACK_OF(X509_NAME) *x509Names = NULL;
+
+    // Return a list of X509 names
+    namesPyList = PyList_New(0);
+    if (namesPyList == NULL)
+        return PyErr_NoMemory();
+
+    x509Names = SSL_get_client_CA_list(self->ssl); // freed by SSL_free()
+    x509NamesNum = sk_X509_NAME_num(x509Names);
+
+    // Extract each X509_NAME and store their string representation
+    for (int i=0;i<x509NamesNum;i++) {
+        char *nameStr = NULL;
+        PyObject *namePyString = NULL;
+        X509_NAME *name = sk_X509_NAME_pop(x509Names);
+
+        // The use of X509_NAME_oneline is "is strongly discouraged in new applications"
+        // But that's all we need for now
+        nameStr = X509_NAME_oneline(name, NULL, 0);
+        namePyString = PyString_FromString(nameStr);
+        if (namePyString == NULL) {
+            return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+        }
+
+        if (PyList_Append(namesPyList, namePyString) == -1) {
+            return NULL; // PyList_Append() set an exception
+        }
+    }
+    return namesPyList;
+}
+
+
+
 static PyMethodDef nassl_SSL_Object_methods[] = {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
      "OpenSSL's SSL_set_bio() on the internal BIO of an nassl.BIO_Pair object."
@@ -401,6 +437,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"check_private_key", (PyCFunction)nassl_SSL_check_private_key, METH_NOARGS,
      "OpenSSL's SSL_check_private_key()."
+    },
+    {"get_client_CA_list", (PyCFunction)nassl_SSL_get_client_CA_list, METH_NOARGS,
+     "Returns a list of name strings using OpenSSL's SSL_get_client_CA_list() and X509_NAME_oneline()."
     },
     {NULL}  // Sentinel
 };

@@ -174,3 +174,7 @@ class SslClient(object):
     def check_private_key(self):
         return self._ssl.check_private_key()
 
+
+    def get_client_CA_list(self):
+        return self._ssl.get_client_CA_list()
+        

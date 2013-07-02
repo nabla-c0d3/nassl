@@ -233,6 +233,15 @@ Pd2eQ9+DkopOz3UGU7c=
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', testSsl.check_private_key)
 
+
+    def test_get_client_CA_list_bad(self):
+        # Bad filename
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertEqual([],testSsl.get_client_CA_list())
+
+
+
+
 def main():
     unittest.main()
 
