@@ -111,7 +111,7 @@ static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args) {
 
     returnValue = SSL_read(self->ssl, readBuffer, readSize);
     if (returnValue > 0) { // Read OK
-        res = PyString_FromStringAndSize(readBuffer, readSize);
+        res = PyString_FromStringAndSize(readBuffer, returnValue);
     }
     else {  // Read failed
         raise_OpenSSL_ssl_error(self->ssl, returnValue);
