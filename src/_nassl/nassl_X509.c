@@ -128,7 +128,7 @@ static PyObject* nassl_X509_as_pem(nassl_X509_Object *self, PyObject *args) {
 
 static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *args) {
     PyObject* extensionsPyList = NULL;
-    int extCount = X509_get_ext_count(self->x509);
+    unsigned int extCount = X509_get_ext_count(self->x509);
 
 
    // We'll return a Python list containing each extension
@@ -167,7 +167,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
 static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a), nassl_X509_Object *self) {
 
     X509_NAME * x509Name = NULL;
-    int nameEntryCount = 0;
+    unsigned int nameEntryCount = 0;
     PyObject* nameEntriesPyList = NULL;
 
     // Extract the name field

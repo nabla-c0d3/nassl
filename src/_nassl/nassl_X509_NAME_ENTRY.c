@@ -26,7 +26,7 @@ static void nassl_X509_NAME_ENTRY_dealloc(nassl_X509_NAME_ENTRY_Object *self) {
 
 
 static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *self) {
-    int nameDataSize = 0;
+    unsigned int nameDataSize = 0;
     ASN1_STRING *nameData = NULL;
     unsigned char *nameDataTxt = NULL;
     PyObject* res = NULL;
@@ -48,7 +48,7 @@ static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *se
 
 
 static PyObject* nassl_X509_NAME_ENTRY_get_object(nassl_X509_NAME_ENTRY_Object *self) {
-    int objectDataSize = 0;
+    unsigned int objectDataSize = 0;
     ASN1_OBJECT *objectData = NULL;
     char *objectDataTxt = NULL;
     PyObject* res = NULL;

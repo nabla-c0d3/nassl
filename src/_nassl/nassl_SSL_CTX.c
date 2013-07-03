@@ -153,7 +153,7 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
 
 
 static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *self, PyObject *args) {
-    int passwordSize;
+    unsigned int passwordSize;
     char *passwordStr;
 
     if (!PyArg_ParseTuple(args, "t#", &passwordStr, &passwordSize)) {

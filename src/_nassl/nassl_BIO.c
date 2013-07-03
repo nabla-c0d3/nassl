@@ -57,7 +57,7 @@ static PyObject* nassl_BIO_make_bio_pair(PyObject *cls, PyObject *args)  {
 
 
 static PyObject* nassl_BIO_read(nassl_BIO_Object *self, PyObject *args) {
-    int readSize;
+    unsigned int readSize;
     char *readBuffer;
     PyObject *res = NULL;
 
@@ -90,7 +90,8 @@ static PyObject* nassl_BIO_pending(nassl_BIO_Object *self, PyObject *args) {
 
 
 static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args) {
-    int writeSize, returnValue;
+    unsigned int writeSize; 
+    int returnValue;
     char *writeBuffer;
     PyObject *res = NULL;
     

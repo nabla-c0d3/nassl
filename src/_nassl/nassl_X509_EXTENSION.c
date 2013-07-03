@@ -30,7 +30,7 @@ static void nassl_X509_EXTENSION_dealloc(nassl_X509_EXTENSION_Object *self) {
 static PyObject* nassl_X509_EXTENSION_get_object(nassl_X509_EXTENSION_Object *self) {
     ASN1_OBJECT *x509extObj;
     char *objTxtBuffer = NULL;
-    int objTxtSize = 0;
+    unsigned int objTxtSize = 0;
     PyObject* res;
 
     x509extObj = X509_EXTENSION_get_object(self->x509ext);
@@ -53,7 +53,7 @@ static PyObject* nassl_X509_EXTENSION_get_object(nassl_X509_EXTENSION_Object *se
 static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self) {
     BIO *memBio;
     char *dataTxtBuffer;
-    int dataTxtSize;
+    unsigned int dataTxtSize;
     PyObject* res;
 
     memBio = BIO_new(BIO_s_mem());
