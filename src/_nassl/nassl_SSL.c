@@ -262,7 +262,7 @@ static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *arg
 
 
 static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *args) {
-    int priority = 0;
+    unsigned int priority = 0;
     PyObject* ciphersPyList = NULL;
 
     if (SSL_get_cipher_list(self->ssl, 0) == NULL) 
@@ -346,7 +346,7 @@ static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *a
 
 static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
     PyObject* namesPyList = NULL;
-    int x509NamesNum = 0;
+    unsigned int x509NamesNum = 0;
     STACK_OF(X509_NAME) *x509Names = NULL;
 
     // Return a list of X509 names
@@ -379,7 +379,13 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
 }
 
 
+static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *args) {
+    long returnValue = 1;//SSL_get_verify_result(self->ssl);
+    printf("%d", returnValue);
+    return Py_BuildValue("I", returnValue);
+}
 
+ 
 static PyMethodDef nassl_SSL_Object_methods[] = {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
      "OpenSSL's SSL_set_bio() on the internal BIO of an nassl.BIO_Pair object."
@@ -440,6 +446,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"get_client_CA_list", (PyCFunction)nassl_SSL_get_client_CA_list, METH_NOARGS,
      "Returns a list of name strings using OpenSSL's SSL_get_client_CA_list() and X509_NAME_oneline()."
+    },
+    {"get_verify_result", (PyCFunction)nassl_SSL_get_verify_result, METH_NOARGS,
+     "OpenSSL's SSL_get_verify_result()."
     },
     {NULL}  // Sentinel
 };
