@@ -1,6 +1,9 @@
 #!/usr/bin/python
 
 
+from xml.etree.ElementTree import Element
+from binascii import hexlify
+
 class X509Certificate:
     """
     High level API for parsing an X509 certificate.
@@ -20,7 +23,7 @@ class X509Certificate:
 
 
     def get_SHA1_fingerprint(self):
-        return self._x509.digest()
+        return hexlify(self._x509.digest())
         
         
     def as_dict(self):
@@ -30,7 +33,7 @@ class X509Certificate:
              'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
              'validity': {'notBefore': self._x509.get_notBefore() ,
                          'notAfter' : self._x509.get_notAfter()} ,
-             'subject': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
+             'subject': self._parse_x509_name(self._x509.get_subject_name_entries()) ,
              'subjectPublicKeyInfo': self._parse_pubkey(),
              'extensions': self._parse_x509_extensions() ,
              'signatureAlgorithm': self._parse_signature_algorithm() ,
@@ -38,8 +41,6 @@ class X509Certificate:
              }
         
         return certDict
-
-
 
 
     def as_xml(self):
