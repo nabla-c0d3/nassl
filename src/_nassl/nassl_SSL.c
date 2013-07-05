@@ -91,7 +91,6 @@ static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args) 
     if (result != 1) {
         return raise_OpenSSL_ssl_error(self->ssl, result);
     }
-
     return Py_BuildValue("I", result);
 }
 
@@ -210,10 +209,9 @@ static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
 
 
 static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject *args) {
-    int nameIndicationSize;
     char *nameIndication;
 
-    if (!PyArg_ParseTuple(args, "t#", &nameIndication, &nameIndicationSize)) {
+    if (!PyArg_ParseTuple(args, "s", &nameIndication)) {
         return NULL;
     }
 
@@ -246,10 +244,9 @@ static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject
 
 
 static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *args) {
-    int cipherListSize;
     char *cipherList;
 
-    if (!PyArg_ParseTuple(args, "t#", &cipherList, &cipherListSize)) {
+    if (!PyArg_ParseTuple(args, "s", &cipherList)) {
         return NULL;
     }
 
@@ -346,7 +343,7 @@ static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *a
 
 static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
     PyObject* namesPyList = NULL;
-    unsigned int x509NamesNum = 0;
+    int x509NamesNum = 0;
     STACK_OF(X509_NAME) *x509Names = NULL;
 
     // Return a list of X509 names
@@ -362,7 +359,11 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
         char *nameStr = NULL;
         PyObject *namePyString = NULL;
         X509_NAME *name = sk_X509_NAME_pop(x509Names);
-
+        if (name == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Could not extract an X509_NAME from the client CA list. Should not happen ?");
+            return NULL;
+        }
+        
         // The use of X509_NAME_oneline is "is strongly discouraged in new applications"
         // But that's all we need for now
         nameStr = X509_NAME_oneline(name, NULL, 0);
