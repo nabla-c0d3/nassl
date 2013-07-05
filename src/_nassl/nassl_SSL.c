@@ -426,6 +426,14 @@ static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
+static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args) {
+    long sslOption=0;
+    
+    if (!PyArg_ParseTuple(args, "l", &sslOption)) {
+        return NULL;
+    }
+    return Py_BuildValue("I", SSL_set_options(self->ssl, sslOption));
+}
 
  
 
@@ -501,6 +509,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"set_session", (PyCFunction)nassl_SSL_set_session, METH_VARARGS,
      "OpenSSL's SSL_set_session(). Argument is an nassl.SSL_SESSION object."
+    },
+    {"set_options", (PyCFunction)nassl_SSL_set_options, METH_VARARGS,
+     "OpenSSL's SSL_set_options()."
     },
     {NULL}  // Sentinel
 };

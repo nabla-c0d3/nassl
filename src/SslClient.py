@@ -239,11 +239,15 @@ class SslClient(object):
         return  self.do_handshake()
 
 
-    def get_session(self, sslSession):
+    def get_session(self):
         return self._ssl.get_session()
 
 
-    def set_session(self):
+    def set_session(self, sslSession):
         return self._ssl.set_session(sslSession)
+
+
+    def set_options(self, options):
+        return self._ssl.set_options(options)
 
 

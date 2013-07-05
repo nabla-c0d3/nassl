@@ -252,10 +252,14 @@ Pd2eQ9+DkopOz3UGU7c=
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertIsNone(testSsl.get_session())
 
-
     def test_set_session_bad(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertRaisesRegexp(TypeError, 'must be _nassl.SSL_SESSION', testSsl.set_session, None)
+    
+
+    def test_set_options_bad(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertGreaterEqual(testSsl.set_options(123), 0);
 
 
 def main():
