@@ -101,7 +101,7 @@ class SSL_Tests(unittest.TestCase):
 
     def test_shutdown_bad(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'uninitialized', testSsl.shutdown)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'no cipher match', testSsl.shutdown)
 
 
     def test_get_cipher_list(self):
@@ -177,7 +177,7 @@ jsXbhxAIkrdmpg==
     def test_use_PrivateKey_file_bad(self):
         # Bad filename
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'system lib', testSsl.use_PrivateKey_file, 'invalidPath', SSL_FILETYPE_PEM)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'uninitialized', testSsl.use_PrivateKey_file, 'invalidPath', SSL_FILETYPE_PEM)
 
 
     def test_check_private_key(self):
@@ -229,13 +229,11 @@ Pd2eQ9+DkopOz3UGU7c=
 
 
     def test_check_private_key_bad(self):
-        # Bad filename
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', testSsl.check_private_key)
 
 
     def test_get_client_CA_list_bad(self):
-        # Bad filename
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertEqual([],testSsl.get_client_CA_list())
 
@@ -248,6 +246,16 @@ Pd2eQ9+DkopOz3UGU7c=
     def test_renegotiate(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertIsNone(testSsl.renegotiate())
+
+
+    def test_get_session(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertIsNone(testSsl.get_session())
+
+
+    def test_set_session_bad(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertRaisesRegexp(TypeError, 'must be _nassl.SSL_SESSION', testSsl.set_session, None)
 
 
 def main():

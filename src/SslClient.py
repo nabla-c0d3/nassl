@@ -223,7 +223,7 @@ class SslClient(object):
 
 
     def get_verify_result(self):
-        verifyResult = self._ssl.get_verify_result()
+        return self._ssl.get_verify_result()
 
 
     def get_verify_result_string(self):
@@ -236,6 +236,14 @@ class SslClient(object):
             raise IOError('SSL Handshake was not completed; cannot renegotiate.')
 
         self._ssl.renegotiate()
-        self.do_handshake()
+        return  self.do_handshake()
+
+
+    def get_session(self, sslSession):
+        return self._ssl.get_session()
+
+
+    def set_session(self):
+        return self._ssl.set_session(sslSession)
 
 

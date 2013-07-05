@@ -7,6 +7,7 @@
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
 #include "nassl_X509.h"
+#include "nassl_SSL_SESSION.h"
 
 
 // nassl.SSL.new()
@@ -381,8 +382,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
 
 
 static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *args) {
-    long returnValue = 1;//SSL_get_verify_result(self->ssl);
-    printf("%d", returnValue);
+    long returnValue = SSL_get_verify_result(self->ssl);
     return Py_BuildValue("I", returnValue);
 }
 
@@ -391,6 +391,41 @@ static PyObject* nassl_SSL_renegotiate(nassl_SSL_Object *self, PyObject *args) {
     SSL_renegotiate(self->ssl);
     Py_RETURN_NONE;
 }
+
+
+static PyObject* nassl_SSL_get_session(nassl_SSL_Object *self, PyObject *args) {
+    SSL_SESSION *sslSession;
+
+    sslSession = SSL_get1_session(self->ssl);
+    if (sslSession == NULL)
+        Py_RETURN_NONE;
+    else {
+        // Return an nassl.SSL_SESSION object
+        nassl_SSL_SESSION_Object *sslSession_PyObject;
+        sslSession_PyObject = (nassl_SSL_SESSION_Object *)nassl_SSL_SESSION_Type.tp_alloc(&nassl_SSL_SESSION_Type, 0);
+        if (sslSession_PyObject == NULL) 
+            return PyErr_NoMemory();
+
+        sslSession_PyObject->sslSession = sslSession;
+        return (PyObject *) sslSession_PyObject;
+    }
+}
+
+
+static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args) {
+    nassl_SSL_SESSION_Object *sslSession_PyObject = NULL;
+    
+    if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_SESSION_Type, &sslSession_PyObject)) {
+        return NULL;
+    }
+
+    if (SSL_set_session(self->ssl, sslSession_PyObject->sslSession) == 0)
+        return raise_OpenSSL_error();
+    
+    Py_RETURN_TRUE;
+}
+
+
 
  
 
@@ -460,6 +495,12 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"renegotiate", (PyCFunction)nassl_SSL_renegotiate, METH_NOARGS,
      "OpenSSL's SSL_renegotiate()."
+    },
+    {"get_session", (PyCFunction)nassl_SSL_get_session, METH_NOARGS,
+     "OpenSSL's SSL_get_session(). Returns an nassl.SSL_SESSION object."
+    },
+    {"set_session", (PyCFunction)nassl_SSL_set_session, METH_VARARGS,
+     "OpenSSL's SSL_set_session(). Argument is an nassl.SSL_SESSION object."
     },
     {NULL}  // Sentinel
 };

@@ -10,6 +10,7 @@
 #include "nassl_X509.h"
 #include "nassl_X509_EXTENSION.h"
 #include "nassl_X509_NAME_ENTRY.h"
+#include "nassl_SSL_SESSION.h"
 
 
 
@@ -39,8 +40,7 @@ PyMODINIT_FUNC init_nassl(void) {
 
 
     // Initalize the module
-    m = Py_InitModule3("_nassl", nassl_methods,
-                       "Example module that creates an extension type.");
+    m = Py_InitModule3("_nassl", nassl_methods, "Example module that creates an extension type.");
 
     module_add_errors(m);
     module_add_SSL_CTX(m);
@@ -49,6 +49,7 @@ PyMODINIT_FUNC init_nassl(void) {
     module_add_X509(m);
     module_add_X509_EXTENSION(m);
     module_add_X509_NAME_ENTRY(m);
+    module_add_SSL_SESSION(m);
 
     if (PyErr_Occurred())
     {
