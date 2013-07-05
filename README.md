@@ -33,4 +33,4 @@ I'm the author of SSLyze, an SSL scanner written in Python: https://github.com/i
 Author
 ======
 
-Alban Diquet - nabla-c0d3.github.io
+Alban Diquet - http://nabla-c0d3.github.io
