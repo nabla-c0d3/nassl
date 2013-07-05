@@ -32,3 +32,6 @@ test/nassl
 # Dependencies
 openssl-*/*
 zlib-*/*
+
+# Build result
+nassl/*
