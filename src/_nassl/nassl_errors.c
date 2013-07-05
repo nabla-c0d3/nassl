@@ -1,8 +1,5 @@
-#include <Python.h>
-
 
 #include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <sys/errno.h>
 
 #include "nassl_errors.h"

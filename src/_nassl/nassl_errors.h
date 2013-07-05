@@ -1,5 +1,8 @@
 #pragma once
 
+#include <Python.h>
+#include <openssl/ssl.h>
+
 extern PyObject *nassl_OpenSSLError_Exception; // Needed by nassl_X509.c
 
 PyObject* raise_OpenSSL_error();

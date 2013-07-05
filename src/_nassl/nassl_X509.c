@@ -8,7 +8,7 @@
 #include "nassl_X509.h"
 #include "nassl_X509_EXTENSION.h"
 #include "nassl_X509_NAME_ENTRY.h"
-
+#include "openssl_utils.h"
 
 
 // nassl.X509.new()
@@ -41,34 +41,6 @@ static void nassl_X509_dealloc(nassl_X509_Object *self) {
     self->ob_type->tp_free((PyObject*)self);
 }
 
-
-// Takes an XXX_print() function and a pointer to the structure to be printed
-// Returns a Python string
-static PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const void *a), const void *dataStruct) {
-    BIO *memBio;
-    char *dataTxtBuffer;
-    int dataTxtSize;
-    PyObject* res;
-
-    memBio = BIO_new(BIO_s_mem());
-    if (memBio == NULL) {
-        raise_OpenSSL_error();
-        return NULL;
-    }
-
-    openSslPrintFunction(memBio, dataStruct);
-    dataTxtSize = BIO_pending(memBio);
-
-    dataTxtBuffer = (char *) PyMem_Malloc(dataTxtSize);
-    if (dataTxtBuffer == NULL)
-        return PyErr_NoMemory();
-
-    // Extract the text from the BIO
-    BIO_read(memBio, dataTxtBuffer, dataTxtSize);
-    res = PyString_FromStringAndSize(dataTxtBuffer, dataTxtSize);
-    PyMem_Free(dataTxtBuffer);
-    return res;
-}
 
 static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args) {
     return generic_print_to_string((int (*)(BIO *, const void *)) &X509_print, self->x509);
