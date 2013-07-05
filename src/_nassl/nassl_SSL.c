@@ -178,7 +178,7 @@ static PyObject* nassl_SSL_get_secure_renegotiation_support(nassl_SSL_Object *se
 static PyObject* nassl_SSL_get_current_compression_name(nassl_SSL_Object *self, PyObject *args) {
     const COMP_METHOD *compMethod;
 
-    compMethod = SSL_get_current_compression(self->ssl); // TODO: test it
+    compMethod = SSL_get_current_compression(self->ssl);
     if (compMethod == NULL)
         Py_RETURN_NONE;
 

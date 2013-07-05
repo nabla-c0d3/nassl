@@ -21,3 +21,14 @@
 
 # OS X
 .DS_Store
+
+test/nassl
+
+# S3cr3ts
+*.pem
+*.key
+*.p12
+
+# Dependencies
+openssl-*/*
+zlib-*/*
