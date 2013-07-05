@@ -64,6 +64,7 @@ class SslClient(object):
         
         # SSL
         self._ssl = SSL(self._sslCtx)
+        self._ssl.set_connect_state()
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
@@ -83,8 +84,7 @@ class SslClient(object):
         if (self._sock == None):
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
-
-        self._ssl.set_connect_state()
+        
         while True:
             try:
                 if self._ssl.do_handshake() == 1:
@@ -105,14 +105,14 @@ class SslClient(object):
                 # Recover the peer's encrypted response
                 handshakeDataIn = self._sock.recv(DEFAULT_BUFFER_SIZE)
                 if len(handshakeDataIn) == 0:
-                    raise IOError('Nassl SSL handshake failed: unexpected EOF')
+                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
                 # Pass the data to the SSL engine
                 self._networkBio.write(handshakeDataIn)
 
 
     def read(self, size):
         if (self._handshakeDone == False):
-            raise IOError('SSL Handshake was not completed; cannot read data.')
+            raise IOError('SSL Handshake was not completed; cannot receive data.')
 
         while True:
             # Receive available encrypted data from the peer
@@ -230,5 +230,12 @@ class SslClient(object):
         verifyResult = self.get_verify_result()
         return X509_V_STRINGS[verifyResult]
 
+
+    def do_renegotiate(self):
+        if (self._handshakeDone == False):
+            raise IOError('SSL Handshake was not completed; cannot renegotiate.')
+
+        self._ssl.renegotiate()
+        self.do_handshake()
 
 

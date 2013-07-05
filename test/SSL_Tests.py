@@ -240,9 +240,14 @@ Pd2eQ9+DkopOz3UGU7c=
         self.assertEqual([],testSsl.get_client_CA_list())
 
         
-    def test_verify_result(self):
+    def test_get_verify_result(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertEqual(0, testSsl.get_verify_result())
+
+        
+    def test_renegotiate(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertIsNone(testSsl.renegotiate())
 
 
 def main():

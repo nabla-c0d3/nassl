@@ -385,7 +385,14 @@ static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *a
     return Py_BuildValue("I", returnValue);
 }
 
+
+static PyObject* nassl_SSL_renegotiate(nassl_SSL_Object *self, PyObject *args) {
+    SSL_renegotiate(self->ssl);
+    Py_RETURN_NONE;
+}
+
  
+
 static PyMethodDef nassl_SSL_Object_methods[] = {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
      "OpenSSL's SSL_set_bio() on the internal BIO of an nassl.BIO_Pair object."
@@ -449,6 +456,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"get_verify_result", (PyCFunction)nassl_SSL_get_verify_result, METH_NOARGS,
      "OpenSSL's SSL_get_verify_result()."
+    },
+    {"renegotiate", (PyCFunction)nassl_SSL_renegotiate, METH_NOARGS,
+     "OpenSSL's SSL_renegotiate()."
     },
     {NULL}  // Sentinel
 };
