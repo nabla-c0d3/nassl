@@ -1,15 +1,15 @@
 #!/usr/bin/python
 import subprocess
-from os import mkdir
+from os import mkdir, getcwd
 from sys import platform, version_info
 
 
-# Use absolute paths or OpenSSL won't compile
-OPENSSL_DIR =    "/Users/nabla/Documents/git/github/nassl/openssl-1.0.1e"
-ZLIB_DIR =       "/Users/nabla/Documents/git/github/nassl/zlib-1.2.8/"
+OPENSSL_DIR =   getcwd() + '/openssl-1.0.1e/'
+ZLIB_DIR =      getcwd() + '/zlib-1.2.8/'
 
 
-FINAL_DIR =     './nassl/'
+TEST_DIR = getcwd() + '/test/'
+
 
 def perform_build_task(title, commandsDict, cwd=None):
     print '===BUILDING {0}==='.format(title)
@@ -24,10 +24,10 @@ def create_folder(path):
         if 'exists' in str(e.args):
             pass
 
+
 def main():
-    # Create folders
-    create_folder(FINAL_DIR)
-    create_folder('./test/nassl')
+    # Create folder
+    create_folder(TEST_DIR + '/nassl/')
 
 
     # Build Zlib
@@ -62,26 +62,25 @@ def main():
 
     # Build nassl
     PY_VERSION = str(version_info[0]) + '.' + str(version_info[1])
-    BUILD_PATH = './build/lib.{0}-{1}/_nassl.so'.format
+    BUILD_PATH = './build/lib.{0}-{1}/nassl/'.format
     BUILD_PATH_DICT = {'darwin' : BUILD_PATH('macosx-10.8-intel', PY_VERSION),
                        'linux2' : BUILD_PATH('linux-x86_64', PY_VERSION) } 
 
     NASSL_BUILD_TASKS = [
         'python setup.py build',
-        'cp ' + BUILD_PATH_DICT[platform] + ' ' + FINAL_DIR,
-        'cp ./src/SslClient.py ' + FINAL_DIR,
-        'cp ./src/X509Certificate.py ' + FINAL_DIR,
-        'cp ./src/__init__.py ' + FINAL_DIR]
+        'cp -R ' + BUILD_PATH_DICT[platform] + ' ' + TEST_DIR + '/nassl/']
 
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
-     
+
 
     # Test nassl
     NASSL_TEST_TASKS = [
-        'cp -R ../' + FINAL_DIR + ' ./nassl/',
         'python -m unittest discover --pattern=*_Tests.py']
 
-    perform_build_task('NASSL Tests', NASSL_TEST_TASKS, './test')
+    perform_build_task('NASSL Tests', NASSL_TEST_TASKS, TEST_DIR)
+
+
+    print '=== All Done! Compiled module is available in ./test/nassl/ ==='
 
 
 if __name__ == "__main__":

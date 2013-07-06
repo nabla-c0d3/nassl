@@ -16,10 +16,6 @@ typedef enum {
 	tlsv1_2
 } SslProtocolVersion;
 
-// -Wall complains about this ?
-SSL_METHOD *TLSv1_1_method(void); 
-SSL_METHOD *TLSv1_2_method(void); 
-
 
 // nassl.SSL_CTX.new()
 static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {

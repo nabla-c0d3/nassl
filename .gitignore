@@ -35,3 +35,6 @@ zlib-*/*
 
 # Build result
 nassl/*
+MANIFEST
+build/*
+dist/*
