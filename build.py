@@ -33,8 +33,7 @@ def main():
     # Build Zlib
     ZLIB_BUILD_TASKS = [
         'CFLAGS="-fPIC" ./configure -static',
-        'make',
-        'cp libz.a ../']
+        'make']
 
     perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_DIR)
 
@@ -53,22 +52,20 @@ def main():
         OPENSSL_CONF_CMD(OPENSSL_BUILD_DICT[platform], ZLIB_DIR),
         'make depend',
         'make',
-        'make test',
-        'cp libssl.a ../',
-        'cp libcrypto.a ../']
+        'make test']
 
     perform_build_task('OPENSSL', OPENSSL_BUILD_TASKS, OPENSSL_DIR)
 
 
     # Build nassl
     PY_VERSION = str(version_info[0]) + '.' + str(version_info[1])
-    BUILD_PATH = './build/lib.{0}-{1}/nassl/'.format
+    BUILD_PATH = './build/lib.{0}-{1}/nassl'.format
     BUILD_PATH_DICT = {'darwin' : BUILD_PATH('macosx-10.8-intel', PY_VERSION),
                        'linux2' : BUILD_PATH('linux-x86_64', PY_VERSION) } 
 
     NASSL_BUILD_TASKS = [
         'python setup.py build',
-        'cp -R ' + BUILD_PATH_DICT[platform] + ' ' + TEST_DIR + '/nassl/']
+        'cp -R ' + BUILD_PATH_DICT[platform] + ' ' + TEST_DIR]
 
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 

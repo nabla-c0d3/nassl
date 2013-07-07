@@ -1,7 +1,7 @@
 nassl
 =====
 
-Experimental Python wrapper for OpenSSL. **Do NOT use for anything serious**. This code has not been properly tested/reviewed and is absolutely not production ready.
+Experimental Python wrapper for OpenSSL. **Do NOT use for anything serious**. This code has not been properly tested/reviewed and is absolutely not production ready. For example, SslClient **does not properly check SSL certificates**.
 
 
 Notes
@@ -19,7 +19,7 @@ Classes implemented in C are part of the nassl._nassl namespace. They try to sta
 Build
 =====
 
-A build script is available in ./build.py. It was tested on OS X Lion and will try to build OpenSSL, Zlib and nassl.
+A build script is available in ./build.py. It was tested on OS X Lion and Ubuntu 13.04 64 bits. The script will build Zlib, OpenSSL and nassl.
 
 	python build.py
 
