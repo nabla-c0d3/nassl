@@ -107,7 +107,14 @@ class SslClient_Tests_Online(unittest.TestCase):
     def test_shutdown(self):
         self.assertIsNone(self.sslClient.shutdown())
 
-        
+
+    def test_shutdown(self):
+        self.assertIsNone(self.sslClient.shutdown())
+
+
+    def test_get_certificate_chain_verify_result(self):
+        self.assertEqual(20, self.sslClient.get_certificate_chain_verify_result()[0])
+
 
 
 def main():

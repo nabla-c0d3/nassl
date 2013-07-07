@@ -58,6 +58,10 @@ class X509_Tests_Online(unittest.TestCase):
         self.assertIsNotNone(self.cert.get_subject_name_entries())
 
 
+    def test_verify_cert_error_string(self):
+        self.assertEqual('error number 1', _nassl.X509.verify_cert_error_string(1))
+
+
 
 def main():
     unittest.main()

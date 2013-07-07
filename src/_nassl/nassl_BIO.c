@@ -44,7 +44,7 @@ static void nassl_BIO_dealloc(nassl_BIO_Object *self) {
 }
 
 
-static PyObject* nassl_BIO_make_bio_pair(PyObject *cls, PyObject *args)  {
+static PyObject* nassl_BIO_make_bio_pair(PyObject *nullPtr, PyObject *args)  {
     nassl_BIO_Object *bio1_Object, *bio2_Object;
     int result;
 
@@ -122,7 +122,7 @@ static PyMethodDef nassl_BIO_Object_methods[] = {
     {"write", (PyCFunction)nassl_BIO_write, METH_VARARGS,
      "OpenSSL's BIO_write()."
     },
-    {"make_bio_pair", (PyCFunction)nassl_BIO_make_bio_pair, METH_VARARGS | METH_CLASS,
+    {"make_bio_pair", (PyCFunction)nassl_BIO_make_bio_pair, METH_VARARGS | METH_STATIC,
      "OpenSSL's BIO_make_bio_pair()."
     },
     {NULL}  // Sentinel

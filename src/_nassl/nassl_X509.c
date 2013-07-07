@@ -186,6 +186,19 @@ static PyObject* nassl_X509_get_subject_name_entries(nassl_X509_Object *self, Py
 }
 
 
+static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject *args) {
+    const char *errorString = NULL;
+    long verifyError = 0;
+    
+    if (!PyArg_ParseTuple(args, "l", &verifyError)) {
+        return NULL;
+    }
+
+    errorString = X509_verify_cert_error_string(verifyError);
+    return PyString_FromString(errorString);
+} 
+
+
 static PyMethodDef nassl_X509_Object_methods[] = {
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
      "Returns a string containing the result of OpenSSL's X509_print()."
@@ -216,6 +229,9 @@ static PyMethodDef nassl_X509_Object_methods[] = {
     },
     {"get_subject_name_entries", (PyCFunction)nassl_X509_get_subject_name_entries, METH_NOARGS,
      "Returns a list of X509_NAME_ENTRY objects extracted from the subject name using OpenSSL's X509_get_subject_name() and X509_NAME_get_entry()."
+    },
+    {"verify_cert_error_string", (PyCFunction)nassl_X509_verify_cert_error_string, METH_VARARGS | METH_STATIC,
+     "OpenSSL's X509_verify_cert_error_string()."
     },
 
     {NULL}  // Sentinel
