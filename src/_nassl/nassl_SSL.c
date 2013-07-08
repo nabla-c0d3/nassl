@@ -3,6 +3,10 @@
 
 #include <openssl/ssl.h>
 
+// http://openssl.6102.n7.nabble.com/Windows-X509-NAME-macro-issue-again-td26977.html
+// Only needed for Windows
+#undef X509_NAME
+
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
@@ -345,6 +349,7 @@ static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *a
 static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
     PyObject* namesPyList = NULL;
     int x509NamesNum = 0;
+    int i=0;
     STACK_OF(X509_NAME) *x509Names = NULL;
 
     // Return a list of X509 names
@@ -356,7 +361,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
     x509NamesNum = sk_X509_NAME_num(x509Names);
 
     // Extract each X509_NAME and store their string representation
-    for (int i=0;i<x509NamesNum;i++) {
+    for (i=0;i<x509NamesNum;i++) {
         char *nameStr = NULL;
         PyObject *namePyString = NULL;
         X509_NAME *name = sk_X509_NAME_pop(x509Names);

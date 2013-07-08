@@ -1,6 +1,11 @@
 
 #include <openssl/err.h>
-#include <sys/errno.h>
+
+#ifdef _WIN32
+#define PyErr_SetFromErrGeneric(x) PyErr_SetExcFromWindowsErr(x, 0)
+#else
+#define PyErr_SetFromErrGeneric(x) PyErr_SetFromErrno(x)
+#endif
 
 #include "nassl_errors.h"
 
@@ -41,8 +46,7 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue) {
                     return NULL;
                 }
                 else if (returnValue == -1) {
-                    // TODO: Windows
-                    PyErr_SetFromErrno(nassl_SslError_Exception);
+                    PyErr_SetFromErrGeneric(nassl_SslError_Exception);
                     return NULL;
                 }
                 else {

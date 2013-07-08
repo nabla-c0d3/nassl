@@ -4,6 +4,10 @@
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
+// http://openssl.6102.n7.nabble.com/Windows-X509-NAME-macro-issue-again-td26977.html
+// Only needed for Windows
+#undef X509_NAME
+
 #include "nassl_errors.h"
 #include "nassl_X509.h"
 #include "nassl_X509_EXTENSION.h"
@@ -100,6 +104,7 @@ static PyObject* nassl_X509_as_pem(nassl_X509_Object *self, PyObject *args) {
 
 static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *args) {
     PyObject* extensionsPyList = NULL;
+    unsigned int i=0;
     unsigned int extCount = X509_get_ext_count(self->x509);
 
 
@@ -110,7 +115,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
     
 
     // Return a list of X509_EXTENSION Python objects
-    for (int i=0;i<extCount;i++) {
+    for (i=0;i<extCount;i++) {
         nassl_X509_EXTENSION_Object *x509ext_Object;
         X509_EXTENSION *x509ext = X509_get_ext(self->x509, i);
         if (x509ext == NULL) {
@@ -137,7 +142,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
 // Generic function to extract the list of X509_NAME_ENTRY from an X509_NAME.
 // Used to get the subject name entries and the issuer name entries. Returns a Python list
 static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a), nassl_X509_Object *self) {
-
+    int i=0;
     X509_NAME * x509Name = NULL;
     unsigned int nameEntryCount = 0;
     PyObject* nameEntriesPyList = NULL;
@@ -156,7 +161,7 @@ static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a
         return PyErr_NoMemory();
 
     // Extract each name entry and create a Python object
-    for (int i=0;i<nameEntryCount;i++) {
+    for (i=0;i<nameEntryCount;i++) {
         nassl_X509_NAME_ENTRY_Object *nameEntry_Object;
         X509_NAME_ENTRY *nameEntry = X509_NAME_get_entry(x509Name, i);
         if (nameEntry == NULL) {
