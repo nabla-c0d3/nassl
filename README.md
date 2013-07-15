@@ -11,6 +11,7 @@ Notes
 
 Classes implemented in Python are part of the nassl namespace. This currently includes SslClient.py and X509Certificate.py. Such classes are designed to provide a simpler, higher-level interface to perform SSL connections.
 
+
 ### src/_nassl/
 
 Classes implemented in C are part of the nassl._nassl namespace. They try to stay as close as possible to OpenSSL's API. In most cases, Python methods of such objects directly match the OpenSSL function with same name. For example the _nassl.SSL.read() Python method matches OpenSSL's SSL_read() function. Those C classes should be considered internal.
@@ -19,9 +20,17 @@ Classes implemented in C are part of the nassl._nassl namespace. They try to sta
 Build
 =====
 
-A build script is available in ./build.py. It was tested on OS X Lion and Ubuntu 13.04 64 bits. The script will build Zlib, OpenSSL and nassl.
+Multiple build scripts are available. They will consecutively build Zlib, OpenSSL and nassl.
 
-	python build.py
+
+### buildAll_unix64.py
+
+Build script for OS X and Linux 64 bits. It was tested on OX Lion and Ubuntu 13.04.
+
+
+### buildAll_win32.py
+
+Build script for Windows 7 32 bits.
 
 
 Why ???
