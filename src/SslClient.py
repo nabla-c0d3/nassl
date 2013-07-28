@@ -8,11 +8,11 @@ DEFAULT_BUFFER_SIZE = 4096
 
 class SslClient(object):
     """
-    High level API implementing an SSL client.
+    High level API implementing an insecure SSL client.
     """
     
 
-    def __init__(self, sock=None, sslVersion=SSLV23, sslVerifyLocations=None):
+    def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None):
         # A Python socket handles transmission of the data
         self._sock = sock
         self._handshakeDone = False
@@ -20,9 +20,9 @@ class SslClient(object):
         # OpenSSL objects
         # SSL_CTX
         self._sslCtx = SSL_CTX(sslVersion)
+        self._sslCtx.set_verify(sslVerify)
         if sslVerifyLocations:
             self._sslCtx.load_verify_locations(sslVerifyLocations)
-            self._sslCtx.set_verify(SSL_VERIFY_PEER)
         
         # SSL
         self._ssl = SSL(self._sslCtx)
@@ -207,5 +207,4 @@ class SslClient(object):
 
     def set_options(self, options):
         return self._ssl.set_options(options)
-
 
