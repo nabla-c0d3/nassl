@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import unittest
 import tempfile
-from nassl import _nassl, SSLV23, SSL_VERIFY_PEER, SSL_FILETYPE_PEM
+from nassl import _nassl, SSLV23, SSL_VERIFY_PEER, SSL_FILETYPE_PEM, TLSEXT_STATUSTYPE_ocsp
 
 class SSL_Tests(unittest.TestCase):
 
@@ -260,6 +260,16 @@ Pd2eQ9+DkopOz3UGU7c=
     def test_set_options_bad(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertGreaterEqual(testSsl.set_options(123), 0);
+
+
+    def test_set_tlsext_status_type(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertIsNone(testSsl.set_tlsext_status_type(TLSEXT_STATUSTYPE_ocsp))
+
+
+    def test_set_tlsext_status_type(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertIsNone(testSsl.get_tlsext_status_ocsp_resp())
 
 
 def main():

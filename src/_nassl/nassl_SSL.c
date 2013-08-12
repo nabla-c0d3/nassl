@@ -2,6 +2,7 @@
 #include <Python.h>
 
 #include <openssl/ssl.h>
+#include <openssl/ocsp.h>
 
 // http://openssl.6102.n7.nabble.com/Windows-X509-NAME-macro-issue-again-td26977.html
 // Only needed for Windows
@@ -12,6 +13,7 @@
 #include "nassl_BIO.h"
 #include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
+#include "nassl_OCSP_RESPONSE.h"
 
 
 // nassl.SSL.new()
@@ -236,7 +238,7 @@ static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject
     if (cert == NULL) // Anonymous cipher suite ?
         Py_RETURN_NONE;
     else {
-        // Return an nassl.X509 object
+        // Return an _nassl.X509 object
         nassl_X509_Object *x509_Object;
         x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
         if (x509_Object == NULL) 
@@ -349,7 +351,7 @@ static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *a
 static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
     PyObject* namesPyList = NULL;
     int x509NamesNum = 0;
-    int i=0;
+    int i = 0;
     STACK_OF(X509_NAME) *x509Names = NULL;
 
     // Return a list of X509 names
@@ -364,6 +366,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
     for (i=0;i<x509NamesNum;i++) {
         char *nameStr = NULL;
         PyObject *namePyString = NULL;
+
         X509_NAME *name = sk_X509_NAME_pop(x509Names);
         if (name == NULL) {
             PyErr_SetString(PyExc_ValueError, "Could not extract an X509_NAME from the client CA list. Should not happen ?");
@@ -405,7 +408,7 @@ static PyObject* nassl_SSL_get_session(nassl_SSL_Object *self, PyObject *args) {
     if (sslSession == NULL)
         Py_RETURN_NONE;
     else {
-        // Return an nassl.SSL_SESSION object
+        // Return an _nassl.SSL_SESSION object
         nassl_SSL_SESSION_Object *sslSession_PyObject;
         sslSession_PyObject = (nassl_SSL_SESSION_Object *)nassl_SSL_SESSION_Type.tp_alloc(&nassl_SSL_SESSION_Type, 0);
         if (sslSession_PyObject == NULL) 
@@ -440,11 +443,76 @@ static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args) {
     return Py_BuildValue("I", SSL_set_options(self->ssl, sslOption));
 }
 
- 
+
+static PyObject* nassl_SSL_set_tlsext_status_type(nassl_SSL_Object *self, PyObject *args) {
+    int statusType = 0;
+
+    if (!PyArg_ParseTuple(args, "I", &statusType)) {
+        return NULL;
+    }
+
+    SSL_set_tlsext_status_type(self->ssl, statusType);
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, PyObject *args) {
+    OCSP_RESPONSE *ocspResp = NULL;
+    long ocspRespLen = 0;
+    const unsigned char *ocspBuf = NULL;
+    STACK_OF(X509) *certChain = NULL, *certChainCpy = NULL;
+
+    // Get the OCSP response
+    ocspRespLen = SSL_get_tlsext_status_ocsp_resp(self->ssl, &ocspBuf);
+    if (ocspBuf == NULL)
+        Py_RETURN_NONE;
+
+    // Try to parse it
+    ocspResp = d2i_OCSP_RESPONSE(NULL, &ocspBuf, ocspRespLen);
+    if (ocspResp == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Error parsing the OCSP response. Should not happen ?");
+        return NULL;
+    }
+
+    // Get the peer's certificate chain
+    certChain = SSL_get_peer_cert_chain(self->ssl);
+    if (certChain == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Error getting the peer's certificate chain.");
+        return NULL;
+    }
+
+    { // Copy each cert of the chain
+        int i = 0, certNum = 0;
+        
+        certChainCpy = sk_X509_new_null();
+        if (certChainCpy == NULL) {
+            return raise_OpenSSL_error();
+        }
+
+        certNum = sk_X509_num(certChain);
+        for(i=0;i<certNum;i++) {
+            X509 *cert = sk_X509_pop(certChain);
+            sk_X509_push(certChainCpy, X509_dup(cert));
+        }
+    }
+
+    // Return an _nassl.OCSP_RESPONSE object
+    nassl_OCSP_RESPONSE_Object *ocspResp_PyObject;
+    ocspResp_PyObject = (nassl_OCSP_RESPONSE_Object *)nassl_OCSP_RESPONSE_Type.tp_alloc(&nassl_OCSP_RESPONSE_Type, 0);
+    if (ocspResp_PyObject == NULL) 
+        return PyErr_NoMemory();
+
+    ocspResp_PyObject->ocspResp = ocspResp;
+    ocspResp_PyObject->peerCertChain = certChainCpy;
+
+    return (PyObject *) ocspResp_PyObject;
+}
+
+
 
 static PyMethodDef nassl_SSL_Object_methods[] = {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
-     "OpenSSL's SSL_set_bio() on the internal BIO of an nassl.BIO_Pair object."
+     "OpenSSL's SSL_set_bio() on the internal BIO of an _nassl.BIO_Pair object."
     },
     {"do_handshake", (PyCFunction)nassl_SSL_do_handshake, METH_NOARGS,
      "OpenSSL's SSL_do_handshake()."
@@ -477,7 +545,7 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
      "OpenSSL's SSL_set_tlsext_host_name()."
     },
     {"get_peer_certificate", (PyCFunction)nassl_SSL_get_peer_certificate, METH_NOARGS,
-     "OpenSSL's SSL_get_peer_certificate(). Returns an nassl.X509 object."
+     "OpenSSL's SSL_get_peer_certificate(). Returns an _nassl.X509 object."
     },
     {"set_cipher_list", (PyCFunction)nassl_SSL_set_cipher_list, METH_VARARGS,
      "OpenSSL's SSL_set_cipher_list()."
@@ -510,13 +578,19 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
      "OpenSSL's SSL_renegotiate()."
     },
     {"get_session", (PyCFunction)nassl_SSL_get_session, METH_NOARGS,
-     "OpenSSL's SSL_get_session(). Returns an nassl.SSL_SESSION object."
+     "OpenSSL's SSL_get_session(). Returns an _nassl.SSL_SESSION object."
     },
     {"set_session", (PyCFunction)nassl_SSL_set_session, METH_VARARGS,
-     "OpenSSL's SSL_set_session(). Argument is an nassl.SSL_SESSION object."
+     "OpenSSL's SSL_set_session(). Argument is an _nassl.SSL_SESSION object."
     },
     {"set_options", (PyCFunction)nassl_SSL_set_options, METH_VARARGS,
      "OpenSSL's SSL_set_options()."
+    },
+    {"set_tlsext_status_type", (PyCFunction)nassl_SSL_set_tlsext_status_type, METH_VARARGS,
+     "OpenSSL's SSL_set_tlsext_status_type()."
+    },
+    {"get_tlsext_status_ocsp_resp", (PyCFunction)nassl_SSL_get_tlsext_status_ocsp_resp, METH_NOARGS,
+     "OpenSSL's SSL_get_tlsext_status_ocsp_resp(). Returns an _nassl.OCSP_RESPONSE object."
     },
     {NULL}  // Sentinel
 };

@@ -1,7 +1,8 @@
 #!/usr/bin/python
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509
-from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER
+from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp
 from X509Certificate import X509Certificate
+from OcspResponse import OcspResponse
 
 DEFAULT_BUFFER_SIZE = 4096
 
@@ -143,7 +144,11 @@ class SslClient(object):
     
     
     def get_peer_certificate(self):
-        return X509Certificate(self._ssl.get_peer_certificate())
+        _x509 = self._ssl.get_peer_certificate()
+        if _x509:
+            return X509Certificate(_x509)
+        else:
+            return None
     
     
     def set_cipher_list(self, cipherList):
@@ -207,4 +212,17 @@ class SslClient(object):
 
     def set_options(self, options):
         return self._ssl.set_options(options)
+
+
+    def set_tlsext_status_ocsp(self):
+        return self._ssl.set_tlsext_status_type(TLSEXT_STATUSTYPE_ocsp)
+
+
+    def get_tlsext_status_ocsp_resp(self):
+        ocspResp = self._ssl.get_tlsext_status_ocsp_resp()
+        if ocspResp:
+            return OcspResponse(ocspResp)
+        else:
+            return None
+
 

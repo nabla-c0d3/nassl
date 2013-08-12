@@ -23,3 +23,7 @@ SSL_FILETYPE_ASN1 = 2
 
 # SSL Options
 SSL_OP_NO_TICKET = 0x00004000L # No TLS Session Tickets
+
+
+# OCSP Stapling
+TLSEXT_STATUSTYPE_ocsp = 1
