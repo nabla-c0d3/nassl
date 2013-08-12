@@ -56,6 +56,7 @@ class X509Certificate:
 # "Private" methods
 
 # XML generation
+# TODO: Move XML functions back to SSLyze
     def _create_xml_node(self, key, value=''):
         key = key.replace(' ', '').strip() # Remove spaces
         key = key.replace('/', '').strip() # Remove slashes (S/MIME Capabilities)

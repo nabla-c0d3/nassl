@@ -475,7 +475,7 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
     }
 
     // Get the peer's certificate chain
-    certChain = SSL_get_peer_cert_chain(self->ssl);
+    certChain = SSL_get_peer_cert_chain(self->ssl); // automatically freed
     if (certChain == NULL) {
         PyErr_SetString(PyExc_ValueError, "Error getting the peer's certificate chain.");
         return NULL;
@@ -491,7 +491,7 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
 
         certNum = sk_X509_num(certChain);
         for(i=0;i<certNum;i++) {
-            X509 *cert = sk_X509_pop(certChain);
+            X509 *cert = sk_X509_value(certChain, i);
             sk_X509_push(certChainCpy, X509_dup(cert));
         }
     }

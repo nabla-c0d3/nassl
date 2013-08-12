@@ -20,6 +20,11 @@ static void nassl_OCSP_RESPONSE_dealloc(nassl_OCSP_RESPONSE_Object *self) {
   		self->ocspResp = NULL;
   	}   
     if (self->peerCertChain != NULL) {
+        /*int i = 0;
+        int certNum = sk_X509_num(self->peerCertChain);
+        for(i=0;i<certNum;i++) {
+            sk_X509_pop_free(self->peerCertChain, &X509_free);
+        } */       
         sk_X509_free(self->peerCertChain);
         self->peerCertChain = NULL;
     }
@@ -80,7 +85,7 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
     // Maybe ? http://www.mail-archive.com/openssl-users@openssl.org/msg70201.html
     certNum = sk_X509_num(self->peerCertChain);
     for(i=0;i<certNum;i++) {
-        X509 *cert = sk_X509_pop(self->peerCertChain);
+        X509 *cert = sk_X509_value(self->peerCertChain, i);
         OCSP_basic_add1_cert(basicResp, cert);
     }
 
