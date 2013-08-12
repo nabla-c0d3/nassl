@@ -51,40 +51,32 @@ class OcspResponse:
     def as_xml(self):
         ocspXml = []
         for (key, value) in self.as_dict().items():
-            for xmlElem in self._keyvalue_pair_to_xml(key, value):
-                ocspXml.append(xmlElem)
+            ocspXml.append(self._keyvalue_pair_to_xml(key,value))
         
         return ocspXml
 
 
 # XML functions
+# TODO: Move XML functions back to SSLyze
     def _keyvalue_pair_to_xml(self, key, value=''):
-        res_xml = []
         
         if type(value) is str: # value is a string
             key_xml = self._create_xml_node(key)
             key_xml.text = value
-            res_xml.append(key_xml)
             
         elif value is None: # no value
-            res_xml.append(self._create_xml_node(key))
+            key_xml = self._create_xml_node(key)
            
         elif type(value) is list: # the list of responses; only 1 for now
             key_xml = self._create_xml_node(key)
-            print key
-            print value
             key_xml.append(self._keyvalue_pair_to_xml('response', value[0]))
-            res_xml.append(key_xml)
 
         elif type(value) is dict: # value is a list of subnodes
             key_xml = self._create_xml_node(key)
             for subkey in value.keys():
-                for subxml in self._keyvalue_pair_to_xml(subkey, value[subkey]):
-                    key_xml.append(subxml)
-                 
-            res_xml.append(key_xml)
+                key_xml.append(self._keyvalue_pair_to_xml(subkey, value[subkey]))
             
-        return res_xml    
+        return key_xml    
 
 
     def _create_xml_node(self, key, value=''):
