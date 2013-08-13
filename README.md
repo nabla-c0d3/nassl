@@ -34,10 +34,10 @@ Multiple build scripts are available. They will consecutively build Zlib,
 OpenSSL and nassl.
 
 
-### buildAll_unix64.py
+### buildAll_unix.py
 
-Build script for OS X and Linux 64 bits. It was tested on OX Lion and Ubuntu
-13.04.
+Build script for OS X 64 bits and Linux 32/64 bits. It was tested on OX
+Mountain Lion and Ubuntu 13.04.
 
 
 ### buildAll_win32.py
