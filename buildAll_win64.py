@@ -4,16 +4,17 @@ from os import mkdir, getcwd
 from os.path import join
 from sys import platform, version_info
 
-from build_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
+from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
 
-
-# Need a separate Zlib dir for Windows or build fails
-ZLIB_DIR = ZLIB_DIR + '-win'
+##### Full build fails right now on win64 #####
+# The Openssl build fails at the very end but libeay32.lib and
+# ssleay32.lib are still generated. You need to copy them manually
+# to ./build/openssl-win64/lib and run the rest of the script
 
 NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.win-amd64-' + PY_VERSION)
 OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-win64')
 
-ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x64\\ZlibDllRelease\\zlibwapi.dll' 
+ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib' 
 
 
 def main():
@@ -23,14 +24,14 @@ def main():
     # Build Zlib
     ZLIB_BUILD_TASKS = [
         'bld_ml64.bat',
-        'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|Win32"']
+        'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|x64"']
 
     perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_DIR + '\\contrib\\masmx64\\')
 
 
     # Build OpenSSL
     OPENSSL_BUILD_TASKS = [
-        OPENSSL_CONF_CMD('VC-WIN64A' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR),
+        OPENSSL_CONF_CMD('VC-WIN64A' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR) + ' -DZLIB_WINAPI', # *hate* zlib
         'ms\\do_win64a.bat',
         'nmake -f ms\\nt.mak clean',
         'nmake -f ms\\nt.mak',
