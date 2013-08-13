@@ -2,7 +2,7 @@ from distutils.core import setup, Extension
 
 from setup_config import NASSL_SETUP, NASSL_EXT_SETUP
 from buildAll_config import OPENSSL_DIR, ZLIB_DIR
-from buildAll_unix64 import OPENSSL_INSTALL_DIR
+from buildAll_unix import OPENSSL_INSTALL_DIR
 
 # Add arguments specific to Unix builds
 unix_ext_args = NASSL_EXT_SETUP.copy()

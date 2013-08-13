@@ -1,21 +1,34 @@
 #!/usr/bin/python
+from platform import architecture
 from sys import platform, version_info
 from os.path import join
 from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
 
 
-if platform == 'darwin':
-    OPENSSL_TARGET = 'darwin64-x86_64-cc'
-    NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-10.8-intel-' + PY_VERSION + '/')
-    OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-darwin64')
-    
-elif platform == 'linux2': 
-    OPENSSL_TARGET = 'linux-x86_64'
-    NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.linux-x86_64-' + PY_VERSION)
-    OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-linux64')
-    
-else:
-    raise Exception('Plaftorm ' + platform + ' not supported.')
+NASSL_INSTALL_DIR = ''
+
+# I've only tried building nassl on OS X 64 bits and Linux 32/64 bits
+# This will fail if you're cross-compiling 
+if architecture()[0] == '64bit':
+    if platform == 'darwin':
+        OPENSSL_TARGET = 'darwin64-x86_64-cc'
+        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-10.8-intel-' + PY_VERSION + '/')
+        OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-darwin64')
+        
+    elif platform == 'linux2': 
+        OPENSSL_TARGET = 'linux-x86_64'
+        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.linux-x86_64-' + PY_VERSION + '/')
+        OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-linux64')
+
+elif architecture()[0] == '32bit':
+    if platform == 'linux2': 
+        OPENSSL_TARGET = 'linux-elf'
+        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.linux-i686-' + PY_VERSION + '/')
+        OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-linux32')
+
+
+if NASSL_INSTALL_DIR == '':
+    raise Exception('Plaftorm ' + platform + ' ' + architecture()[0] + ' not supported.')
 
 
 def main():
@@ -46,8 +59,8 @@ def main():
 
     # Build nassl
     NASSL_BUILD_TASKS = [
-        'python setup_unix64.py build',
-        'cp -R ' + NASSL_INSTALL_DIR + ' ' + TEST_DIR]
+        'python setup_unix.py build',
+        'cp -R ' + NASSL_INSTALL_DIR + '* ' + TEST_DIR]
 
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 
