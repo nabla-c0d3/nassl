@@ -1,8 +1,6 @@
 #!/usr/bin/python
-
-
-from xml.etree.ElementTree import Element
 from binascii import hexlify
+
 
 class X509Certificate:
     """
@@ -11,6 +9,7 @@ class X509Certificate:
 
 
     def __init__(self, x509):
+        self._certDict = None
         self._x509 = x509 
         
     
@@ -27,6 +26,10 @@ class X509Certificate:
         
         
     def as_dict(self):
+        
+        if self._certDict:
+            return self._certDict
+        
         certDict = \
             {'version': self._x509.get_version() ,
              'serialNumber': self._x509.get_serialNumber() ,
@@ -39,63 +42,12 @@ class X509Certificate:
              'signatureAlgorithm': self._parse_signature_algorithm() ,
              'signatureValue': self._parse_signature() 
              }
+        self._certDict = certDict
         
         return certDict
 
 
-    def as_xml(self):
-        cert_dict = self.as_dict()
-        cert_xml = []
-        
-        for (key, value) in cert_dict.items():
-            for xml_elem in self._keyvalue_pair_to_xml(key, value):
-                cert_xml.append(xml_elem)
- 
-        return cert_xml
-
 # "Private" methods
-
-# XML generation
-# TODO: Move XML functions back to SSLyze
-    def _create_xml_node(self, key, value=''):
-        key = key.replace(' ', '').strip() # Remove spaces
-        key = key.replace('/', '').strip() # Remove slashes (S/MIME Capabilities)
-        
-        # Things that would generate invalid XML
-        if key[0].isdigit(): # Tags cannot start with a digit
-                key = 'oid-' + key 
-                
-        xml_node = Element(key)
-        xml_node.text = value.decode( "utf-8" ).strip()
-        return xml_node
-    
-    
-    def _keyvalue_pair_to_xml(self, key, value=''):
-        res_xml = []
-        
-        if type(value) is str: # value is a string
-            key_xml = self._create_xml_node(key)
-            key_xml.text = value
-            res_xml.append(key_xml)
-            
-        elif value is None: # no value
-            res_xml.append(self._create_xml_node(key))
-           
-        elif type(value) is list: # multiple strings
-            for val in value:
-                res_xml.append(self._create_xml_node(key, val))
-           
-        elif type(value) is dict: # value is a list of subnodes
-            key_xml = self._create_xml_node(key)
-            for subkey in value.keys():
-                for subxml in self._keyvalue_pair_to_xml(subkey, value[subkey]):
-                    key_xml.append(subxml)
-                 
-            res_xml.append(key_xml)
-            
-        return res_xml    
-
-    
 # Value extraction
     def _extract_cert_value(self, key):
         certValue = self.as_text().split(key)
