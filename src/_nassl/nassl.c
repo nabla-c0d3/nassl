@@ -1,5 +1,11 @@
 #include <Python.h>
 
+// Fix symbol clashing on Windows
+// https://bugs.launchpad.net/pyopenssl/+bug/570101
+#ifdef _WIN32
+#include "winsock.h"
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 

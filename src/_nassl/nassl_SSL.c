@@ -1,12 +1,15 @@
 
 #include <Python.h>
 
+// Fix symbol clashing on Windows
+// https://bugs.launchpad.net/pyopenssl/+bug/570101
+#ifdef _WIN32
+#include "winsock.h"
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/ocsp.h>
 
-// http://openssl.6102.n7.nabble.com/Windows-X509-NAME-macro-issue-again-td26977.html
-// Only needed for Windows
-#undef X509_NAME
 
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
@@ -14,6 +17,7 @@
 #include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
+
 
 
 // nassl.SSL.new()
@@ -458,6 +462,7 @@ static PyObject* nassl_SSL_set_tlsext_status_type(nassl_SSL_Object *self, PyObje
 
 static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, PyObject *args) {
     OCSP_RESPONSE *ocspResp = NULL;
+    nassl_OCSP_RESPONSE_Object *ocspResp_PyObject;
     long ocspRespLen = 0;
     const unsigned char *ocspBuf = NULL;
     STACK_OF(X509) *certChain = NULL, *certChainCpy = NULL;
@@ -497,7 +502,6 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
     }
 
     // Return an _nassl.OCSP_RESPONSE object
-    nassl_OCSP_RESPONSE_Object *ocspResp_PyObject;
     ocspResp_PyObject = (nassl_OCSP_RESPONSE_Object *)nassl_OCSP_RESPONSE_Type.tp_alloc(&nassl_OCSP_RESPONSE_Type, 0);
     if (ocspResp_PyObject == NULL) 
         return PyErr_NoMemory();

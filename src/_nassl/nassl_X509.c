@@ -1,12 +1,15 @@
 
 #include <Python.h>
 
+// Fix symbol clashing on Windows
+// https://bugs.launchpad.net/pyopenssl/+bug/570101
+#ifdef _WIN32
+#include "winsock.h"
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
 
-// http://openssl.6102.n7.nabble.com/Windows-X509-NAME-macro-issue-again-td26977.html
-// Only needed for Windows
-#undef X509_NAME
 
 #include "nassl_errors.h"
 #include "nassl_X509.h"
