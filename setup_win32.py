@@ -1,7 +1,7 @@
 from distutils.core import setup, Extension
 
 from setup_config import NASSL_SETUP, NASSL_EXT_SETUP
-from buildAll_win32 import OPENSSL_INSTALL_DIR
+from buildAll_win32 import OPENSSL_INSTALL_DIR, ZLIB_LIB_DIR
 
 
 # Add arguments specific to Win32 builds
@@ -12,7 +12,8 @@ win32_ext_args = NASSL_EXT_SETUP.copy()
 win32_ext_args.update({
     'include_dirs' : [OPENSSL_INSTALL_DIR+'\\include', 'C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\include'],
     'library_dirs' : [OPENSSL_INSTALL_DIR + '\\lib', 'C:\\Python27_32\\libs\\', 'C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\lib' ],
-    'libraries' : ['ssleay32', 'libeay32', 'user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32']})
+    'libraries' : ['ssleay32', 'libeay32', 'user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32'],
+	'extra_objects' : [ZLIB_LIB_DIR]})
 
 win32_setup = NASSL_SETUP.copy()
 win32_setup.update({

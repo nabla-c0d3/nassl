@@ -4,16 +4,13 @@ from os import mkdir, getcwd
 from os.path import join
 from sys import platform, version_info
 
-from build_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
+from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
 
-
-# Need a separate Zlib dir for Windows or build fails
-ZLIB_DIR = ZLIB_DIR + '-win'
 
 NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.win32-' + PY_VERSION)
 OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-win32')
 
-ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x86\\ZlibDllRelease\\zlibwapi.dll' 
+ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibstat.lib' 
 
 
 def main():
@@ -30,12 +27,12 @@ def main():
 
     # Build OpenSSL
     OPENSSL_BUILD_TASKS = [
-        OPENSSL_CONF_CMD('VC-WIN32' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR),
+        OPENSSL_CONF_CMD('VC-WIN32' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR) + ' -DZLIB_WINAPI', # *hate* zlib
         'ms\\do_ms',
         'nmake -f ms\\nt.mak clean',
         'nmake -f ms\\nt.mak',
         'nmake -f ms\\nt.mak install']
-
+        
     perform_build_task('OPENSSL', OPENSSL_BUILD_TASKS, OPENSSL_DIR)
 
 
