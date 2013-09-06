@@ -63,6 +63,14 @@ pyOpenSSL) expose the APIs that I need for SSLyze, so I had to write my own
 wrapper.
 
 
+License
+-------
+
+Copyright 2013 Alban Diquet
+Licensed under the GPLv2; see ./LICENSE
+Please contact me if this license doesn't work for you.
+
+
 Author
 ------
 
