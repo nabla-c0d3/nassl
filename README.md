@@ -67,7 +67,9 @@ License
 -------
 
 Copyright 2013 Alban Diquet
+
 Licensed under the GPLv2; see ./LICENSE
+
 Please contact me if this license doesn't work for you.
 
 
