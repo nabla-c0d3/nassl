@@ -1,5 +1,6 @@
 #!/usr/bin/python
 from binascii import hexlify
+import re
 
 
 class X509Certificate:
@@ -46,8 +47,74 @@ class X509Certificate:
         
         return certDict
 
+    
+    def matches_hostname(self, hostname):
+        """
+        Attempts to match the given hostname with the name(s) the certificate was issued to.
+        """
+        certDict = self.as_dict()
+        
+        # Let's try the common name first, if there's one
+        if self._matches_CN(hostname):
+            return True
+
+        # No luck, let's look at Subject Alternative Names
+        if self._matches_subject_alt_name(hostname):
+            return True
+        
+        return False
+        
+
 
 # "Private" methods
+
+# Hostname validation
+    
+    def _matches_CN(self, hostname):
+        certDict = self.as_dict()
+        
+        try:
+            commonName = certDict['subject']['commonName'][0]
+            if self._dnsname_to_pat(commonName).match(hostname):
+                return True
+        except KeyError:
+            return False
+
+
+    def _matches_subject_alt_name(self, hostname):
+        certDict = self.as_dict()
+        
+        try:
+            altNames = certDict['extensions']['X509v3 Subject Alternative Name']['DNS']
+        except KeyError:
+            return False
+        
+        for altname in altNames:
+            if self._dnsname_to_pat(altname).match(hostname):
+                return True     
+        
+        return False
+
+
+    @staticmethod
+    def _dnsname_to_pat(dn):
+        """
+        Generates a regexp for the given name, to be used for hostname validation
+        Taken from http://pypi.python.org/pypi/backports.ssl_match_hostname/3.2a3
+        """
+        pats = []
+        for frag in dn.split(r'.'):
+            if frag == '*':
+                # When '*' is a fragment by itself, it matches a non-empty dotless
+                # fragment.
+                pats.append('[^.]+')
+            else:
+                # Otherwise, '*' matches any dotless fragment.
+                frag = re.escape(frag)
+                pats.append(frag.replace(r'\*', '[^.]*'))
+        return re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
+
+
 # Value extraction
     def _extract_cert_value(self, key):
         certValue = self.as_text().split(key)
