@@ -14,13 +14,13 @@ static PyObject* nassl_X509_EXTENSION_new(PyTypeObject *type, PyObject *args, Py
 
     PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509_EXTENSION object. Get it from X509.get_extensions()");
     return NULL;
-} 
-    
+}
+
 
 static void nassl_X509_EXTENSION_dealloc(nassl_X509_EXTENSION_Object *self) {
     if (self->x509ext != NULL) {
         X509_EXTENSION_free(self->x509ext);
-        self->x509ext = NULL; 
+        self->x509ext = NULL;
     }
 
     self->ob_type->tp_free((PyObject*)self);
@@ -63,7 +63,7 @@ static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self
     }
 
     X509V3_EXT_print(memBio, self->x509ext, X509V3_EXT_ERROR_UNKNOWN, 0);
-    
+
     dataTxtSize = BIO_pending(memBio);
     dataTxtBuffer = (char *) PyMem_Malloc(dataTxtSize);
     if (dataTxtBuffer == NULL)
@@ -148,8 +148,8 @@ void module_add_X509_EXTENSION(PyObject* m) {
 
 	nassl_X509_EXTENSION_Type.tp_new = nassl_X509_EXTENSION_new;
 	if (PyType_Ready(&nassl_X509_EXTENSION_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_X509_EXTENSION_Type);
     PyModule_AddObject(m, "X509_EXTENSION", (PyObject *)&nassl_X509_EXTENSION_Type);
 

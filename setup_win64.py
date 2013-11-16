@@ -19,5 +19,5 @@ win64_setup = NASSL_SETUP.copy()
 win64_setup.update({
     'ext_modules' : [Extension(**win64_ext_args)]})
 
-	
+
 setup(**win64_setup)

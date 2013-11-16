@@ -28,7 +28,7 @@ class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
 
     def test_get_object(self):
         self.assertIsNotNone(self.nameEntry.get_object())
-        
+
 
 def main():
     unittest.main()

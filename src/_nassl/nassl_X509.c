@@ -28,14 +28,14 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
     /*
     nassl_X509_Object *self;
     self = (nassl_X509_Object *)type->tp_alloc(type, 0);
-    if (self == NULL) 
+    if (self == NULL)
     	return NULL;
 
 	self->x509 = NULL;
 
     return (PyObject *)self;
     */
-} 
+}
 
 
 
@@ -93,7 +93,7 @@ static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args) {
     }
     else {
         PyErr_SetString(nassl_OpenSSLError_Exception, "X509_digest() failed.");
-    }    
+    }
 
     PyMem_Free(readBuffer);
     return res;
@@ -115,7 +115,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
     extensionsPyList = PyList_New(extCount);
     if (extensionsPyList == NULL)
         return PyErr_NoMemory();
-    
+
 
     // Return a list of X509_EXTENSION Python objects
     for (i=0;i<extCount;i++) {
@@ -127,12 +127,12 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
         }
 
         x509ext_Object = (nassl_X509_EXTENSION_Object *)nassl_X509_EXTENSION_Type.tp_alloc(&nassl_X509_EXTENSION_Type, 0);
-        if (x509ext_Object == NULL) 
+        if (x509ext_Object == NULL)
             return PyErr_NoMemory();
 
-        // We need a copy of the X509_EXTENSION OpenSSL structure, 
-        // otherwise the X509 Python object might get garbage collected 
-        // (resulting in a call to X509_free()) while we're still 
+        // We need a copy of the X509_EXTENSION OpenSSL structure,
+        // otherwise the X509 Python object might get garbage collected
+        // (resulting in a call to X509_free()) while we're still
         // using the X509_EXTENSION Python object, resulting in a seg fault
         x509ext_Object->x509ext = X509_EXTENSION_dup(x509ext);
         PyList_SET_ITEM(extensionsPyList, i, (PyObject *) x509ext_Object);
@@ -173,7 +173,7 @@ static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a
         }
 
         nameEntry_Object = (nassl_X509_NAME_ENTRY_Object *)nassl_X509_NAME_ENTRY_Type.tp_alloc(&nassl_X509_NAME_ENTRY_Type, 0);
-        if (nameEntry_Object == NULL) 
+        if (nameEntry_Object == NULL)
             return PyErr_NoMemory();
 
         nameEntry_Object->x509NameEntry = X509_NAME_ENTRY_dup(nameEntry);
@@ -197,14 +197,14 @@ static PyObject* nassl_X509_get_subject_name_entries(nassl_X509_Object *self, Py
 static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject *args) {
     const char *errorString = NULL;
     long verifyError = 0;
-    
+
     if (!PyArg_ParseTuple(args, "l", &verifyError)) {
         return NULL;
     }
 
     errorString = X509_verify_cert_error_string(verifyError);
     return PyString_FromString(errorString);
-} 
+}
 
 
 static PyMethodDef nassl_X509_Object_methods[] = {
@@ -294,8 +294,8 @@ void module_add_X509(PyObject* m) {
 
 	nassl_X509_Type.tp_new = nassl_X509_new;
 	if (PyType_Ready(&nassl_X509_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_X509_Type);
     PyModule_AddObject(m, "X509", (PyObject *)&nassl_X509_Type);
 

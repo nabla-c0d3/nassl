@@ -9,14 +9,14 @@ class OcspResponse:
 
 
     def __init__(self, ocspResp):
-        self._ocspResp = ocspResp 
+        self._ocspResp = ocspResp
         self._respDict = None
-        
-    
+
+
     def as_text(self):
         return self._ocspResp.as_text()
-        
-        
+
+
     def verify(self, verifyLocations):
         return self._ocspResp.basic_verify(verifyLocations)
 
@@ -24,7 +24,7 @@ class OcspResponse:
     def as_dict(self):
         if self._respDict:
             return self._respDict
-        
+
         # For now we just parse OpenSSL's text output and make a lot of assumptions
         respDict = { \
             'responseStatus': self._get_value_from_text_output_no_p('OCSP Response Status:'),
@@ -37,7 +37,7 @@ class OcspResponse:
             return respDict
 
         respDict['responses'] = [ { \
-            'certID': { 
+            'certID': {
                 'hashAlgorithm': self._get_value_from_text_output('Hash Algorithm:'),
                 'issuerNameHash': self._get_value_from_text_output('Issuer Name Hash:'),
                 'issuerKeyHash': self._get_value_from_text_output('Issuer Key Hash:'),

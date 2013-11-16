@@ -11,13 +11,13 @@ static PyObject* nassl_X509_NAME_ENTRY_new(PyTypeObject *type, PyObject *args, P
 
     PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509_NAME_ENTRY object. Get it from X509.get_issuer_name_entries()");
     return NULL;
-} 
+}
 
 
 static void nassl_X509_NAME_ENTRY_dealloc(nassl_X509_NAME_ENTRY_Object *self) {
     if (self->x509NameEntry != NULL) {
         X509_NAME_ENTRY_free(self->x509NameEntry);
-        self->x509NameEntry = NULL; 
+        self->x509NameEntry = NULL;
     }
 
     self->ob_type->tp_free((PyObject*)self);
@@ -130,8 +130,8 @@ void module_add_X509_NAME_ENTRY(PyObject* m) {
 
 	nassl_X509_NAME_ENTRY_Type.tp_new = nassl_X509_NAME_ENTRY_new;
 	if (PyType_Ready(&nassl_X509_NAME_ENTRY_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_X509_NAME_ENTRY_Type);
     PyModule_AddObject(m, "X509_NAME_ENTRY", (PyObject *)&nassl_X509_NAME_ENTRY_Type);
 }

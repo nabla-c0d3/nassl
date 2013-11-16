@@ -38,7 +38,7 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue) {
 
         case SSL_ERROR_SSL:
         	return raise_OpenSSL_error();
-        
+
         case SSL_ERROR_SYSCALL:
             if (ERR_peek_error() == 0) {
                 if (returnValue == 0) {
@@ -53,7 +53,7 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue) {
                     PyErr_SetString(nassl_SslError_Exception, "SSL_ERROR_SYSCALL");
                     return NULL;
                 }
-            } 
+            }
             else {
                 return raise_OpenSSL_error();
             }
@@ -74,7 +74,7 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue) {
             PyErr_SetString(nassl_SslError_Exception, "TODO: Better error handling");
             return NULL;
     }
-    
+
     Py_RETURN_NONE;
 }
 

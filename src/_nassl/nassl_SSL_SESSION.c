@@ -11,14 +11,14 @@
 static PyObject* nassl_SSL_SESSION_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
     PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an SSL_SESSION object. Get it from SSL.get_session()");
     return NULL;
-} 
+}
 
 
 static void nassl_SSL_SESSION_dealloc(nassl_SSL_SESSION_Object *self) {
  	if (self->sslSession != NULL) {
   		SSL_SESSION_free(self->sslSession);
   		self->sslSession = NULL;
-  	}    
+  	}
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -90,8 +90,8 @@ void module_add_SSL_SESSION(PyObject* m) {
 
 	nassl_SSL_SESSION_Type.tp_new = nassl_SSL_SESSION_new;
 	if (PyType_Ready(&nassl_SSL_SESSION_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_SSL_SESSION_Type);
     PyModule_AddObject(m, "SSL_SESSION", (PyObject *)&nassl_SSL_SESSION_Type);
 }

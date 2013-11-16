@@ -14,7 +14,7 @@ from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR
 NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.win-amd64-' + PY_VERSION)
 OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-win64')
 
-ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib' 
+ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib'
 
 
 def main():

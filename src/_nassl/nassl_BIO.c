@@ -12,7 +12,7 @@ static PyObject* nassl_BIO_new(PyTypeObject *type, PyObject *args, PyObject *kwd
     BIO *sBio;
 
     self = (nassl_BIO_Object *)type->tp_alloc(type, 0);
-    if (self == NULL) 
+    if (self == NULL)
         return NULL;
 
     self->bio = NULL;
@@ -31,7 +31,7 @@ static PyObject* nassl_BIO_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
     self->bio = sBio;
     return (PyObject *)self;
-} 
+}
 
 
 static void nassl_BIO_dealloc(nassl_BIO_Object *self) {
@@ -53,7 +53,7 @@ static PyObject* nassl_BIO_make_bio_pair(PyObject *nullPtr, PyObject *args)  {
     }
     result = BIO_make_bio_pair(bio1_Object->bio, bio2_Object->bio);
     Py_RETURN_NONE;
-} 
+}
 
 
 static PyObject* nassl_BIO_read(nassl_BIO_Object *self, PyObject *args) {
@@ -76,7 +76,7 @@ static PyObject* nassl_BIO_read(nassl_BIO_Object *self, PyObject *args) {
     else {
             PyErr_SetString(PyExc_IOError, "BIO_read() failed.");
             return NULL;
-    }    
+    }
 
     PyMem_Free(readBuffer);
     return res;
@@ -90,11 +90,11 @@ static PyObject* nassl_BIO_pending(nassl_BIO_Object *self, PyObject *args) {
 
 
 static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args) {
-    unsigned int writeSize; 
+    unsigned int writeSize;
     int returnValue;
     char *writeBuffer;
     PyObject *res = NULL;
-    
+
     if (!PyArg_ParseTuple(args, "t#", &writeBuffer, &writeSize)) {
         return NULL;
     }
@@ -107,7 +107,7 @@ static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args) {
         // TODO: Error handling
             PyErr_SetString(PyExc_IOError, "BIO_write() failed");
             return NULL;
-    }    
+    }
     return res;
 }
 
@@ -177,8 +177,8 @@ void module_add_BIO(PyObject* m) {
 
 	nassl_BIO_Type.tp_new = nassl_BIO_new;
 	if (PyType_Ready(&nassl_BIO_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_BIO_Type);
     PyModule_AddObject(m, "BIO", (PyObject *)&nassl_BIO_Type);
 }

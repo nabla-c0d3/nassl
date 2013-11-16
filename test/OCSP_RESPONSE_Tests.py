@@ -53,7 +53,7 @@ Pd2eQ9+DkopOz3UGU7c=
 """)
         testFile.close()
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', self.ocspResp.basic_verify, testFile.name)
-        
+
 
 def main():
     unittest.main()

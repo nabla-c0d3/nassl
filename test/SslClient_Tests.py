@@ -55,7 +55,7 @@ Pd2eQ9+DkopOz3UGU7c=
 """)
         testFile2.close()
         self.sslClient.use_certificate_file(testFile2.name, SSL_FILETYPE_PEM)
-    
+
 
     def test_use_privateKey_file(self):
         self.assertIsNone(self.sslClient.use_privateKey_file(self.testFile.name, SSL_FILETYPE_PEM, 'testPW'))
@@ -102,7 +102,7 @@ class SslClient_Tests_Online(unittest.TestCase):
 
     def test_get_peer_certificate(self):
         self.assertIsNotNone(self.sslClient.get_peer_certificate())
-        
+
 
     def test_shutdown(self):
         self.assertIsNone(self.sslClient.shutdown())

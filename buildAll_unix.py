@@ -8,20 +8,20 @@ from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR
 NASSL_INSTALL_DIR = ''
 
 # I've only tried building nassl on OS X 64 bits and Linux 32/64 bits
-# This will fail if you're cross-compiling 
+# This will fail if you're cross-compiling
 if architecture()[0] == '64bit':
     if platform == 'darwin':
         OPENSSL_TARGET = 'darwin64-x86_64-cc'
         NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-10.8-intel-' + PY_VERSION + '/')
         OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-darwin64')
-        
-    elif platform == 'linux2': 
+
+    elif platform == 'linux2':
         OPENSSL_TARGET = 'linux-x86_64'
         NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.linux-x86_64-' + PY_VERSION + '/')
         OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-linux64')
 
 elif architecture()[0] == '32bit':
-    if platform == 'linux2': 
+    if platform == 'linux2':
         OPENSSL_TARGET = 'linux-elf'
         NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.linux-i686-' + PY_VERSION + '/')
         OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-linux32')

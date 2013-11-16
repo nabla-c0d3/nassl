@@ -24,14 +24,14 @@ class X509_Tests_Online(unittest.TestCase):
 
     def test_as_text(self):
         self.assertIsNotNone(self.cert.as_text())
-        
+
 
     def test_get_version(self):
-        self.assertIsNotNone(self.cert.get_version())        
+        self.assertIsNotNone(self.cert.get_version())
 
 
     def test_get_notBefore(self):
-        self.assertIsNotNone(self.cert.get_notBefore())        
+        self.assertIsNotNone(self.cert.get_notBefore())
 
 
     def test_get_notAfter(self):

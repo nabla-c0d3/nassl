@@ -24,7 +24,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 	SSL_CTX *sslCtx;
 
     self = (nassl_SSL_CTX_Object *)type->tp_alloc(type, 0);
-    if (self == NULL) 
+    if (self == NULL)
     	return NULL;
 
     self->sslCtx = NULL;
@@ -68,7 +68,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 	self->sslCtx = sslCtx;
 
     return (PyObject *)self;
-} 
+}
 
 
 
@@ -77,12 +77,12 @@ static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self) {
   		SSL_CTX_free(self->sslCtx);
   		self->sslCtx = NULL;
   	}
-    
+
     if (self->pkeyPasswordBuf != NULL) {
         PyMem_Free(self->pkeyPasswordBuf);
         self->pkeyPasswordBuf = NULL;
     }
-    
+
     self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -105,7 +105,7 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
             PyErr_SetString(PyExc_ValueError, "Invalid value for verification mode");
             return NULL;
     }
-	
+
 	Py_RETURN_NONE;
 }
 
@@ -119,7 +119,7 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
         return NULL;
     }
 
-    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL)) { 
+    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL)) {
         raise_OpenSSL_error();
         return NULL;
     }
@@ -128,7 +128,7 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
 }
 
 
-// passwd callback for encrypted PEM file handling 
+// passwd callback for encrypted PEM file handling
 static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
     // This is a hack to allow callers to provide the password to unlock
     // a PEM private key whenever they want instead of when the SSL_CTX
@@ -136,7 +136,7 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
     // The pointer to the buffer containing the user's password is at userdata
     size_t passwordSize = 0;
     char *passwordBuf = (char *)userdata;
-        
+
     if ((userdata == NULL) || (buf == NULL)) {
         return 0;
     }
@@ -148,7 +148,7 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
     }
 
     strncpy(buf, passwordBuf, passwordSize);
-    return (int) passwordSize; 
+    return (int) passwordSize;
 }
 
 
@@ -170,7 +170,7 @@ static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *se
     // Set up the OpenSSL callbacks
     SSL_CTX_set_default_passwd_cb(self->sslCtx, &pem_passwd_cb);
     SSL_CTX_set_default_passwd_cb_userdata(self->sslCtx, self->pkeyPasswordBuf);
-    
+
     Py_RETURN_NONE;
 }
 
@@ -242,8 +242,8 @@ void module_add_SSL_CTX(PyObject* m) {
 
 	nassl_SSL_CTX_Type.tp_new = nassl_SSL_CTX_new;
 	if (PyType_Ready(&nassl_SSL_CTX_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_SSL_CTX_Type);
     PyModule_AddObject(m, "SSL_CTX", (PyObject *)&nassl_SSL_CTX_Type);
 }

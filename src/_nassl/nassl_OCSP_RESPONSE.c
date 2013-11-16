@@ -17,20 +17,20 @@
 static PyObject* nassl_OCSP_RESPONSE_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
     PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an OCSP_RESPONSE object. Get it from SSL.get_tlsext_status_ocsp_resp()");
     return NULL;
-} 
+}
 
 
 static void nassl_OCSP_RESPONSE_dealloc(nassl_OCSP_RESPONSE_Object *self) {
  	if (self->ocspResp != NULL) {
   		OCSP_RESPONSE_free(self->ocspResp);
   		self->ocspResp = NULL;
-  	}   
+  	}
     if (self->peerCertChain != NULL) {
         /*int i = 0;
         int certNum = sk_X509_num(self->peerCertChain);
         for(i=0;i<certNum;i++) {
             sk_X509_pop_free(self->peerCertChain, &X509_free);
-        } */       
+        } */
         sk_X509_free(self->peerCertChain);
         self->peerCertChain = NULL;
     }
@@ -62,7 +62,7 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self) {
     BIO_read(memBio, txtBuffer, txtLen);
     ocsResp_PyString = PyString_FromStringAndSize(txtBuffer, txtLen);
     PyMem_Free(txtBuffer);
-    
+
     return ocsResp_PyString;
 }
 
@@ -81,8 +81,8 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
     trustedCAs = X509_STORE_new();
     if (trustedCAs == NULL)
         return raise_OpenSSL_error();
-    
-    X509_STORE_load_locations(trustedCAs, caFile, NULL); 
+
+    X509_STORE_load_locations(trustedCAs, caFile, NULL);
 
     // Verify the OCSP response
     basicResp = OCSP_response_get1_basic(self->ocspResp);
@@ -165,8 +165,8 @@ void module_add_OCSP_RESPONSE(PyObject* m) {
 
 	nassl_OCSP_RESPONSE_Type.tp_new = nassl_OCSP_RESPONSE_new;
 	if (PyType_Ready(&nassl_OCSP_RESPONSE_Type) < 0)
-    	return;	
-    
+    	return;
+
     Py_INCREF(&nassl_OCSP_RESPONSE_Type);
     PyModule_AddObject(m, "OCSP_RESPONSE", (PyObject *)&nassl_OCSP_RESPONSE_Type);
 }

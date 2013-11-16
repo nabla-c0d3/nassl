@@ -11,20 +11,20 @@ class SslClient(object):
     """
     High level API implementing an insecure SSL client.
     """
-    
+
 
     def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None):
         # A Python socket handles transmission of the data
         self._sock = sock
         self._handshakeDone = False
-        
+
         # OpenSSL objects
         # SSL_CTX
         self._sslCtx = SSL_CTX(sslVersion)
         self._sslCtx.set_verify(sslVerify)
         if sslVerifyLocations:
             self._sslCtx.load_verify_locations(sslVerifyLocations)
-        
+
         # SSL
         self._ssl = SSL(self._sslCtx)
         self._ssl.set_connect_state()
@@ -32,12 +32,12 @@ class SslClient(object):
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
         if sslVersion != SSLV2: # This makes SSLv2 fail
-            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA') 
-        
+            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
+
         # BIOs
         self._internalBio = BIO()
         self._networkBio = BIO()
-        
+
         # http://www.openssl.org/docs/crypto/BIO_s_bio.html
         BIO.make_bio_pair(self._internalBio, self._networkBio)
         self._ssl.set_bio(self._internalBio)
@@ -47,7 +47,7 @@ class SslClient(object):
         if (self._sock == None):
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
-        
+
         while True:
             try:
                 if self._ssl.do_handshake() == 1:
@@ -82,17 +82,17 @@ class SslClient(object):
             encData = self._sock.recv(DEFAULT_BUFFER_SIZE)
             # Pass it to the SSL engine
             self._networkBio.write(encData)
-            
+
             try:
                 # Try to read the decrypted data
                 decData = self._ssl.read(size)
                 return decData
-            
+
             except WantReadError:
-                # The SSL engine needs more data 
+                # The SSL engine needs more data
                 # before it can decrypt the whole message
                 pass
-        
+
 
     def write(self, data):
         """
@@ -103,7 +103,7 @@ class SslClient(object):
 
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
-        
+
         # Recover the corresponding encrypted data
         lenToRead = self._networkBio.pending()
         finalLen = lenToRead
@@ -113,10 +113,10 @@ class SslClient(object):
             self._sock.send(encData)
             lenToRead = self._networkBio.pending()
             finalLen += lenToRead
-            
+
         return finalLen
 
-        
+
     def shutdown(self):
         self._handshakeDone = False
         try:
@@ -126,43 +126,43 @@ class SslClient(object):
             if 'SSL_shutdown:uninitialized' not in str(e):
                 raise
 
-    
+
     def get_secure_renegotiation_support(self):
         return self._ssl.get_secure_renegotiation_support()
-    
-    
+
+
     def get_current_compression_name(self):
         return self._ssl.get_current_compression_name()
-    
-    
+
+
     def set_verify(self, verifyMode):
         return self._ssl.set_verify(verifyMode)
-    
-    
+
+
     def set_tlsext_host_name(self, nameIndication):
-        return self._ssl.set_tlsext_host_name(nameIndication)    
-    
-    
+        return self._ssl.set_tlsext_host_name(nameIndication)
+
+
     def get_peer_certificate(self):
         _x509 = self._ssl.get_peer_certificate()
         if _x509:
             return X509Certificate(_x509)
         else:
             return None
-    
-    
+
+
     def set_cipher_list(self, cipherList):
         return self._ssl.set_cipher_list(cipherList)
-    
-    
+
+
     def get_cipher_list(self):
         return self._ssl.get_cipher_list()
 
 
     def get_cipher_name(self):
         return self._ssl.get_cipher_name()
-    
-    
+
+
     def get_cipher_bits(self):
         return self._ssl.get_cipher_bits()
 
@@ -174,7 +174,7 @@ class SslClient(object):
     def use_privateKey_file(self, keyFile, keyType, keyPassword=''):
         if isinstance(keyPassword, basestring):
             self._sslCtx.set_private_key_password(keyPassword)
-        else: 
+        else:
             raise TypeError('keyPassword is not a string')
 
         return self._ssl.use_PrivateKey_file(keyFile, keyType)

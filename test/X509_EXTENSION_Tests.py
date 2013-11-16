@@ -28,11 +28,11 @@ class X509_EXTENSION_Tests_Online(unittest.TestCase):
 
     def test_get_object(self):
         self.assertIsNotNone(self.x509ext.get_object())
-        
+
 
     def test_get_critical(self):
         self.assertIsNotNone(self.x509ext.get_critical())
-        
+
 
 def main():
     unittest.main()
