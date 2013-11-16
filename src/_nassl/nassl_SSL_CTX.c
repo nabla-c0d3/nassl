@@ -112,10 +112,9 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
 
 
 static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args) {
-    int caFileSize;
-    char *caFile;
+    char *caFile = NULL;
 
-    if (!PyArg_ParseTuple(args, "t#", &caFile, &caFileSize)) {
+    if (!PyArg_ParseTuple(args, "s", &caFile)) {
         return NULL;
     }
 
@@ -141,26 +140,28 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
         return 0;
     }
 
-    // Assuming NULL-terminated string as it will come from Python
-    passwordSize = strlen(passwordBuf);
+    // NUL-terminated string as it will come from Python
+    passwordSize = strlen(passwordBuf) + 1;
     if (passwordSize > size){  // Not enough space in OpenSSL's buffer
         return 0;
     }
 
     strncpy(buf, passwordBuf, passwordSize);
-    return (int) passwordSize;
+    // OpenSSL wants the size of the password
+    return (int) strlen(passwordBuf);
 }
 
 
 static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *self, PyObject *args) {
-    unsigned int passwordSize;
-    char *passwordStr;
+    size_t passwordSize = 0;
+    char *passwordStr = NULL;
 
-    if (!PyArg_ParseTuple(args, "t#", &passwordStr, &passwordSize)) {
+    if (!PyArg_ParseTuple(args, "s", &passwordStr)) {
         return NULL;
     }
 
-    // Store the password
+    // Store the password; Python gives us a NUL-terminated string
+    passwordSize = strlen(passwordStr) + 1;
     self->pkeyPasswordBuf = (char *) PyMem_Malloc(passwordSize);
     if (self->pkeyPasswordBuf == NULL)
         return PyErr_NoMemory();

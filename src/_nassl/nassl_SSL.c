@@ -312,10 +312,10 @@ static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *arg
 
 
 static PyObject* nassl_SSL_use_certificate_file(nassl_SSL_Object *self, PyObject *args) {
-    const char *filePath;
-    int filePathLen, certType;
+    const char *filePath = NULL;
+    int certType = 0;
 
-    if (!PyArg_ParseTuple(args, "t#I", &filePath, &filePathLen, &certType)) {
+    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType)) {
         return NULL;
     }
 
@@ -328,15 +328,15 @@ static PyObject* nassl_SSL_use_certificate_file(nassl_SSL_Object *self, PyObject
 
 
 static PyObject* nassl_SSL_use_PrivateKey_file(nassl_SSL_Object *self, PyObject *args) {
-    const char *filePath;
-    int filePathLen, certType;
+    const char *filePath = NULL;
+    int certType = 0;
 
-    if (!PyArg_ParseTuple(args, "t#I", &filePath, &filePathLen, &certType)) {
+    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType)) {
         return NULL;
     }
 
-    if (SSL_use_PrivateKey_file(self->ssl, filePath, certType) != 1 ){
-    return raise_OpenSSL_error();
+    if (SSL_use_PrivateKey_file(self->ssl, filePath, certType) != 1) {
+        return raise_OpenSSL_error();
     }
 
     Py_RETURN_NONE;
@@ -344,7 +344,7 @@ static PyObject* nassl_SSL_use_PrivateKey_file(nassl_SSL_Object *self, PyObject 
 
 
 static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *args) {
-    if (SSL_check_private_key(self->ssl) != 1 ){
+    if (SSL_check_private_key(self->ssl) != 1){
         return raise_OpenSSL_error();
     }
 

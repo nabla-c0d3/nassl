@@ -2,6 +2,7 @@ import unittest
 import tempfile
 from nassl import _nassl, SSLV23, SSL_VERIFY_PEER
 
+
 class SSL_CTX_Tests(unittest.TestCase):
 
     def test_new(self):
@@ -47,9 +48,15 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
         self.assertIsNone(testCTX.load_verify_locations(testFile.name))
 
     def test_load_verify_locations_bad(self):
-    	# Certificate file doesn't exist
-    	testCTX = _nassl.SSL_CTX(SSLV23)
+        # Certificate file doesn't exist
+        testCTX = _nassl.SSL_CTX(SSLV23)
         self.assertRaises(_nassl.OpenSSLError, testCTX.load_verify_locations, ("test"))
+
+    def test_set_private_key_password_null_byte(self):
+        # NULL byte embedded in the password
+        testCTX = _nassl.SSL_CTX(SSLV23)
+        self.assertRaisesRegexp(TypeError, 'must be string without null bytes', testCTX.set_private_key_password, ("AAA\x00AAAA"))
+
 
 
 def main():

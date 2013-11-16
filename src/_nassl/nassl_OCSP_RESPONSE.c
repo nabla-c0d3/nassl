@@ -69,11 +69,11 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self) {
 
 static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *self, PyObject *args) {
     X509_STORE *trustedCAs = NULL;
-    int certNum = 0, verifyRes = 0, caFileSize = 0, i = 0;
+    int certNum = 0, verifyRes = 0, i = 0;
     OCSP_BASICRESP *basicResp = NULL;
     char *caFile = NULL;
 
-    if (!PyArg_ParseTuple(args, "t#", &caFile, &caFileSize)) {
+    if (!PyArg_ParseTuple(args, "s", &caFile)) {
         return NULL;
     }
 
