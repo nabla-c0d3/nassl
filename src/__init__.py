@@ -27,3 +27,9 @@ SSL_OP_NO_TICKET = 0x00004000L # No TLS Session Tickets
 
 # OCSP Stapling
 TLSEXT_STATUSTYPE_ocsp = 1
+
+
+# Hostname validation constants - nassl constants (not OpenSSL)
+X509_NAME_MISMATCH = 0
+X509_NAME_MATCHES_SAN = 1
+X509_NAME_MATCHES_CN = 2

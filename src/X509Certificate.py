@@ -2,12 +2,17 @@
 from binascii import hexlify
 import re
 
+from nassl import X509_NAME_MISMATCH, X509_NAME_MATCHES_SAN, X509_NAME_MATCHES_CN
+
+
+class X509HostnameValidationError:
+    pass
+
 
 class X509Certificate:
     """
     High level API for parsing an X509 certificate.
     """
-
 
     def __init__(self, x509):
         self._certDict = None
@@ -50,69 +55,90 @@ class X509Certificate:
 
     def matches_hostname(self, hostname):
         """
-        Attempts to match the given hostname with the name(s) the certificate was issued to.
+        Attempts to match the given hostname with the name(s) the certificate
+        was issued to.
+        Returns X509_NAME_MATCHES_SAN or X509_NAME_MATCHES_CN if a match is
+        found and X509_NAME_MISMATCH if no match could be found.
+        Will raise X509HostnameValidationError if the certificate is malformed.
         """
         certDict = self.as_dict()
 
-        # Let's try the common name first, if there's one
-        if self._matches_CN(hostname):
-            return True
+        # First look at Subject Alternative Names
+        try:
+            altNames = certDict['extensions']['X509v3 Subject Alternative Name']['DNS']
+            for altname in altNames:
+                if self._dnsname_match(altname, hostname):
+                    return X509_NAME_MATCHES_SAN
+            return X509_NAME_MISMATCH
 
-        # No luck, let's look at Subject Alternative Names
-        if self._matches_subject_alt_name(hostname):
-            return True
+        except KeyError: # No SAN in this cert; try the Common Name
+            pass
 
-        return False
+        try:
+            if self._matches_CN(hostname):
+                    return X509_NAME_MATCHES_CN
+        except KeyError: # No CN either ? This certificate is malformed
+            raise X509HostnameValidationError("Certificate has no subjectAltName and no Common Name; malformed certificate ?")
+
+        return X509_NAME_MISMATCH
 
 
 
 # "Private" methods
 
 # Hostname validation
-
-    def _matches_CN(self, hostname):
-        certDict = self.as_dict()
-
-        try:
-            commonName = certDict['subject']['commonName'][0]
-            if self._dnsname_to_pat(commonName).match(hostname):
-                return True
-        except KeyError:
-            return False
-
-
-    def _matches_subject_alt_name(self, hostname):
-        certDict = self.as_dict()
-
-        try:
-            altNames = certDict['extensions']['X509v3 Subject Alternative Name']['DNS']
-        except KeyError:
-            return False
-
-        for altname in altNames:
-            if self._dnsname_to_pat(altname).match(hostname):
-                return True
-
-        return False
-
-
     @staticmethod
-    def _dnsname_to_pat(dn):
+    def _dnsname_match(dn, hostname, max_wildcards=1):
         """
-        Generates a regexp for the given name, to be used for hostname validation
-        Taken from http://pypi.python.org/pypi/backports.ssl_match_hostname/3.2a3
+        Taken from https://bitbucket.org/brandon/backports.ssl_match_hostname/
         """
         pats = []
-        for frag in dn.split(r'.'):
-            if frag == '*':
-                # When '*' is a fragment by itself, it matches a non-empty dotless
-                # fragment.
-                pats.append('[^.]+')
-            else:
-                # Otherwise, '*' matches any dotless fragment.
-                frag = re.escape(frag)
-                pats.append(frag.replace(r'\*', '[^.]*'))
-        return re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
+        if not dn:
+            return False
+
+        # Ported from python3-syntax:
+        # leftmost, *remainder = dn.split(r'.')
+        parts = dn.split(r'.')
+        leftmost = parts[0]
+        remainder = parts[1:]
+
+        wildcards = leftmost.count('*')
+        if wildcards > max_wildcards:
+            # Issue #17980: avoid denials of service by refusing more
+            # than one wildcard per fragment.  A survey of established
+            # policy among SSL implementations showed it to be a
+            # reasonable choice.
+            raise X509HostnameValidationError(
+                "too many wildcards in certificate DNS name: " + repr(dn))
+
+        # speed up common case w/o wildcards
+        if not wildcards:
+            return dn.lower() == hostname.lower()
+
+        # RFC 6125, section 6.4.3, subitem 1.
+        # The client SHOULD NOT attempt to match a presented identifier in which
+        # the wildcard character comprises a label other than the left-most label.
+        if leftmost == '*':
+            # When '*' is a fragment by itself, it matches a non-empty dotless
+            # fragment.
+            pats.append('[^.]+')
+        elif leftmost.startswith('xn--') or hostname.startswith('xn--'):
+            # RFC 6125, section 6.4.3, subitem 3.
+            # The client SHOULD NOT attempt to match a presented identifier
+            # where the wildcard character is embedded within an A-label or
+            # U-label of an internationalized domain name.
+            pats.append(re.escape(leftmost))
+        else:
+            # Otherwise, '*' matches any dotless string, e.g. www*
+            pats.append(re.escape(leftmost).replace(r'\*', '[^.]*'))
+
+        # add the remaining fragments, ignore any wildcards
+        for frag in remainder:
+            pats.append(re.escape(frag))
+
+        pat = re.compile(r'\A' + r'\.'.join(pats) + r'\Z', re.IGNORECASE)
+        return pat.match(hostname)
+
 
 
 # Value extraction
