@@ -1,5 +1,4 @@
 #!/usr/bin/python
-from nassl._nassl import OCSP_RESPONSE
 
 
 class OcspResponse:
