@@ -20,11 +20,11 @@ connections.
 
 ### src/_nassl/
 
-Classes implemented in C are part of the nassl._nassl namespace. They try to
+Classes implemented in C are part of the nassl.\_nassl namespace. They try to
 stay as close as possible to OpenSSL's API. In most cases, Python methods of
 such objects directly match the OpenSSL function with same name. For example
-the _nassl.SSL.read() Python method matches OpenSSL's SSL_read() function.
-Those C classes should be considered internal.
+the \_nassl.SSL.read() Python method matches OpenSSL's SSL\_read() function.
+These C classes should be considered internal.
 
 
 Build
@@ -36,8 +36,8 @@ OpenSSL and nassl.
 
 ### buildAll_unix.py
 
-Build script for OS X 64 bits and Linux 32/64 bits. It was tested on OX
-Mountain Lion and Ubuntu 13.04.
+Build script for OS X 64 bits and Linux 32/64 bits. It was tested on OS X
+Mavericks and Ubuntu 13.04.
 
 
 ### buildAll_win32.py
@@ -56,7 +56,7 @@ Why ???
 I'm the author of SSLyze, an SSL scanner written in Python:
 https://github.com/iSECPartners/sslyze. Scanning SSL servers requires access
 to low-level SSL functions within the OpenSSL API, for example to test for
-things like insecure renegotiation or session resumption. 
+things like insecure renegotiation or session resumption.
 
 None of the existing OpenSSL wrappers for Python (including ssl, M2Crypto and
 pyOpenSSL) expose the APIs that I need for SSLyze, so I had to write my own
