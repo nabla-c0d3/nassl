@@ -45,13 +45,12 @@ static void nassl_BIO_dealloc(nassl_BIO_Object *self) {
 
 
 static PyObject* nassl_BIO_make_bio_pair(PyObject *nullPtr, PyObject *args)  {
-    nassl_BIO_Object *bio1_Object, *bio2_Object;
-    int result;
+    nassl_BIO_Object *bio1_Object, *bio2_Object = NULL;
 
     if (!PyArg_ParseTuple(args, "O!O!", &nassl_BIO_Type, &bio1_Object, &nassl_BIO_Type, &bio2_Object)) {
         return NULL;
     }
-    result = BIO_make_bio_pair(bio1_Object->bio, bio2_Object->bio);
+    BIO_make_bio_pair(bio1_Object->bio, bio2_Object->bio);
     Py_RETURN_NONE;
 }
 
