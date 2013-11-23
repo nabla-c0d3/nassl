@@ -137,6 +137,9 @@ class SslClient(object):
 
     @staticmethod
     def get_available_compression_methods():
+        """
+        Returns the list of SSL compression methods supported by SslClient.
+        """
         return SSL.get_available_compression_methods()
 
 
