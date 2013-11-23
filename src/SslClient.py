@@ -137,7 +137,7 @@ class SslClient(object):
 
     @staticmethod
     def get_available_compression_methods():
-        return self._ssl.get_available_compression_methods()
+        return SSL.get_available_compression_methods()
 
 
     def set_verify(self, verifyMode):
