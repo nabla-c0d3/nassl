@@ -131,8 +131,13 @@ class SslClient(object):
         return self._ssl.get_secure_renegotiation_support()
 
 
-    def get_current_compression_name(self):
-        return self._ssl.get_current_compression_name()
+    def get_current_compression_method(self):
+        return self._ssl.get_current_compression_method()
+
+
+    @staticmethod
+    def get_available_compression_methods():
+        return self._ssl.get_available_compression_methods()
 
 
     def set_verify(self, verifyMode):

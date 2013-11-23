@@ -185,14 +185,46 @@ static PyObject* nassl_SSL_get_secure_renegotiation_support(nassl_SSL_Object *se
 }
 
 
-static PyObject* nassl_SSL_get_current_compression_name(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *self, PyObject *args) {
+    PyObject* compMethodPyList = NULL;
+    int i, compMethodsCount = 0;
+    STACK_OF(SSL_COMP) *compMethods = SSL_COMP_get_compression_methods();
+
+   // We'll return a Python list containing the name of each compression method
+    compMethodsCount = sk_SSL_COMP_num(compMethods);
+    compMethodPyList = PyList_New(compMethodsCount);
+    if (compMethodPyList == NULL)
+        return PyErr_NoMemory();
+
+    for (i=0;i<compMethodsCount;i++) {
+        PyObject *methodPyString = NULL;
+
+        const SSL_COMP *method = sk_SSL_COMP_value(compMethods, i);
+        if (method == NULL) {
+            PyErr_SetString(PyExc_ValueError, "Could not extract a compression method. Should not happen ?");
+            return NULL;
+        }
+
+        methodPyString = PyString_FromString(method->name);
+        if (methodPyString == NULL) {
+            return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+        }
+
+        PyList_SET_ITEM(compMethodPyList, i,  methodPyString);
+    }
+
+    return compMethodPyList;
+}
+
+
+static PyObject* nassl_SSL_get_current_compression_method(nassl_SSL_Object *self, PyObject *args) {
     const COMP_METHOD *compMethod;
 
     compMethod = SSL_get_current_compression(self->ssl);
     if (compMethod == NULL)
         Py_RETURN_NONE;
 
-    return PyString_FromString(compMethod->name);
+    return PyString_FromString(SSL_COMP_get_name(compMethod));
 }
 
 
@@ -539,7 +571,10 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     {"get_secure_renegotiation_support", (PyCFunction)nassl_SSL_get_secure_renegotiation_support, METH_NOARGS,
      "OpenSSL's SSL_get_secure_renegotiation_support()."
     },
-    {"get_current_compression_name", (PyCFunction)nassl_SSL_get_current_compression_name, METH_NOARGS,
+    {"get_available_compression_methods", (PyCFunction)nassl_SSL_get_available_compression_methods, METH_NOARGS | METH_STATIC,
+     "Recovers the list of all available compression methods by calling SSL_get_compression_methods()."
+    },
+    {"get_current_compression_method", (PyCFunction)nassl_SSL_get_current_compression_method, METH_NOARGS,
      "Recovers the name of the compression method being used by calling SSL_get_current_compression()."
     },
     {"set_verify", (PyCFunction)nassl_SSL_set_verify, METH_VARARGS,

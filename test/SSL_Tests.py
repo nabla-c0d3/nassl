@@ -71,9 +71,14 @@ class SSL_Tests(unittest.TestCase):
         self.assertFalse(testSsl.get_secure_renegotiation_support())
 
 
-    def test_get_current_compression_name(self):
+    def test_get_current_compression_method(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
-        self.assertIsNone(testSsl.get_current_compression_name())
+        self.assertIsNone(testSsl.get_current_compression_method())
+
+
+    def test_get_available_compression_methods_has_zlib(self):
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        self.assertEqual(['zlib compression'],testSsl.get_available_compression_methods())
 
 
     def test_set_tlsext_host_name(self):
