@@ -118,8 +118,7 @@ static PyMethodDef nassl_OCSP_RESPONSE_Object_methods[] = {
 
 
 PyTypeObject nassl_OCSP_RESPONSE_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.OCSP_RESPONSE",             /*tp_name*/
     sizeof(nassl_OCSP_RESPONSE_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/

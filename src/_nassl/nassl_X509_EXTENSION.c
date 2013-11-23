@@ -101,8 +101,7 @@ static PyMethodDef nassl_X509_EXTENSION_Object_methods[] = {
 
 
 PyTypeObject nassl_X509_EXTENSION_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.X509_EXTENSION",             /*tp_name*/
     sizeof(nassl_X509_EXTENSION_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/

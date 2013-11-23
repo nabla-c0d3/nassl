@@ -196,8 +196,7 @@ static PyMemberDef nassl_SSL_CTX_Object_members[] = {
 */
 
 PyTypeObject nassl_SSL_CTX_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.SSL_CTX",             /*tp_name*/
     sizeof(nassl_SSL_CTX_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/

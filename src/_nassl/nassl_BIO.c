@@ -129,8 +129,7 @@ static PyMethodDef nassl_BIO_Object_methods[] = {
 
 
 PyTypeObject nassl_BIO_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.BIO",             /*tp_name*/
     sizeof(nassl_BIO_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/

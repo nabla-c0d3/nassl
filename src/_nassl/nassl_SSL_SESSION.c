@@ -43,8 +43,7 @@ static PyMemberDef nassl_SSL_SESSION_Object_members[] = {
 */
 
 PyTypeObject nassl_SSL_SESSION_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.SSL_SESSION",             /*tp_name*/
     sizeof(nassl_SSL_SESSION_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/

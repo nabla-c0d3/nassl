@@ -606,8 +606,7 @@ static PyMemberDef nassl_SSL_Object_members[] = {
 */
 
 static PyTypeObject nassl_SSL_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.SSL",             /*tp_name*/
     sizeof(nassl_SSL_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/

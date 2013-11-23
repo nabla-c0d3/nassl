@@ -83,8 +83,7 @@ static PyMethodDef nassl_X509_NAME_ENTRY_Object_methods[] = {
 
 
 PyTypeObject nassl_X509_NAME_ENTRY_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.X509_NAME_ENTRY",             /*tp_name*/
     sizeof(nassl_X509_NAME_ENTRY_Object),             /*tp_basicsize*/
     0,                         /*tp_itemsize*/
