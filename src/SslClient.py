@@ -1,10 +1,32 @@
 #!/usr/bin/python
-from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509
+from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
 from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp
 from X509Certificate import X509Certificate
 from OcspResponse import OcspResponse
 
 DEFAULT_BUFFER_SIZE = 4096
+
+
+class ClientCertificateRequested(Exception):
+
+    ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the ' +\
+    'following CAs: {0}.'
+    ERROR_MSG = 'Server requested a client certificate.'
+
+    def __init__(self, caList):
+        self._caList = caList
+
+    def __str__(self):
+        exc_msg = ''
+        if len(self._caList) > 0:
+            caListStr = ''
+            for ca in self._caList:
+                caListStr += ca + ' '
+            exc_msg = self.ERROR_MSG_CAS.format(caListStr)
+        else:
+            exc_msg = self.ERROR_MSG
+        return exc_msg
+
 
 
 class SslClient(object):
@@ -71,6 +93,11 @@ class SslClient(object):
                     raise IOError('Nassl SSL handshake failed: peer did not send data back.')
                 # Pass the data to the SSL engine
                 self._networkBio.write(handshakeDataIn)
+
+            except WantX509LookupError:
+                # Server asked for a client certificate and we didn't provide one
+                raise ClientCertificateRequested(self._ssl.get_client_CA_list())
+
 
 
     def read(self, size):
@@ -167,33 +194,25 @@ class SslClient(object):
         return self._ssl.get_cipher_list()
 
 
-    def get_cipher_name(self):
+    def get_current_cipher_name(self):
         return self._ssl.get_cipher_name()
 
 
-    def get_cipher_bits(self):
+    def get_current_cipher_bits(self):
         return self._ssl.get_cipher_bits()
 
 
-    def use_certificate_file(self, certFile, certType):
-        return self._ssl.use_certificate_file(certFile, certType)
+    def use_private_key(self, certFile, certType, keyFile, keyType, keyPassword=''):
 
+        self._ssl.use_certificate_file(certFile, certType)
 
-    def use_privateKey_file(self, keyFile, keyType, keyPassword=''):
         if isinstance(keyPassword, basestring):
             self._sslCtx.set_private_key_password(keyPassword)
         else:
             raise TypeError('keyPassword is not a string')
 
-        return self._ssl.use_PrivateKey_file(keyFile, keyType)
-
-
-    def check_private_key(self):
+        self._ssl.use_PrivateKey_file(keyFile, keyType)
         return self._ssl.check_private_key()
-
-
-    def get_client_CA_list(self):
-        return self._ssl.get_client_CA_list()
 
 
     def get_certificate_chain_verify_result(self):

@@ -17,6 +17,14 @@ typedef enum {
 } SslProtocolVersion;
 
 
+static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey) {
+    // This callback is here so we can detect when the server wants a client cert
+    // It will trigger an SSL_ERROR_WANT_X509_LOOKUP error during the handshake
+    // if the server expected a client certificate and we didn't provide one
+    return -1;
+}
+
+
 // nassl.SSL_CTX.new()
 static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 	nassl_SSL_CTX_Object *self;
@@ -65,8 +73,10 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 		return NULL;
 	}
 
-	self->sslCtx = sslCtx;
+    // Add the client certificate callback
+    SSL_CTX_set_client_cert_cb(sslCtx, client_cert_cb);
 
+    self->sslCtx = sslCtx;
     return (PyObject *)self;
 }
 

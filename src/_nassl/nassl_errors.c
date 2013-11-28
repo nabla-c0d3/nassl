@@ -14,6 +14,7 @@ PyObject *nassl_OpenSSLError_Exception;
 static PyObject *nassl_SslError_Exception;
 static PyObject *nassl_WantReadError_Exception;
 static PyObject *nassl_WantWriteError_Exception;
+static PyObject *nassl_WantX509LookupError_Exception;
 
 
 PyObject* raise_OpenSSL_error() {
@@ -70,6 +71,10 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue) {
             PyErr_SetString(nassl_WantReadError_Exception, "");
             return NULL;
 
+        case SSL_ERROR_WANT_X509_LOOKUP:
+            PyErr_SetString(nassl_WantX509LookupError_Exception, "");
+            return NULL;
+
         default:
             PyErr_SetString(nassl_SslError_Exception, "TODO: Better error handling");
             return NULL;
@@ -83,13 +88,20 @@ void module_add_errors(PyObject* m) {
     nassl_OpenSSLError_Exception = PyErr_NewException("_nassl.OpenSSLError", NULL, NULL);
     Py_INCREF(nassl_OpenSSLError_Exception);
     PyModule_AddObject(m, "OpenSSLError", nassl_OpenSSLError_Exception);
+
     nassl_SslError_Exception = PyErr_NewException("_nassl.SslError", nassl_OpenSSLError_Exception, NULL);
     Py_INCREF(nassl_SslError_Exception);
     PyModule_AddObject(m, "SslError", nassl_SslError_Exception);
+
     nassl_WantWriteError_Exception = PyErr_NewException("_nassl.WantWriteError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantWriteError_Exception);
     PyModule_AddObject(m, "WantWriteError", nassl_WantWriteError_Exception);
+
     nassl_WantReadError_Exception = PyErr_NewException("_nassl.WantReadError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantReadError_Exception);
     PyModule_AddObject(m, "WantReadError", nassl_WantReadError_Exception);
+
+    nassl_WantX509LookupError_Exception = PyErr_NewException("_nassl.WantX509LookupError", nassl_SslError_Exception, NULL);
+    Py_INCREF(nassl_WantX509LookupError_Exception);
+    PyModule_AddObject(m, "WantX509LookupError", nassl_WantX509LookupError_Exception);
 }

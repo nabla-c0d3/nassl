@@ -54,14 +54,18 @@ Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----
 """)
         testFile2.close()
-        self.sslClient.use_certificate_file(testFile2.name, SSL_FILETYPE_PEM)
+        self.testFile2 = testFile2
 
 
-    def test_use_privateKey_file(self):
-        self.assertIsNone(self.sslClient.use_privateKey_file(self.testFile.name, SSL_FILETYPE_PEM, 'testPW'))
+    def test_use_private_key(self):
+        self.assertIsNone(self.sslClient.use_private_key(self.testFile2.name,
+            SSL_FILETYPE_PEM, self.testFile.name, SSL_FILETYPE_PEM, 'testPW'))
 
-    def test_use_privateKey_file_bad(self):
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'bad decrypt', self.sslClient.use_privateKey_file, self.testFile.name, SSL_FILETYPE_PEM, 'badPW')
+
+    def test_use_private_key_bad(self):
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'bad decrypt',
+            self.sslClient.use_private_key, self.testFile2.name, SSL_FILETYPE_PEM,
+            self.testFile.name, SSL_FILETYPE_PEM, 'badPW')
 
 
 class SslClient_Tests_Handshake(unittest.TestCase):
