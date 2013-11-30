@@ -31,23 +31,30 @@ Build
 -----
 
 Multiple build scripts are available. They will consecutively build Zlib,
-OpenSSL and nassl.
-
+OpenSSL and nassl. Regardless of the platform you're targeting, you will need to:
+* Download OpenSSL 1.0.1e at
+https://www.openssl.org/source/openssl-1.0.1e.tar.gz and extract the content of
+the source package to nassl/openssl-1.0.1e
+* Download Zlib at http://zlib.net/zlib-1.2.8.tar.gz and extract the content
+of the source package to nassl/zlib-1.2.8.
 
 ### buildAll_unix.py
 
 Build script for OS X 64 bits and Linux 32/64 bits. It was tested on OS X
-Mavericks and Ubuntu 13.04.
+Mavericks, Ubuntu 13.04 and Debian 7. This is the easiest build script to use.
 
 
 ### buildAll_win32.py
 
-Build script for Windows 7 32 bits.
+Build script for Windows 7 32 bits. It expects Python to be installed in
+C:\Python27_32.
 
 
 ### buildAll_win64.py
 
-Build script for Windows 7 64 bits.
+Build script for Windows 7 64 bits. It expects Python to be installed in
+C:\Python27. This build script will crash after building OpenSSL but you can
+still manage to get a full build of nassl, if you can figure it out...
 
 
 Why ???
