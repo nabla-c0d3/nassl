@@ -31,7 +31,9 @@ Build
 -----
 
 Multiple build scripts are available. They will consecutively build Zlib,
-OpenSSL and nassl. Regardless of the platform you're targeting, you will need to:
+OpenSSL and nassl.
+
+Regardless of the platform you're targeting, you will need to:
 * Download OpenSSL 1.0.1e at
 https://www.openssl.org/source/openssl-1.0.1e.tar.gz and extract the content of
 the source package to nassl/openssl-1.0.1e
