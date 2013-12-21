@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+
+NASSL_VERSION = "0.8"
+
+
 # Verify constants
 SSL_VERIFY_NONE =                   0x00
 SSL_VERIFY_PEER =                   0x01

@@ -1,8 +1,8 @@
-
+from src import NASSL_VERSION
 
 NASSL_SETUP = {
     'name' : "nassl",
-    'version' : "0.8",
+    'version' : NASSL_VERSION,
     'package_dir' : {'nassl' : 'src'},
     'py_modules' : ['nassl.__init__', 'nassl.SslClient', 'nassl.X509Certificate', 'nassl.OcspResponse'],
     'description' : 'OpenSSL wrapper for SSLyze',
