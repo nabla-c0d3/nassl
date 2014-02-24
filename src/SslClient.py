@@ -21,7 +21,9 @@ class ClientCertificateRequested(Exception):
         if len(self._caList) > 0:
             caListStr = ''
             for ca in self._caList:
-                caListStr += ca + ' '
+                if len(caListStr) > 0:
+                    caListStr += ', '
+                caListStr += '\'' + ca + '\''
             exc_msg = self.ERROR_MSG_CAS.format(caListStr)
         else:
             exc_msg = self.ERROR_MSG
