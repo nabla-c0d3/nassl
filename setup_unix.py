@@ -8,7 +8,7 @@ from buildAll_unix import OPENSSL_INSTALL_DIR
 unix_ext_args = NASSL_EXT_SETUP.copy()
 unix_ext_args.update({
     'include_dirs' : [OPENSSL_INSTALL_DIR + '/include'],
-    'extra_compile_args' : ['-Wall', '-Wno-deprecated-declarations'],
+    'extra_compile_args' : ['-Wall', '-Wno-deprecated-declarations', '-Wno-error=unused-command-line-argument-hard-error-in-future'], # Last flag is a workaround for Clang 3.4
     'library_dirs' : [OPENSSL_DIR, ZLIB_DIR],
     'libraries' : ['ssl', 'z', 'crypto']})
 
