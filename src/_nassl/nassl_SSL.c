@@ -258,10 +258,10 @@ static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject
         return NULL;
     }
 
-    if (!SSL_set_tlsext_host_name(self->ssl, nameIndication))
-        {
-            return raise_OpenSSL_error();
-        }
+    if (!SSL_set_tlsext_host_name(self->ssl, nameIndication)) {
+        PyErr_SetString(PyExc_ValueError, "Error setting the SNI extension. Using SSL 2 ?");
+        return NULL;
+    }
 
     Py_RETURN_NONE;
 }
