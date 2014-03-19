@@ -25,7 +25,7 @@ class OcspResponse:
             return self._respDict
 
         # For now we just parse OpenSSL's text output and make a lot of assumptions
-        respDict = { \
+        respDict = {
             'responseStatus': self._get_value_from_text_output_no_p('OCSP Response Status:'),
             'version' : self._get_value_from_text_output_no_p('Version:'),
             'responseType': self._get_value_from_text_output('Response Type:'),
@@ -35,8 +35,8 @@ class OcspResponse:
         if 'successful' not in respDict['responseStatus']:
             return respDict
 
-        respDict['responses'] = [ { \
-            'certID': {
+        respDict['responses'] = [ {
+                                      'certID': {
                 'hashAlgorithm': self._get_value_from_text_output('Hash Algorithm:'),
                 'issuerNameHash': self._get_value_from_text_output('Issuer Name Hash:'),
                 'issuerKeyHash': self._get_value_from_text_output('Issuer Key Hash:'),

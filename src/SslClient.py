@@ -66,7 +66,7 @@ class SslClient(object):
 
 
     def do_handshake(self):
-        if (self._sock == None):
+        if self._sock is None:
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
 
@@ -101,7 +101,7 @@ class SslClient(object):
 
 
     def read(self, size):
-        if (self._handshakeDone == False):
+        if not self._handshakeDone:
             raise IOError('SSL Handshake was not completed; cannot receive data.')
 
         while True:
@@ -125,7 +125,7 @@ class SslClient(object):
         """
         Returns the number of (encrypted) bytes sent.
         """
-        if (self._handshakeDone == False):
+        if not self._handshakeDone:
             raise IOError('SSL Handshake was not completed; cannot send data.')
 
         # Pass the cleartext data to the SSL engine
@@ -218,11 +218,11 @@ class SslClient(object):
     def get_certificate_chain_verify_result(self):
         verifyResult = self._ssl.get_verify_result()
         verifyResultStr = X509.verify_cert_error_string(verifyResult)
-        return (verifyResult, verifyResultStr)
+        return verifyResult, verifyResultStr
 
 
     def do_renegotiate(self):
-        if (self._handshakeDone == False):
+        if not self._handshakeDone:
             raise IOError('SSL Handshake was not completed; cannot renegotiate.')
 
         self._ssl.renegotiate()

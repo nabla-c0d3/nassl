@@ -5,7 +5,7 @@ import re
 from nassl import X509_NAME_MISMATCH, X509_NAME_MATCHES_SAN, X509_NAME_MATCHES_CN
 
 
-class X509HostnameValidationError:
+class X509HostnameValidationError(Exception):
     pass
 
 
@@ -162,7 +162,8 @@ class X509Certificate:
         return signature.strip()
 
 
-    def _parse_x509_name(self, nameEntries):
+    @staticmethod
+    def _parse_x509_name(nameEntries):
         nameEntriesDict= {}
         for entry in nameEntries:
             nameEntriesDict[entry.get_object()] = entry.get_data()
@@ -226,7 +227,7 @@ class X509Certificate:
             extName = x509ext.get_object()
             extData = x509ext.get_data()
             # TODO: Should we output the critical field ?
-            extCrit = x509ext.get_critical()
+            #extCrit = x509ext.get_critical()
             if extName in x509extParsingFunctions.keys():
                 extDict[extName] = x509extParsingFunctions[extName](extData)
             else:
@@ -235,7 +236,8 @@ class X509Certificate:
         return extDict
 
 
-    def _parse_multi_valued_extension(self, extension):
+    @staticmethod
+    def _parse_multi_valued_extension(extension):
 
         extension = extension.split(', ')
         # Split the (key,value) pairs
@@ -253,7 +255,8 @@ class X509Certificate:
         return parsed_ext
 
 
-    def _parse_authority_information_access(self, auth_ext):
+    @staticmethod
+    def _parse_authority_information_access(auth_ext):
         # Hazardous attempt at parsing an Authority Information Access extension
         auth_ext = auth_ext.strip(' \n').split('\n')
         auth_ext_list = {}
@@ -274,7 +277,8 @@ class X509Certificate:
         return auth_ext_list
 
 
-    def _parse_crl_distribution_points(self, crl_ext):
+    @staticmethod
+    def _parse_crl_distribution_points(crl_ext):
         # Hazardous attempt at parsing a CRL Distribution Point extension
         crl_ext = crl_ext.strip(' \n').split('\n')
         subcrl = {}
