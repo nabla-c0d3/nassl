@@ -173,16 +173,38 @@ class X509Certificate:
 # Public Key Parsing Functions
 # The easiest and ugliest way to do this is to just parse OpenSSL's text output
 # I don't want to create an EVP_PKEY class in C just for this
+# Of course lots of assumptions here regarding the format of the text output
 
     def _parse_pubkey(self):
 
+        algo = self._parse_pubkey_algorithm()
+        if algo in ['id-ecPublicKey', 'id-ecDH', 'id-ecMQV']:
+            paramDict = {'pub': self._parse_ec_pubkey(),
+                         'curve': self._parse_ec_pubkey_curve() }
+        else: # RSA, DSA
+            paramDict = {'modulus': self._parse_pubkey_modulus(),
+                         'exponent': self._parse_pubkey_exponent() }
+
         pubkeyDict = {
-            'publicKeyAlgorithm': self._parse_pubkey_algorithm() ,
+            'publicKeyAlgorithm': algo ,
             'publicKeySize': str( self._parse_pubkey_size()) ,
-            'publicKey': {'modulus': self._parse_pubkey_modulus(),
-                          'exponent': self._parse_pubkey_exponent() }
-                      }
+            'publicKey': paramDict }
         return pubkeyDict
+
+
+    def _parse_ec_pubkey(self):
+        cert =  self.as_text()
+        eckey_lines = cert.split('pub:')[1].split('\n',1)[1].split('ASN1 OID:')[0].strip().split('\n')
+        pubkey_txt = ''
+
+        for line in eckey_lines:
+            pubkey_txt += line.strip()
+        return pubkey_txt
+
+
+    def _parse_ec_pubkey_curve(self):
+        exp = self._extract_cert_value('ASN1 OID:')
+        return exp.split('(')[0].strip()
 
 
     def _parse_pubkey_modulus(self):
