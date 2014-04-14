@@ -9,7 +9,7 @@ import subprocess
 
 # The build scripts expect the OpenSSL and Zlib src packages
 # to be in nassl's root folder
-OPENSSL_DIR =   join(getcwd(), 'openssl-1.0.1e')
+OPENSSL_DIR =   join(getcwd(), 'openssl-1.0.1g')
 # Warning: use a fresh Zlib src tree on Windows or build will fail
 # ie. do not use the same Zlib src folder for Windows and Unix build
 ZLIB_DIR =      join(getcwd(), 'zlib-1.2.8')
