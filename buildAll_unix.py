@@ -49,7 +49,7 @@ def main():
     OPENSSL_BUILD_TASKS = [
         OPENSSL_CONF_CMD(OPENSSL_TARGET, OPENSSL_INSTALL_DIR, ZLIB_DIR,  ZLIB_DIR) + ' -fPIC',
         'make clean',
-        #'make depend', # This make building with Clang on OS X fail
+        #'make depend', # This makes building with Clang on OS X fail
         'make',
         'make test',
         'make install']
