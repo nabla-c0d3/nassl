@@ -33,7 +33,7 @@ def main():
     OPENSSL_BUILD_TASKS = [
         OPENSSL_CONF_CMD('VC-WIN64A' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR) + ' -DZLIB_WINAPI', # *hate* zlib
         'ms\\do_win64a.bat',
-        'nmake -f ms\\nt.mak clean',
+        #'nmake -f ms\\nt.mak clean', # This mysteriously fails on win64
         'nmake -f ms\\nt.mak',
         'nmake -f ms\\nt.mak install']
 

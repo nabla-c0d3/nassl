@@ -56,7 +56,8 @@ C:\Python27_32.
 
 Build script for Windows 7 64 bits. It expects Python to be installed in
 C:\Python27. This build script will crash after building OpenSSL but you can
-still manage to get a full build of nassl, if you can figure it out...
+still manage to get a full build of nassl by manually copying the OpenSSL libs
+from openssl/out32 to the right location in build/. Look at win32 builds.
 
 
 Why ???
