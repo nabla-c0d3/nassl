@@ -9,7 +9,8 @@ from buildAll_unix import OPENSSL_INSTALL_DIR
 extra_compile_args = ['-Wall', '-Wno-deprecated-declarations']
 
 if platform == 'darwin': # Workaround for Clang 3.4
-    extra_compile_args += '-Wno-error=unused-command-line-argument-hard-error-in-future'
+    # add as the element of an array rather than a string, py 2.7.5 
+    extra_compile_args += ['-Wno-error=unused-command-line-argument-hard-error-in-future']
 
 
 # Add arguments specific to Unix builds
