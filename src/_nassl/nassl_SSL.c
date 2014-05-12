@@ -545,6 +545,11 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
 }
 
 
+static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args) {
+    const char *stateString = SSL_state_string_long(self->ssl);
+    return PyString_FromString(stateString);
+}
+
 
 static PyMethodDef nassl_SSL_Object_methods[] = {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
@@ -630,6 +635,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"get_tlsext_status_ocsp_resp", (PyCFunction)nassl_SSL_get_tlsext_status_ocsp_resp, METH_NOARGS,
      "OpenSSL's SSL_get_tlsext_status_ocsp_resp(). Returns an _nassl.OCSP_RESPONSE object."
+    },
+    {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
+     "OpenSSL's SSL_state_string_long()."
     },
     {NULL}  // Sentinel
 };

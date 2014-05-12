@@ -57,6 +57,9 @@ class SslClient(object):
         # So we make the default cipher list smaller (to make the client hello smaller)
         if sslVersion != SSLV2: # This makes SSLv2 fail
             self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
+        else:
+            # Handshake workaround for SSL2 + IIS 7
+            self.do_handshake = self.do_ssl2_iis_handshake
 
         # BIOs
         self._internalBio = BIO()
@@ -90,6 +93,64 @@ class SslClient(object):
                     lenToRead = self._networkBio.pending()
 
                 # Recover the peer's encrypted response
+                handshakeDataIn = self._sock.recv(DEFAULT_BUFFER_SIZE)
+                if len(handshakeDataIn) == 0:
+                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                # Pass the data to the SSL engine
+                self._networkBio.write(handshakeDataIn)
+
+            except WantX509LookupError:
+                # Server asked for a client certificate and we didn't provide one
+                raise ClientCertificateRequested(self._ssl.get_client_CA_list())
+
+
+    def do_ssl2_iis_handshake(self):
+        if self._sock is None:
+            # TODO: Auto create a socket ?
+            raise IOError('Internal socket set to None; cannot perform handshake.')
+
+        while True:
+            try:
+                if self._ssl.do_handshake() == 1:
+                    self._handshakeDone = True
+                    return True # Handshake was successful
+
+            except WantReadError:
+                # OpenSSL is expecting more data from the peer
+                # Send available handshake data to the peer
+                lenToRead = self._networkBio.pending()
+                while lenToRead:
+                    # Get the data from the SSL engine
+                    handshakeDataOut = self._networkBio.read(lenToRead)
+
+                    if 'SSLv2 read server verify A' in self._ssl.state_string_long():
+                        # Awful h4ck for SSLv2 when connecting to IIS7 (like in the 90s)
+                        # OpenSSL sends the client's CMK and data message in the same packet without
+                        # waiting for the server's response, causing IIS 7 to hang on the connection.
+                        # This workaround forces our client to send the CMK message, then wait for the server's
+                        # response, and then send the data packet
+                        if '\x02' in handshakeDataOut[2]:  # Make sure we're looking at the CMK message
+                            cmkSize = handshakeDataOut[0:2]
+                            test1 =  int(handshakeDataOut[0].encode('hex'), base=16)
+                            test2 = int(handshakeDataOut[1].encode('hex'), base=16)
+                            test1 = (test1 & 0x7f) << 8
+                            size = test1 + test2
+                            # Manually split the two records to force them to be sent separately
+                            cmkPacket = handshakeDataOut[0:size+2]
+                            dataPacket = handshakeDataOut[size+2::]
+                            self._sock.send(cmkPacket)
+                            handshakeDataIn = self._sock.recv(DEFAULT_BUFFER_SIZE)
+                            #print repr(handshakeDataIn)
+                            if len(handshakeDataIn) == 0:
+                                raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                            # Pass the data to the SSL engine
+                            self._networkBio.write(handshakeDataIn)
+                            handshakeDataOut = dataPacket
+
+                    # Send it to the peer
+                    self._sock.send(handshakeDataOut)
+                    lenToRead = self._networkBio.pending()
+
                 handshakeDataIn = self._sock.recv(DEFAULT_BUFFER_SIZE)
                 if len(handshakeDataIn) == 0:
                     raise IOError('Nassl SSL handshake failed: peer did not send data back.')
