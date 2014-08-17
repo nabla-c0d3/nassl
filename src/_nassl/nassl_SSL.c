@@ -1,6 +1,16 @@
 
 #include <Python.h>
 
+// Include internal headers so we can access EDH and ECDH parameter
+// They need to be included before including winsock.h otherwise we get a bunch of errors on Windows
+// http://stackoverflow.com/questions/11726958/cant-include-winsock2-h-in-msvc-2010
+/* crappy solution, ssl_locl and e_os are normally not exported by openssl but we need them to read non exported structures.
+   Plus CERT is defined by ssl_locl so we have to undefine it before including it... */
+#undef CERT
+#include "openssl-internal/ssl_locl.h"
+
+
+
 // Fix symbol clashing on Windows
 // https://bugs.launchpad.net/pyopenssl/+bug/570101
 #ifdef _WIN32
@@ -22,29 +32,29 @@
 
 // nassl.SSL.new()
 static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-	nassl_SSL_Object *self;
+    nassl_SSL_Object *self;
     nassl_SSL_CTX_Object *sslCtx_Object;
-	SSL *ssl;
+    SSL *ssl;
 
     self = (nassl_SSL_Object *)type->tp_alloc(type, 0);
     if (self == NULL)
-    	return NULL;
+        return NULL;
 
     self->ssl = NULL;
     self->sslCtx_Object = NULL;
     self->bio_Object = NULL;
 
     // Recover and store the corresponding ssl_ctx
-	if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object)) {
-		Py_DECREF(self);
-    	return NULL;
+    if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object)) {
+        Py_DECREF(self);
+        return NULL;
     }
 
-	if (sslCtx_Object == NULL) {
+    if (sslCtx_Object == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Received a NULL SSL_CTX object");
         Py_DECREF(self);
-		return NULL;
-	}
+        return NULL;
+    }
     Py_INCREF(sslCtx_Object);
 
     ssl = SSL_new(sslCtx_Object->sslCtx);
@@ -53,7 +63,7 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
         return raise_OpenSSL_error();
     }
 
-	self->sslCtx_Object = sslCtx_Object;
+    self->sslCtx_Object = sslCtx_Object;
     self->ssl = ssl;
     self->bio_Object = NULL;
 
@@ -62,13 +72,13 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
 
 static void nassl_SSL_dealloc(nassl_SSL_Object *self) {
- 	if (self->ssl != NULL) {
-  		SSL_free(self->ssl);
+    if (self->ssl != NULL) {
+        SSL_free(self->ssl);
         self->ssl = NULL;
         if (self->bio_Object != NULL) {
             // BIO is implicitely freed by SSL_free()
             self->bio_Object->bio = NULL;
-  	    }
+        }
     }
 
     if (self->sslCtx_Object != NULL) {
@@ -552,11 +562,18 @@ static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *a
     return PyString_FromString(stateString);
 }
 
+//#ifndef WIN32
+//  #define WIN32
+//#endif
 
-/* crappy solution, ssl_locl and e_os are normally not exported by openssl but we need them to read non exported structures.
-   Plus CERT is defined by ssl_locl so we have to undefine it before including it... */
-#undef CERT
-#include "openssl-internal/ssl_locl.h"
+//#define WIN32_LEAN_AND_MEAN
+//#include <WinSock2.h>
+//#include <Windows.h>
+
+//#define _WINSOCK2API_
+//#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+
+
 
 static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
     DH *dh_srvr;
@@ -802,9 +819,9 @@ static PyTypeObject nassl_SSL_Type = {
 
 void module_add_SSL(PyObject* m) {
 
-	nassl_SSL_Type.tp_new = nassl_SSL_new;
-	if (PyType_Ready(&nassl_SSL_Type) < 0)
-    	return;
+    nassl_SSL_Type.tp_new = nassl_SSL_new;
+    if (PyType_Ready(&nassl_SSL_Type) < 0)
+        return;
 
     Py_INCREF(&nassl_SSL_Type);
     PyModule_AddObject(m, "SSL", (PyObject *)&nassl_SSL_Type);
