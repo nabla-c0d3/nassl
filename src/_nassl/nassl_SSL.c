@@ -17,7 +17,7 @@
 #include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
-
+#include "openssl_utils.h"
 
 
 // nassl.SSL.new()
@@ -546,9 +546,112 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
 
 
 static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args) {
+    // This is only used for fixing SSLv2 connections when connecting to IIS7 (like in the 90s)
+    // See SslClient.py for more information
     const char *stateString = SSL_state_string_long(self->ssl);
     return PyString_FromString(stateString);
 }
+
+
+/* crappy solution, ssl_locl and e_os are normally not exported by openssl but we need them to read non exported structures.
+   Plus CERT is defined by ssl_locl so we have to undefine it before including it... */
+#undef CERT
+#include "openssl-internal/ssl_locl.h"
+
+static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
+    DH *dh_srvr;
+    SSL_SESSION* session;
+    long alg_k;
+
+    if ((self->ssl == NULL) || (self->ssl->s3 == NULL) || (self->ssl->s3->tmp.new_cipher == NULL))
+    {
+        PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
+        return NULL;
+    }
+    alg_k = self->ssl->s3->tmp.new_cipher->algorithm_mkey;
+    session = self->ssl->session;
+
+    if (!(alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)))
+    {
+        PyErr_SetString(PyExc_TypeError, "Diffie-Hellman is not used in this session");
+        return NULL;
+    }
+
+    if (session == NULL)
+    {
+        PyErr_SetString(PyExc_TypeError, "Invalid session");
+        return NULL;
+    }
+
+    if ((session->sess_cert == NULL) || (session->sess_cert->peer_dh_tmp == NULL))
+    {
+        PyErr_SetString(PyExc_TypeError, "Unable to get Diffie-Hellman parameters");
+        return NULL;
+    }
+    dh_srvr = session->sess_cert->peer_dh_tmp;
+
+    if ((dh_srvr->p == NULL) ||(dh_srvr->g == NULL) ||(dh_srvr->pub_key == NULL))
+    {
+        PyErr_SetString(PyExc_TypeError, "Unable to get Diffie-Hellman parameters");
+        return NULL;
+    }
+
+    return generic_print_to_string((int (*)(BIO *, const void *)) &DHparams_print, dh_srvr);
+}
+
+
+/* mostly ripped from OpenSSL's s3_clnt.c */
+static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self) {
+    EC_KEY *ec_key;
+    SSL_SESSION* session;
+    long alg_k;
+    EVP_PKEY *srvr_pub_pkey = NULL;
+
+    if ((self->ssl == NULL) || (self->ssl->s3 == NULL) || (self->ssl->s3->tmp.new_cipher == NULL))
+    {
+        PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
+        return NULL;
+    }
+    alg_k = self->ssl->s3->tmp.new_cipher->algorithm_mkey;
+    session = self->ssl->session;
+
+    if (!(alg_k & (SSL_kECDHr|SSL_kECDHe|SSL_kEECDH)))
+    {
+        PyErr_SetString(PyExc_TypeError, "Elliptic curve Diffie-Hellman is not used in this session");
+        return NULL;
+    }
+
+    if ((session == NULL) || (session->sess_cert == NULL))
+    {
+        PyErr_SetString(PyExc_TypeError, "Invalid session");
+        return NULL;
+    }
+
+
+    if (session->sess_cert->peer_ecdh_tmp != NULL)
+    {
+        ec_key = session->sess_cert->peer_ecdh_tmp;
+    }
+    else
+    {
+        /* Get the Server Public Key from Cert */
+        srvr_pub_pkey = X509_get_pubkey(session-> \
+            sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
+        if ((srvr_pub_pkey == NULL) ||
+            (srvr_pub_pkey->type != EVP_PKEY_EC) ||
+            (srvr_pub_pkey->pkey.ec == NULL))
+        {
+            if (srvr_pub_pkey)
+                EVP_PKEY_free(srvr_pub_pkey);
+            PyErr_SetString(PyExc_TypeError, "Unable to get server public key.");
+            return NULL;
+        }
+        ec_key = srvr_pub_pkey->pkey.ec;
+    }
+
+    return generic_print_to_string((int (*)(BIO *, const void *)) &ECParameters_print, ec_key);
+}
+
 
 
 static PyMethodDef nassl_SSL_Object_methods[] = {
@@ -638,6 +741,12 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
      "OpenSSL's SSL_state_string_long()."
+    },
+    {"get_dh_param", (PyCFunction)nassl_SSL_get_dh_param, METH_NOARGS,
+     "return Diffie-Hellman parameters as a string."
+    },
+    {"get_ecdh_param", (PyCFunction)nassl_SSL_get_ecdh_param, METH_NOARGS,
+     "return elliptic curve Diffie-Hellman parameters as a string."
     },
     {NULL}  // Sentinel
 };

@@ -16,6 +16,8 @@ ZLIB_LIB_DIR = ZLIB_DIR + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibst
 def main():
     # Create folder
     create_folder(join(TEST_DIR, 'nassl'))
+    openssl_internal_dir = join(OPENSSL_INSTALL_DIR, "include", "openssl-internal")
+    create_folder(openssl_internal_dir)
 
     # Build Zlib
     ZLIB_BUILD_TASKS = [
@@ -31,7 +33,9 @@ def main():
         'ms\\do_ms',
         'nmake -f ms\\nt.mak clean',
         'nmake -f ms\\nt.mak',
-        'nmake -f ms\\nt.mak install']
+        'nmake -f ms\\nt.mak install',
+        'xcopy /y %s %s'%(join(OPENSSL_DIR, 'e_os.h'), openssl_internal_dir), # copy some internal headers for accessing EDH and ECDH parameters
+        'xcopy /y %s %s'%(join(OPENSSL_DIR, 'ssl', 'ssl_locl.h'), openssl_internal_dir)]
 
     perform_build_task('OPENSSL', OPENSSL_BUILD_TASKS, OPENSSL_DIR)
 
@@ -56,4 +60,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -316,3 +316,54 @@ class SslClient(object):
             return None
 
 
+    def get_dh_param(self):
+        d = self._openssl_str_to_dic(self._ssl.get_dh_param())
+        d['GroupSize'] = d.pop('PKCS#3_DH_Parameters').strip('( bit)')
+        d['Type'] = "DH"
+        d['Generator'] = d.pop('generator').split(' ')[0]
+        return d
+
+
+    def get_ecdh_param(self):
+        d = self._openssl_str_to_dic(self._ssl.get_ecdh_param(), '        ')
+        d['GroupSize'] = d.pop('ECDSA_Parameters').strip('( bit)')
+        d['Type'] = "ECDH"
+        if 'Cofactor' in d :
+            d['Cofactor'] = d['Cofactor'].split(' ')[0]
+
+        for k in d.keys() :
+            if k.startswith('Generator') :
+                d['Generator'] = d.pop(k)
+                d['GeneratorType'] = k.split('_')[1].strip('()')
+                break
+        else :
+            d['GeneratorType'] = 'Unknown'
+        return d
+
+
+    @staticmethod
+    # For EDH and ECDH parameters pretty-printing
+    def _openssl_str_to_dic(s, param_tab='            ') :
+        d = {}
+        to_XML = lambda x : "_".join(m for m in x.replace('-', ' ').split(' '))
+        current_arg = None
+        for l in s.splitlines() :
+            if not l.startswith(param_tab) :
+                if current_arg :
+                    d[current_arg] = "0x"+d[current_arg].replace(':', '')
+                    current_arg = None
+                args = tuple(arg.strip() for arg in l.split(':') if arg.strip())
+                if len(args) > 1 :
+                    # one line parameter
+                    d[to_XML(args[0])] = args[1]
+                else :
+                    # multi-line parameter
+                    current_arg = to_XML(args[0])
+                    d[current_arg] = ''
+            else :
+                d[current_arg] += l.strip()
+        if current_arg :
+            d[current_arg] = "0x"+d[current_arg].replace(':', '')
+        return d
+
+

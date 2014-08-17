@@ -34,7 +34,8 @@ if NASSL_INSTALL_DIR == '':
 def main():
     # Create folder
     create_folder(TEST_DIR + '/nassl/')
-
+    openssl_internal_dir = join(OPENSSL_INSTALL_DIR, "include", "openssl-internal")
+    create_folder(openssl_internal_dir)
 
     # Build Zlib
     ZLIB_BUILD_TASKS = [
@@ -52,7 +53,9 @@ def main():
         #'make depend', # This makes building with Clang on OS X fail
         'make',
         'make test',
-        'make install']
+        'make install_sw', # don't build documentation, else will fail on Debian
+        'cp %s %s'%(join(OPENSSL_DIR, 'e_os.h'), openssl_internal_dir), # copy some internal headers for accessing EDH and ECDH parameters
+        'cp %s %s'%(join(OPENSSL_DIR, 'ssl', 'ssl_locl.h'), openssl_internal_dir)]
 
     perform_build_task('OPENSSL', OPENSSL_BUILD_TASKS, OPENSSL_DIR)
 
@@ -77,4 +80,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
