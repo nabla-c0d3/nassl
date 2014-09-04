@@ -4,7 +4,7 @@ NASSL_SETUP = {
     'name' : "nassl",
     'version' : NASSL_VERSION,
     'package_dir' : {'nassl' : 'src'},
-    'py_modules' : ['nassl.__init__', 'nassl.SslClient', 'nassl.X509Certificate', 'nassl.OcspResponse'],
+    'py_modules' : ['nassl.__init__', 'nassl.SslClient', 'nassl.DebugSslClient', 'nassl.X509Certificate', 'nassl.OcspResponse'],
     'description' : 'OpenSSL wrapper for SSLyze',
     'author' : 'Alban Diquet',
     'author_email' : 'nabla.c0d3@gmail.com',
