@@ -60,6 +60,12 @@ still manage to get a full build of nassl by manually copying the OpenSSL libs
 from openssl/out32 to the right location in build/. Look at win32 builds.
 
 
+Unit Tests
+----------
+
+    python -m unittest discover test -p *Tests.py
+
+
 Why ???
 -------
 
