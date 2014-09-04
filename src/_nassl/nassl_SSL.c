@@ -562,18 +562,6 @@ static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *a
     return PyString_FromString(stateString);
 }
 
-//#ifndef WIN32
-//  #define WIN32
-//#endif
-
-//#define WIN32_LEAN_AND_MEAN
-//#include <WinSock2.h>
-//#include <Windows.h>
-
-//#define _WINSOCK2API_
-//#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
-
-
 
 static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
     DH *dh_srvr;
