@@ -9,7 +9,7 @@ class SSL_Tests(unittest.TestCase):
         self.assertTrue(_nassl.SSL(_nassl.SSL_CTX(SSLV23)))
 
     def test_new_bad(self):
-    	# Invalid None SSL_CTX
+        # Invalid None SSL_CTX
         self.assertRaises(TypeError, _nassl.SSL, (None))
 
 
@@ -18,8 +18,8 @@ class SSL_Tests(unittest.TestCase):
         self.assertIsNone(testSsl.set_verify(SSL_VERIFY_PEER))
 
     def test_set_verify_bad(self):
-    	# Invalid verify constant
-    	testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
+        # Invalid verify constant
+        testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertRaises(ValueError,testSsl.set_verify, (1235))
 
 

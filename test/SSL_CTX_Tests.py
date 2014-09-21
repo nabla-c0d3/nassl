@@ -9,22 +9,22 @@ class SSL_CTX_Tests(unittest.TestCase):
         self.assertTrue(_nassl.SSL_CTX(SSLV23))
 
     def test_new_bad(self):
-    	# Invalid protocol constant
+        # Invalid protocol constant
         self.assertRaises(ValueError, _nassl.SSL_CTX, (1234))
 
     def test_set_verify(self):
-    	testCTX = _nassl.SSL_CTX(SSLV23)
+        testCTX = _nassl.SSL_CTX(SSLV23)
         self.assertIsNone(testCTX.set_verify(SSL_VERIFY_PEER))
 
     def test_set_verify_bad(self):
-    	# Invalid verify constant
-    	testCTX = _nassl.SSL_CTX(SSLV23)
+        # Invalid verify constant
+        testCTX = _nassl.SSL_CTX(SSLV23)
         self.assertRaises(ValueError,testCTX.set_verify, (1235))
 
     def test_load_verify_locations(self):
-    	testCTX = _nassl.SSL_CTX(SSLV23)
-    	testFile = tempfile.NamedTemporaryFile(delete=False)
-    	testFile.write("""-----BEGIN CERTIFICATE-----
+        testCTX = _nassl.SSL_CTX(SSLV23)
+        testFile = tempfile.NamedTemporaryFile(delete=False)
+        testFile.write("""-----BEGIN CERTIFICATE-----
 MIIDIDCCAomgAwIBAgIENd70zzANBgkqhkiG9w0BAQUFADBOMQswCQYDVQQGEwJV
 UzEQMA4GA1UEChMHRXF1aWZheDEtMCsGA1UECxMkRXF1aWZheCBTZWN1cmUgQ2Vy
 dGlmaWNhdGUgQXV0aG9yaXR5MB4XDTk4MDgyMjE2NDE1MVoXDTE4MDgyMjE2NDE1
