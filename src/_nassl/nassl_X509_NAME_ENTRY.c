@@ -24,22 +24,43 @@ static void nassl_X509_NAME_ENTRY_dealloc(nassl_X509_NAME_ENTRY_Object *self) {
 }
 
 
-
 static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *self) {
-    unsigned int nameDataSize = 0;
+    unsigned int nameDataSize = 0, objectDataSize = 0, nameUtf8Size = 0;
     ASN1_STRING *nameData = NULL;
+    ASN1_OBJECT *objectData = NULL;
     unsigned char *nameDataTxt = NULL;
+    unsigned char *objectDataTxt = NULL;
     PyObject* res = NULL;
 
     nameData = X509_NAME_ENTRY_get_data(self->x509NameEntry);
     nameDataSize = ASN1_STRING_length(nameData);
 
-    if (nameDataSize != ASN1_STRING_to_UTF8(&nameDataTxt, nameData)) {
-        // Embedded null character ? Get out
-        PyErr_SetString(PyExc_NotImplementedError, "ASN1 string length does not match C string length. Embedded null character ?");
-        return NULL;
-    }
 
+    // Extract the text representation of the field's name
+    objectData = X509_NAME_ENTRY_get_object(self->x509NameEntry);
+    objectDataSize = OBJ_obj2txt(NULL, 0, objectData, 0) + 1;
+
+    objectDataTxt = (char *) PyMem_Malloc(objectDataSize);
+    if (objectDataTxt == NULL)
+        return PyErr_NoMemory();
+
+    OBJ_obj2txt(objectDataTxt, objectDataSize, objectData, 0);
+    nameUtf8Size = ASN1_STRING_to_UTF8(&nameDataTxt, nameData);
+
+
+    // Are we extracting the Common Name ?
+    if (strncmp(objectDataTxt, "commonName", strlen("commonName")) == 0)
+    {
+        if (nameDataSize != nameUtf8Size)
+        {
+            // TODO: Unit test for that
+            // Embedded null character in the Common Name ? Get out
+            PyMem_Free(objectDataTxt);
+            PyErr_SetString(PyExc_NotImplementedError, "ASN1 string length does not match C string length. Embedded null character ?");
+            return NULL;
+        }
+    }
+    PyMem_Free(objectDataTxt);
     res = PyString_FromStringAndSize((const char*) nameDataTxt, nameDataSize);
     return res;
 }
