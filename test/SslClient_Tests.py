@@ -2,13 +2,13 @@ import unittest
 import socket
 import tempfile
 from nassl import SSLV23, SSL_FILETYPE_PEM, _nassl, SSL_VERIFY_NONE
-from nassl.SslClient import SslClient
+from nassl.DebugSslClient import DebugSslClient
 
 
 class SslClient_Tests_PrivateKey(unittest.TestCase):
 
     def setUp(self):
-        self.sslClient = SslClient(sslVersion=SSLV23, sslVerify=SSL_VERIFY_NONE)
+        self.sslClient = DebugSslClient(sslVersion=SSLV23, sslVerify=SSL_VERIFY_NONE)
 
         testFile = tempfile.NamedTemporaryFile(delete=False)
         testFile.write("""-----BEGIN RSA PRIVATE KEY-----
@@ -75,7 +75,7 @@ class SslClient_Tests_Handshake(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = SslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
+        sslClient = DebugSslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
         self.sslClient = sslClient
 
 
@@ -90,7 +90,8 @@ class SslClient_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = SslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
+        sslClient = DebugSslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
+        sslClient.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
         sslClient.do_handshake()
         self.sslClient = sslClient
 
@@ -106,6 +107,14 @@ class SslClient_Tests_Online(unittest.TestCase):
 
     def test_get_peer_certificate(self):
         self.assertIsNotNone(self.sslClient.get_peer_certificate())
+
+
+    def test_get_peer_cert_chain(self):
+        self.assertIsNotNone(self.sslClient.get_peer_cert_chain())
+
+
+    def test_get_ecdh_param(self):
+        self.assertIsNotNone(self.sslClient.get_ecdh_param())
 
 
     def test_shutdown(self):
