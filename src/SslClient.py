@@ -297,3 +297,6 @@ class SslClient(object):
         else:
             return None
 
+    def set_mode(self, mode):
+        return self._ssl.set_mode(mode)
+

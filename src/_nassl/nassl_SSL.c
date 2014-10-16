@@ -107,6 +107,18 @@ static PyObject* nassl_SSL_set_connect_state(nassl_SSL_Object *self, PyObject *a
 }
 
 
+static PyObject* nassl_SSL_set_mode(nassl_SSL_Object *self, PyObject *args) {
+    long mode;
+
+    if (!PyArg_ParseTuple(args, "l", &mode)) {
+        return NULL;
+    }
+
+    SSL_set_mode(self->ssl, mode);
+    Py_RETURN_NONE;
+}
+
+
 static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args) {
     int result = SSL_do_handshake(self->ssl);
     if (result != 1) {
@@ -711,6 +723,9 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"set_connect_state", (PyCFunction)nassl_SSL_set_connect_state, METH_NOARGS,
      "OpenSSL's SSL_set_connect_state()."
+    },
+    {"set_mode", (PyCFunction)nassl_SSL_set_mode, METH_VARARGS,
+     "OpenSSL's SSL_set_mode()."
     },
     {"read", (PyCFunction)nassl_SSL_read, METH_VARARGS,
      "OpenSSL's SSL_read()."
