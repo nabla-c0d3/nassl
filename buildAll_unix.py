@@ -12,7 +12,8 @@ NASSL_INSTALL_DIR = ''
 if architecture()[0] == '64bit':
     if platform == 'darwin':
         OPENSSL_TARGET = 'darwin64-x86_64-cc'
-        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-10.9-intel-' + PY_VERSION + '/')
+        import platform
+        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-' + platform.mac_ver()[0] + '-' + platform.mac_ver()[-1] + '-' + PY_VERSION + '/')
         OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-darwin64')
 
     elif platform == 'linux2':
