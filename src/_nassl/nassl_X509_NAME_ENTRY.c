@@ -40,16 +40,16 @@ static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *se
     objectData = X509_NAME_ENTRY_get_object(self->x509NameEntry);
     objectDataSize = OBJ_obj2txt(NULL, 0, objectData, 0) + 1;
 
-    objectDataTxt = (char *) PyMem_Malloc(objectDataSize);
+    objectDataTxt = PyMem_Malloc(objectDataSize);
     if (objectDataTxt == NULL)
         return PyErr_NoMemory();
 
-    OBJ_obj2txt(objectDataTxt, objectDataSize, objectData, 0);
+    OBJ_obj2txt((char *)objectDataTxt, objectDataSize, objectData, 0);
     nameUtf8Size = ASN1_STRING_to_UTF8(&nameDataTxt, nameData);
 
 
     // Are we extracting the Common Name ?
-    if (strncmp(objectDataTxt, "commonName", strlen("commonName")) == 0)
+    if (strncmp((char *)objectDataTxt, "commonName", strlen("commonName")) == 0)
     {
         if (nameDataSize != nameUtf8Size)
         {
