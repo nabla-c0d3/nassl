@@ -1,6 +1,6 @@
 #!/usr/bin/python
-from platform import architecture
-from sys import platform, version_info
+from platform import architecture, mac_ver
+from sys import platform
 from os.path import join
 from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
 
@@ -12,8 +12,7 @@ NASSL_INSTALL_DIR = ''
 if architecture()[0] == '64bit':
     if platform == 'darwin':
         OPENSSL_TARGET = 'darwin64-x86_64-cc'
-        import platform
-        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-' + platform.mac_ver()[0] + '-' + platform.mac_ver()[-1] + '-' + PY_VERSION + '/')
+        NASSL_INSTALL_DIR = join(BUILD_DIR, 'lib.macosx-' + mac_ver()[0] + '-' + mac_ver()[-1] + '-' + PY_VERSION + '/')
         OPENSSL_INSTALL_DIR = join(BUILD_DIR, 'openssl-darwin64')
 
     elif platform == 'linux2':
