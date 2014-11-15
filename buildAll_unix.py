@@ -54,7 +54,7 @@ def main():
         'make',
         'make test',
         'make install_sw', # don't build documentation, else will fail on Debian
-        'mkdir %s'%(openssl_internal_dir),  # copy some internal headers for accessing EDH and ECDH parameters
+        'mkdir -p %s'%(openssl_internal_dir),  # copy some internal headers for accessing EDH and ECDH parameters
         'cp %s %s/'%(join(OPENSSL_DIR, 'e_os.h'), openssl_internal_dir),
         'cp %s %s/'%(join(OPENSSL_DIR, 'ssl', 'ssl_locl.h'), openssl_internal_dir)]
 
