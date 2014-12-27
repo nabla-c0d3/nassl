@@ -7,24 +7,10 @@ production ready. For example, SslClient **does not properly check SSL
 certificates**.
 
 
-Notes
+Usage
 -----
 
-### src/
-
-Classes implemented in Python are part of the nassl namespace. This currently
-includes SslClient.py, OcspResponse.py and X509Certificate.py. Such classes
-are designed to provide a simpler, higher-level interface to perform SSL
-connections.
-
-
-### src/_nassl/
-
-Classes implemented in C are part of the nassl.\_nassl namespace. They try to
-stay as close as possible to OpenSSL's API. In most cases, Python methods of
-such objects directly match the OpenSSL function with same name. For example
-the \_nassl.SSL.read() Python method matches OpenSSL's SSL\_read() function.
-These C classes should be considered internal.
+See test/test_client.py for an example.
 
 
 Build
@@ -66,6 +52,26 @@ Unit Tests
     python -m unittest discover test -p *Tests.py
 
 
+Structure
+---------
+
+### src/
+
+Classes implemented in Python are part of the nassl namespace. This currently
+includes SslClient.py, OcspResponse.py and X509Certificate.py. Such classes
+are designed to provide a simpler, higher-level interface to perform SSL
+connections.
+
+
+### src/_nassl/
+
+Classes implemented in C are part of the nassl.\_nassl namespace. They try to
+stay as close as possible to OpenSSL's API. In most cases, Python methods of
+such objects directly match the OpenSSL function with same name. For example
+the \_nassl.SSL.read() Python method matches OpenSSL's SSL\_read() function.
+These C classes should be considered internal.
+
+
 Why ???
 -------
 
@@ -92,4 +98,4 @@ Please contact me if this license doesn't work for you.
 Author
 ------
 
-Alban Diquet - http://nabla-c0d3.github.io
+Alban Diquet - https://nabla-c0d3.github.io
