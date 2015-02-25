@@ -37,7 +37,7 @@ class SslClient(object):
     """
 
 
-    def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None):
+    def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None, ignoreClientCertificateRequests=False):
         # A Python socket handles transmission of the data
         self._sock = sock
         self._handshakeDone = False
@@ -48,6 +48,9 @@ class SslClient(object):
         self._sslCtx.set_verify(sslVerify)
         if sslVerifyLocations:
             self._sslCtx.load_verify_locations(sslVerifyLocations)
+
+        if ignoreClientCertificateRequests:
+            self._sslCtx.ignore_certificate_requests(1)
 
         # SSL
         self._ssl = SSL(self._sslCtx)

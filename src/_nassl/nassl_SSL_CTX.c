@@ -185,6 +185,24 @@ static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *se
     Py_RETURN_NONE;
 }
 
+static PyObject* nassl_SSL_CTX_ignore_certificate_requests(nassl_SSL_CTX_Object *self, PyObject *args) {
+    int ignoreRequests = 0;
+
+    if(!PyArg_ParseTuple(args, "i", &ignoreRequests)) {
+        return NULL;
+    }
+
+    if(ignoreRequests) {
+        SSL_CTX_set_client_cert_cb(self->sslCtx, NULL);
+    } else {
+        SSL_CTX_set_client_cert_cb(self->sslCtx, client_cert_cb);
+    }
+
+    self->ignoreClientCertRequests = ignoreRequests;
+
+    Py_RETURN_NONE;
+}
+
 
 static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
     {"set_verify", (PyCFunction)nassl_SSL_CTX_set_verify, METH_VARARGS,
@@ -195,6 +213,9 @@ static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
     },
     {"set_private_key_password", (PyCFunction)nassl_SSL_CTX_set_private_key_password, METH_VARARGS,
      "Sets up a default callback for encrypted PEM file handling using OpenSSL's SSL_CTX_set_default_passwd_cb() with a hardcoded callback, and then stores the supplied password to be used for subsequent PEM decryption operations."
+    },
+    {"ignore_certificate_requests", (PyCFunction)nassl_SSL_CTX_ignore_certificate_requests, METH_VARARGS,
+     "Ignore client certificate requests from the server and continue even if no certificate was provided."
     },
     {NULL}  // Sentinel
 };
