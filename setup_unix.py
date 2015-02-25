@@ -19,7 +19,7 @@ unix_ext_args.update({
     'include_dirs' : [OPENSSL_INSTALL_DIR + '/include'],
     'extra_compile_args' : extra_compile_args,
     'library_dirs' : [OPENSSL_DIR, ZLIB_DIR],
-    'libraries' : ['ssl', 'z', 'crypto']})
+    'libraries' : ['ssl', 'crypto', 'z']})
 
 
 unix_setup = NASSL_SETUP.copy()
