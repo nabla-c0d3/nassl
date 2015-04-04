@@ -3,8 +3,8 @@ nassl
 
 Experimental Python wrapper for OpenSSL. **Do NOT use for anything serious**.
 This code has not been properly tested/reviewed and is absolutely not
-production ready. For example, SslClient **does not properly check SSL
-certificates**.
+production ready. For example, SslClient uses an **insecure, outdated version 
+of OpenSSL**.
 
 
 Usage
