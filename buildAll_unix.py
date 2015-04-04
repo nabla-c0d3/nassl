@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 from platform import architecture, mac_ver
 from sys import platform
 from os.path import join
@@ -72,7 +72,7 @@ def main():
 
     # Test nassl
     NASSL_TEST_TASKS = [
-        'python -m unittest discover --pattern=*_Tests.py']
+        'python2 -m unittest discover --pattern=*_Tests.py']
 
     perform_build_task('NASSL Tests', NASSL_TEST_TASKS, TEST_DIR)
 

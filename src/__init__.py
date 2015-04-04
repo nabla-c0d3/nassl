@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python2
 
 
 NASSL_VERSION = "1.0 DEV"
