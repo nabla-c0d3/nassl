@@ -3,7 +3,7 @@ nassl
 
 Experimental Python wrapper for OpenSSL. **Do NOT use for anything serious**.
 This code has not been properly tested/reviewed and is absolutely not
-production ready. For example, SslClient uses an **insecure, outdated version 
+production ready. For example, nassl uses an **insecure, outdated version 
 of OpenSSL**.
 
 
@@ -76,7 +76,7 @@ Why ???
 -------
 
 I'm the author of SSLyze, an SSL scanner written in Python:
-https://github.com/iSECPartners/sslyze. Scanning SSL servers requires access
+https://github.com/nabla-c0d3/sslyze. Scanning SSL servers requires access
 to low-level SSL functions within the OpenSSL API, for example to test for
 things like insecure renegotiation or session resumption.
 
@@ -88,7 +88,7 @@ wrapper.
 License
 -------
 
-Copyright 2013 Alban Diquet
+Copyright 2015 Alban Diquet
 
 Licensed under the GPLv2; see ./LICENSE
 
