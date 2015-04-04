@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 
 
-NASSL_VERSION = "1.0 DEV"
+NASSL_VERSION = "0.11"
 
 
 # Verify constants
