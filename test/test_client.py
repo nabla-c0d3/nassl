@@ -1,4 +1,4 @@
-
+#!/usr/bin/python2.7
 import socket
 from nassl import TLSV1, SSL_VERIFY_NONE
 from nassl.DebugSslClient import DebugSslClient

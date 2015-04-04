@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python2.7
 from nassl._nassl import SSL
 from SslClient import SslClient
 

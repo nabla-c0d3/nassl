@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 from distutils.core import setup, Extension
 from sys import platform
 

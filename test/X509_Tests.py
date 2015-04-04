@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 import unittest
 import socket
 from nassl.SslClient import SslClient

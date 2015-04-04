@@ -1,3 +1,4 @@
+#!/usr/bin/python2.7
 import unittest
 import tempfile
 from nassl import _nassl, SSLV23, SSL_VERIFY_PEER
