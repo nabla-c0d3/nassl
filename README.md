@@ -20,9 +20,9 @@ Multiple build scripts are available. They will consecutively build Zlib,
 OpenSSL and nassl.
 
 Regardless of the platform you're targeting, you will need to:
-* Download OpenSSL 1.0.1i at
+* Download OpenSSL 1.0.2a at
 https://www.openssl.org/source/ and extract the content of
-the source package to nassl/openssl-1.0.1i
+the source package to nassl/openssl-1.0.2a
 * Download Zlib at http://zlib.net/zlib-1.2.8.tar.gz and extract the content
 of the source package to nassl/zlib-1.2.8.
 
