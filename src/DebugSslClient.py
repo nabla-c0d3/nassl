@@ -51,7 +51,7 @@ class DebugSslClient(SslClient):
     def get_dh_param(self):
         """Retrieve the negotiated Ephemeral Diffie Helmann parameters."""
         d = self._openssl_str_to_dic(self._ssl.get_dh_param())
-        d['GroupSize'] = d.pop('PKCS#3_DH_Parameters').strip('( bit)')
+        d['GroupSize'] = d.pop('DH_Parameters').strip('( bit)')
         d['Type'] = "DH"
         d['Generator'] = d.pop('generator').split(' ')[0]
         return d
