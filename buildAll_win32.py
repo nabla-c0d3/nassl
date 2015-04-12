@@ -29,7 +29,7 @@ def main():
 
     # Build OpenSSL
     OPENSSL_BUILD_TASKS = [
-        OPENSSL_CONF_CMD('VC-WIN32' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR) + ' -DZLIB_WINAPI', # *hate* zlib
+        OPENSSL_CONF_CMD('VC-WIN32' , OPENSSL_INSTALL_DIR, ZLIB_DIR, ZLIB_LIB_DIR) + ' no-asm -DZLIB_WINAPI', # *hate* zlib
         'ms\\do_ms',
         'nmake -f ms\\nt.mak clean',
         'nmake -f ms\\nt.mak',
