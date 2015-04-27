@@ -41,6 +41,7 @@ class SslClient(object):
         # A Python socket handles transmission of the data
         self._sock = sock
         self._handshakeDone = False
+        self.client_ca_list = []
 
         # OpenSSL objects
         # SSL_CTX
@@ -101,7 +102,7 @@ class SslClient(object):
 
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
-                raise ClientCertificateRequested(self._ssl.get_client_CA_list())
+                raise ClientCertificateRequested(self.get_client_ca_list())
 
 
     def do_ssl2_iis_handshake(self):
@@ -159,7 +160,7 @@ class SslClient(object):
 
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
-                raise ClientCertificateRequested(self._ssl.get_client_CA_list())
+                raise ClientCertificateRequested(self.get_client_CA_list())
 
 
 
@@ -297,3 +298,7 @@ class SslClient(object):
         else:
             return None
 
+    def get_client_CA_list(self):
+        if not self.client_ca_list:
+            self.client_ca_list = self._ssl.get_client_CA_list()
+        return self.client_ca_list
