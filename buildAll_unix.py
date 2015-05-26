@@ -64,7 +64,7 @@ def main():
 
     # Build nassl
     NASSL_BUILD_TASKS = [
-        'python setup_unix.py build',
+        'python2.7 setup_unix.py build',
         'cp -R ' + NASSL_INSTALL_DIR + '* ' + TEST_DIR]
 
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
