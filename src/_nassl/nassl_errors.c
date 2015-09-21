@@ -24,9 +24,9 @@ PyObject* raise_OpenSSL_error() {
     // Just queue all the errors in the error queue to create a giant error string
     // TODO: Improve error handling so we only return one single error; no sure if OpenSSL allows that...
     while(iterateOpenSslError != 0) {
+        PyObject* pyIterateErrorString;
         char iterateErrorString[128];
         iterateErrorString[0] = '\0';
-        PyObject* pyIterateErrorString;
 
         // Get the current error string and convert it to a Python string
         ERR_error_string_n(iterateOpenSslError, iterateErrorString, 128);
