@@ -18,12 +18,30 @@ static PyObject *nassl_WantX509LookupError_Exception;
 
 
 PyObject* raise_OpenSSL_error() {
-    unsigned long openSslError;
-    char *errorString;
+    PyObject *pyFinalErrorString = PyString_FromString("");
+    unsigned long iterateOpenSslError = ERR_get_error();
 
-    openSslError = ERR_get_error();
-    errorString = ERR_error_string(openSslError, NULL);
-    PyErr_SetString(nassl_OpenSSLError_Exception, errorString);
+    // Just queue all the errors in the error queue to create a giant error string
+    // TODO: Improve error handling so we only return one single error; no sure if OpenSSL allows that...
+    while(iterateOpenSslError != 0) {
+        char iterateErrorString[128];
+        PyObject* pyIterateErrorString;
+
+        // Get the current error string and convert it to a Python string
+        ERR_error_string_n(iterateOpenSslError, iterateErrorString, 128);
+        pyIterateErrorString = PyString_FromStringAndSize(iterateErrorString, 128);
+
+        // Concatenate it with the previous error strings
+        PyString_ConcatAndDel(&pyFinalErrorString, pyIterateErrorString);
+        if (pyFinalErrorString == NULL) {
+            return PyErr_NoMemory();
+        }
+
+        iterateOpenSslError = ERR_get_error();
+    }
+
+    PyErr_SetObject(nassl_OpenSSLError_Exception, pyFinalErrorString);
+    Py_DECREF(pyFinalErrorString);
     return NULL;
 }
 
