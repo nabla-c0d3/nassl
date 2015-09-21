@@ -20,9 +20,9 @@ Multiple build scripts are available. They will consecutively build Zlib,
 OpenSSL and nassl.
 
 Regardless of the platform you're targeting, you will need to:
-* Download OpenSSL 1.0.2a at
+* Download OpenSSL 1.0.2d at
 https://www.openssl.org/source/ and extract the content of
-the source package to nassl/openssl-1.0.2a
+the source package to nassl/openssl-1.0.2d
 * Download Zlib at http://zlib.net/zlib-1.2.8.tar.gz and extract the content
 of the source package to nassl/zlib-1.2.8.
 
@@ -32,11 +32,11 @@ of the source package to nassl/zlib-1.2.8.
 Build script for OS X 64 bits and Linux 32/64 bits. It was tested on OS X
 Mavericks, Ubuntu 13.04 and Debian 7. This is the easiest build script to use.
 
-    wget http://zlib.net/zlib-1.2.8.tar.gz
-    tar xvfz  zlib-1.2.8.tar.gz
-    wget https://www.openssl.org/source/openssl-1.0.2a.tar.gz
-    tar xvfz  openssl-1.0.2a.tar.gz
-    python buildAll_unix.py
+    $ wget http://zlib.net/zlib-1.2.8.tar.gz
+    $ tar xvfz  zlib-1.2.8.tar.gz
+    $ wget https://www.openssl.org/source/openssl-1.0.2d.tar.gz
+    $ tar xvfz  openssl-1.0.2a.tar.gz
+    $ python buildAll_unix.py
 
 
 ### buildAll_win32.py
@@ -56,7 +56,7 @@ from openssl/out32 to the right location in build/. Look at win32 builds.
 Unit Tests
 ----------
 
-    python -m unittest discover test -p *Tests.py
+    $ python -m unittest discover test -p *Tests.py
 
 
 Structure
