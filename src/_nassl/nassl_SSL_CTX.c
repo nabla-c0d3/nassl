@@ -129,8 +129,47 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
     }
 
     if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL)) {
-        raise_OpenSSL_error();
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_CTX_use_certificate_chain_file(nassl_SSL_CTX_Object *self, PyObject *args) {
+    const char *filePath = NULL;
+
+    if (!PyArg_ParseTuple(args, "s", &filePath)) {
         return NULL;
+    }
+
+    if (SSL_CTX_use_certificate_chain_file(self->sslCtx, filePath) != 1 ){
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, PyObject *args) {
+    const char *filePath = NULL;
+    int certType = 0;
+
+    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType)) {
+        return NULL;
+    }
+
+    if (SSL_CTX_use_PrivateKey_file(self->sslCtx, filePath, certType) != 1) {
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+static PyObject* nassl_SSL_CTX_check_private_key(nassl_SSL_CTX_Object *self, PyObject *args) {
+    if (SSL_CTX_check_private_key(self->sslCtx) != 1){
+        return raise_OpenSSL_error();
     }
 
     Py_RETURN_NONE;
@@ -192,6 +231,15 @@ static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
     },
     {"load_verify_locations", (PyCFunction)nassl_SSL_CTX_load_verify_locations, METH_VARARGS,
      "OpenSSL's SSL_CTX_load_verify_locations() with a NULL CAPath."
+    },
+    {"use_certificate_chain_file", (PyCFunction)nassl_SSL_CTX_use_certificate_chain_file, METH_VARARGS,
+     "OpenSSL's SSL_CTX_use_certificate_chain_file()."
+    },
+    {"use_PrivateKey_file", (PyCFunction)nassl_SSL_CTX_use_PrivateKey_file, METH_VARARGS,
+     "OpenSSL's SSL_CTX_use_PrivateKey_file()."
+    },
+    {"check_private_key", (PyCFunction)nassl_SSL_CTX_check_private_key, METH_NOARGS,
+     "OpenSSL's SSL_CTX_check_private_key()."
     },
     {"set_private_key_password", (PyCFunction)nassl_SSL_CTX_set_private_key_password, METH_VARARGS,
      "Sets up a default callback for encrypted PEM file handling using OpenSSL's SSL_CTX_set_default_passwd_cb() with a hardcoded callback, and then stores the supplied password to be used for subsequent PEM decryption operations."

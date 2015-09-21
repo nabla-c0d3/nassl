@@ -266,17 +266,18 @@ class SslClient(object):
         return self._ssl.get_cipher_bits()
 
 
-    def use_private_key(self, certFile, certType, keyFile, keyType, keyPassword=''):
+    def use_private_key(self, certChainFile, keyFile, keyType, keyPassword=''):
+        """The certificate chain file must be in PEM format."""
 
-        self._ssl.use_certificate_file(certFile, certType)
+        self._sslCtx.use_certificate_chain_file(certChainFile)
 
         if isinstance(keyPassword, basestring):
             self._sslCtx.set_private_key_password(keyPassword)
         else:
             raise TypeError('keyPassword is not a string')
 
-        self._ssl.use_PrivateKey_file(keyFile, keyType)
-        return self._ssl.check_private_key()
+        self._sslCtx.use_PrivateKey_file(keyFile, keyType)
+        return self._sslCtx.check_private_key()
 
 
     def get_certificate_chain_verify_result(self):

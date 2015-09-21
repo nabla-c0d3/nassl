@@ -353,47 +353,6 @@ static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *arg
 }
 
 
-static PyObject* nassl_SSL_use_certificate_file(nassl_SSL_Object *self, PyObject *args) {
-    const char *filePath = NULL;
-    int certType = 0;
-
-    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType)) {
-        return NULL;
-    }
-
-    if (SSL_use_certificate_file(self->ssl, filePath, certType) != 1 ){
-        return raise_OpenSSL_error();
-    }
-
-    Py_RETURN_NONE;
-}
-
-
-static PyObject* nassl_SSL_use_PrivateKey_file(nassl_SSL_Object *self, PyObject *args) {
-    const char *filePath = NULL;
-    int certType = 0;
-
-    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType)) {
-        return NULL;
-    }
-
-    if (SSL_use_PrivateKey_file(self->ssl, filePath, certType) != 1) {
-        return raise_OpenSSL_error();
-    }
-
-    Py_RETURN_NONE;
-}
-
-
-static PyObject* nassl_SSL_check_private_key(nassl_SSL_Object *self, PyObject *args) {
-    if (SSL_check_private_key(self->ssl) != 1){
-        return raise_OpenSSL_error();
-    }
-
-    Py_RETURN_NONE;
-}
-
-
 static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
     PyObject* namesPyList = NULL;
     int x509NamesNum = 0;
@@ -753,15 +712,6 @@ static PyMethodDef nassl_SSL_Object_methods[] = {
     },
     {"get_cipher_name", (PyCFunction)nassl_SSL_get_cipher_name, METH_NOARGS,
      "OpenSSL's SSL_get_cipher_name()."
-    },
-    {"use_certificate_file", (PyCFunction)nassl_SSL_use_certificate_file, METH_VARARGS,
-     "OpenSSL's SSL_use_certificate_file()."
-    },
-    {"use_PrivateKey_file", (PyCFunction)nassl_SSL_use_PrivateKey_file, METH_VARARGS,
-     "OpenSSL's SSL_use_PrivateKey_file()."
-    },
-    {"check_private_key", (PyCFunction)nassl_SSL_check_private_key, METH_NOARGS,
-     "OpenSSL's SSL_check_private_key()."
     },
     {"get_client_CA_list", (PyCFunction)nassl_SSL_get_client_CA_list, METH_NOARGS,
      "Returns a list of name strings using OpenSSL's SSL_get_client_CA_list() and X509_NAME_oneline()."
