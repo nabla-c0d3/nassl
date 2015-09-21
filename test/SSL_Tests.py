@@ -107,14 +107,16 @@ class SSL_Tests(unittest.TestCase):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertIsNone(testSsl.set_cipher_list("LOW"))
 
+
     def test_set_cipher_list_bad(self):
         # Invalid cipher string
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         self.assertRaises(_nassl.OpenSSLError,testSsl.set_cipher_list, ("badcipherstring"))
 
+
     def test_shutdown_bad(self):
         testSsl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'no cipher match', testSsl.shutdown)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'uninitialized', testSsl.shutdown)
 
 
     def test_get_cipher_list(self):
