@@ -25,13 +25,15 @@ PyObject* raise_OpenSSL_error() {
     // TODO: Improve error handling so we only return one single error; no sure if OpenSSL allows that...
     while(iterateOpenSslError != 0) {
         char iterateErrorString[128];
+        iterateErrorString[0] = '\0';
         PyObject* pyIterateErrorString;
 
         // Get the current error string and convert it to a Python string
         ERR_error_string_n(iterateOpenSslError, iterateErrorString, 128);
-        pyIterateErrorString = PyString_FromStringAndSize(iterateErrorString, 128);
+        pyIterateErrorString = PyString_FromString(iterateErrorString);
 
         // Concatenate it with the previous error strings
+        PyString_ConcatAndDel(&pyFinalErrorString,PyString_FromString("\n"));
         PyString_ConcatAndDel(&pyFinalErrorString, pyIterateErrorString);
         if (pyFinalErrorString == NULL) {
             return PyErr_NoMemory();
