@@ -308,7 +308,7 @@ class X509Certificate:
         for distrib_point in crl_ext:
             distrib_point = distrib_point.strip()
             distrib_point = distrib_point.split(':', 1)
-            if distrib_point[0] != '':
+            if len(distrib_point) >= 2:
                 if subcrl.has_key(distrib_point[0].strip()):
                     subcrl[distrib_point[0].strip()].append(distrib_point[1].strip())
                 else:
