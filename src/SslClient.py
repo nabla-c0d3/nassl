@@ -278,7 +278,7 @@ class SslClient(object):
         if isinstance(client_key_password, basestring):
             self._ssl_ctx.set_private_key_password(client_key_password)
         else:
-            raise TypeError('keyPassword is not a string')
+            raise TypeError('client_key_password is not a string')
 
         try:
             self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type)
