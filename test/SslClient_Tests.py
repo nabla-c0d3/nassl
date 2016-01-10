@@ -145,7 +145,7 @@ class SslClient_Tests_Online(unittest.TestCase):
         self.assertEqual(20, self.ssl_client.get_certificate_chain_verify_result()[0])
 
 
-    def test_get_client_CA_list(self):
+    def test_client_certificate_requested(self):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
@@ -156,6 +156,18 @@ class SslClient_Tests_Online(unittest.TestCase):
         self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
                                 ssl_client.do_handshake)
 
+
+    def test_ignore_client_authentication_requests(self):
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(("auth.startssl.com", 443))
+
+        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE,
+                                    ignore_client_authentication_requests=True)
+
+        ssl_client.do_handshake()
+        self.assertGreater(ssl_client.get_client_CA_list(), 2)
 
 
 def main():

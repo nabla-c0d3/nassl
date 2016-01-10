@@ -36,7 +36,8 @@ class SslClient(object):
 
     def __init__(self, sock=None, ssl_version=SSLV23, ssl_verify=SSL_VERIFY_PEER, ssl_verify_locations=None,
                  client_certchain_file=None, client_key_file=None, client_key_type=SSL_FILETYPE_PEM,
-                 client_key_password=''):
+                 client_key_password='', ignore_client_authentication_requests=False):
+
         # A Python socket handles transmission of the data
         self._sock = sock
         self._is_handshake_completed = False
@@ -51,6 +52,12 @@ class SslClient(object):
 
         if client_certchain_file is not None:
             self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
+
+        if ignore_client_authentication_requests:
+            if client_certchain_file:
+                raise ValueError('Cannot enable both client_certchain_file and ignore_client_authentication_requests')
+
+            self._ssl_ctx.set_client_cert_cb_NULL()
 
         # SSL
         self._ssl = SSL(self._ssl_ctx)
