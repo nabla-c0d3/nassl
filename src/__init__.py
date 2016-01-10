@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 
-
-NASSL_VERSION = "0.12"
+__author__ = 'Alban Diquet - @nabla_c0d3'
+__version__ = '0.13'
 
 
 # Verify constants

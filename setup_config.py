@@ -1,12 +1,12 @@
-from src import NASSL_VERSION
+from src import __author__, __version__
 
 NASSL_SETUP = {
     'name' : "nassl",
-    'version' : NASSL_VERSION,
+    'version' : __version__,
     'package_dir' : {'nassl' : 'src'},
     'py_modules' : ['nassl.__init__', 'nassl.SslClient', 'nassl.DebugSslClient', 'nassl.X509Certificate', 'nassl.OcspResponse'],
     'description' : 'OpenSSL wrapper for SSLyze',
-    'author' : 'Alban Diquet',
+    'author' : __author__,
     'author_email' : 'nabla.c0d3@gmail.com',
     'url' : 'https://github.com/nabla-c0d3/nassl'
     }
