@@ -18,17 +18,17 @@ class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = SslClient(sock=sock, sslVerify=SSL_VERIFY_NONE)
-        sslClient.do_handshake()
-        self.nameEntry = sslClient.get_peer_certificate()._x509.get_subject_name_entries()[0];
+        ssl_client = SslClient(sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client.do_handshake()
+        self.name_entry = ssl_client.get_peer_certificate()._x509.get_subject_name_entries()[0];
 
 
     def test_get_data(self):
-        self.assertIsNotNone(self.nameEntry.get_data())
+        self.assertIsNotNone(self.name_entry.get_data())
 
 
     def test_get_object(self):
-        self.assertIsNotNone(self.nameEntry.get_object())
+        self.assertIsNotNone(self.name_entry.get_object())
 
 
 def main():

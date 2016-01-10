@@ -13,10 +13,10 @@ class X509Certificate_Tests_Hostname_Validation(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.fr", 443))
 
-        sslClient = SslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
-        sslClient.do_handshake()
-        self.sslClient = sslClient
-        self.cert = sslClient.get_peer_certificate()
+        ssl_client = SslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client.do_handshake()
+        self.ssl_client = ssl_client
+        self.cert = ssl_client.get_peer_certificate()
 
     def test_matches_hostname_good(self):
         self.assertEqual(X509_NAME_MATCHES_SAN, self.cert.matches_hostname('www.google.fr'))

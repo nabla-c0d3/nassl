@@ -9,10 +9,10 @@ from nassl.DebugSslClient import DebugSslClient
 class SslClient_Tests_PrivateKey(unittest.TestCase):
 
     def setUp(self):
-        self.sslClient = DebugSslClient(sslVersion=SSLV23, sslVerify=SSL_VERIFY_NONE)
+        self.ssl_client = DebugSslClient(ssl_version=SSLV23, ssl_verify=SSL_VERIFY_NONE)
 
-        testFile = tempfile.NamedTemporaryFile(delete=False)
-        testFile.write("""-----BEGIN RSA PRIVATE KEY-----
+        test_file = tempfile.NamedTemporaryFile(delete=False)
+        test_file.write("""-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: DES-EDE3-CBC,7D15D836EE9E1B77
 
@@ -31,10 +31,10 @@ Wxf7cJ6J55bG5/Kft65kJnXAHrV9LnM1tPiRkB8umZkj/ou5NpDKiuLjR+WBfwi0
 tqXk90NdSqJtMMGgrtVM84TYFPXP58QCBnE9oAI7XYM1rusuVBOXZw==
 -----END RSA PRIVATE KEY-----
 """)
-        testFile.close()
-        self.testFile = testFile
-        testFile2 = tempfile.NamedTemporaryFile(delete=False)
-        testFile2.write("""-----BEGIN CERTIFICATE-----
+        test_file.close()
+        self.test_file = test_file
+        test_file2 = tempfile.NamedTemporaryFile(delete=False)
+        test_file2.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -73,18 +73,18 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----
 """)
-        testFile2.close()
-        self.testFile2 = testFile2
+        test_file2.close()
+        self.testFile2 = test_file2
 
 
     def test_use_private_key(self):
-        self.assertIsNone(self.sslClient.use_private_key(self.testFile2.name, self.testFile.name, SSL_FILETYPE_PEM,
+        self.assertIsNone(self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM,
                                                          'testPW'))
 
 
     def test_use_private_key_bad(self):
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'bad decrypt',
-            self.sslClient.use_private_key, self.testFile2.name, self.testFile.name, SSL_FILETYPE_PEM, 'badPW')
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'bad decrypt', self.ssl_client._use_private_key,
+                                self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM, 'badPW')
 
 
 class SslClient_Tests_Handshake(unittest.TestCase):
@@ -94,12 +94,12 @@ class SslClient_Tests_Handshake(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = DebugSslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
-        self.sslClient = sslClient
+        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        self.ssl_client = ssl_client
 
 
     def test_do_handshake(self):
-        self.assertTrue(self.sslClient.do_handshake())
+        self.assertTrue(self.ssl_client.do_handshake())
 
 
 class SslClient_Tests_Online(unittest.TestCase):
@@ -109,43 +109,43 @@ class SslClient_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
 
-        sslClient = DebugSslClient(sslVersion=SSLV23, sock=sock, sslVerify=SSL_VERIFY_NONE)
-        sslClient.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
-        sslClient.do_handshake()
-        self.sslClient = sslClient
+        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
+        ssl_client.do_handshake()
+        self.ssl_client = ssl_client
 
 
     def test_write(self):
-        self.assertGreater(self.sslClient.write('GET / HTTP/1.0\r\n\r\n'), 1)
+        self.assertGreater(self.ssl_client.write('GET / HTTP/1.0\r\n\r\n'), 1)
 
 
     def test_read(self):
-        self.sslClient.write('GET / HTTP/1.0\r\n\r\n')
-        self.assertRegexpMatches(self.sslClient.read(1024), 'google')
+        self.ssl_client.write('GET / HTTP/1.0\r\n\r\n')
+        self.assertRegexpMatches(self.ssl_client.read(1024), 'google')
 
 
     def test_get_peer_certificate(self):
-        self.assertIsNotNone(self.sslClient.get_peer_certificate())
+        self.assertIsNotNone(self.ssl_client.get_peer_certificate())
 
 
     def test_get_peer_cert_chain(self):
-        self.assertIsNotNone(self.sslClient.get_peer_cert_chain())
+        self.assertIsNotNone(self.ssl_client.get_peer_cert_chain())
 
 
     def test_get_ecdh_param(self):
-        self.assertIsNotNone(self.sslClient.get_ecdh_param())
+        self.assertIsNotNone(self.ssl_client.get_ecdh_param())
 
 
     def test_shutdown(self):
-        self.assertIsNone(self.sslClient.shutdown())
+        self.assertIsNone(self.ssl_client.shutdown())
 
 
     def test_shutdown(self):
-        self.assertIsNone(self.sslClient.shutdown())
+        self.assertIsNone(self.ssl_client.shutdown())
 
 
     def test_get_certificate_chain_verify_result(self):
-        self.assertEqual(20, self.sslClient.get_certificate_chain_verify_result()[0])
+        self.assertEqual(20, self.ssl_client.get_certificate_chain_verify_result()[0])
 
 
 

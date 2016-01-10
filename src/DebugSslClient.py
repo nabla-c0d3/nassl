@@ -27,11 +27,11 @@ class DebugSslClient(SslClient):
 
     def do_renegotiate(self):
         """Initiate an SSL renegotiation."""
-        if not self._handshakeDone:
+        if not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot renegotiate.')
 
         self._ssl.renegotiate()
-        return  self.do_handshake()
+        return self.do_handshake()
 
 
     def get_session(self):
@@ -39,9 +39,9 @@ class DebugSslClient(SslClient):
         return self._ssl.get_session()
 
 
-    def set_session(self, sslSession):
+    def set_session(self, ssl_session):
         """Set the SSL connection's Session object."""
-        return self._ssl.set_session(sslSession)
+        return self._ssl.set_session(ssl_session)
 
 
     def set_options(self, options):
@@ -76,7 +76,7 @@ class DebugSslClient(SslClient):
 
 
     @staticmethod
-    def _openssl_str_to_dic(s, param_tab='            ') :
+    def _openssl_str_to_dic(s, param_tab='            '):
         """EDH and ECDH parameters pretty-printing."""
         d = {}
         to_XML = lambda x : "_".join(m for m in x.replace('-', ' ').split(' '))

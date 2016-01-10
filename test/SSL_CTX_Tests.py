@@ -14,18 +14,18 @@ class SSL_CTX_Tests(unittest.TestCase):
         self.assertRaises(ValueError, _nassl.SSL_CTX, (1234))
 
     def test_set_verify(self):
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertIsNone(testCTX.set_verify(SSL_VERIFY_PEER))
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertIsNone(test_ssl_ctx.set_verify(SSL_VERIFY_PEER))
 
     def test_set_verify_bad(self):
         # Invalid verify constant
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertRaises(ValueError,testCTX.set_verify, (1235))
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertRaises(ValueError, test_ssl_ctx.set_verify, (1235))
 
     def test_load_verify_locations(self):
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        testFile = tempfile.NamedTemporaryFile(delete=False)
-        testFile.write("""-----BEGIN CERTIFICATE-----
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        test_file = tempfile.NamedTemporaryFile(delete=False)
+        test_file.write("""-----BEGIN CERTIFICATE-----
 MIIDIDCCAomgAwIBAgIENd70zzANBgkqhkiG9w0BAQUFADBOMQswCQYDVQQGEwJV
 UzEQMA4GA1UEChMHRXF1aWZheDEtMCsGA1UECxMkRXF1aWZheCBTZWN1cmUgQ2Vy
 dGlmaWNhdGUgQXV0aG9yaXR5MB4XDTk4MDgyMjE2NDE1MVoXDTE4MDgyMjE2NDE1
@@ -45,24 +45,25 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
 1voqZiegDfqnc1zqcPGUIWVEX/r87yloqaKHee9570+sB3c4
 -----END CERTIFICATE-----
         """)
-        testFile.close()
-        self.assertIsNone(testCTX.load_verify_locations(testFile.name))
+        test_file.close()
+        self.assertIsNone(test_ssl_ctx.load_verify_locations(test_file.name))
 
     def test_load_verify_locations_bad(self):
         # Certificate file doesn't exist
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertRaises(_nassl.OpenSSLError, testCTX.load_verify_locations, ("test"))
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertRaises(_nassl.OpenSSLError, test_ssl_ctx.load_verify_locations, ("test"))
 
     def test_set_private_key_password_null_byte(self):
         # NULL byte embedded in the password
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertRaisesRegexp(TypeError, 'must be string without null bytes', testCTX.set_private_key_password, ("AAA\x00AAAA"))
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertRaisesRegexp(TypeError, 'must be string without null bytes', test_ssl_ctx.set_private_key_password,
+                                ("AAA\x00AAAA"))
 
 
     def test_use_certificate_file(self):
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        testFile = tempfile.NamedTemporaryFile(delete=False)
-        testFile.write("""-----BEGIN CERTIFICATE-----
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        test_file = tempfile.NamedTemporaryFile(delete=False)
+        test_file.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -101,19 +102,20 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----
 """)
-        testFile.close()
-        self.assertIsNone(testCTX.use_certificate_chain_file(testFile.name))
+        test_file.close()
+        self.assertIsNone(test_ssl_ctx.use_certificate_chain_file(test_file.name))
 
     def test_use_certificate_file_bad(self):
         # Bad filename
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'system lib', testCTX.use_certificate_chain_file, 'invalidPath')
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'system lib', test_ssl_ctx.use_certificate_chain_file,
+                                'invalidPath')
 
 
     def test_use_PrivateKey_file(self):
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        testFile = tempfile.NamedTemporaryFile(delete=False)
-        testFile.write("""-----BEGIN PRIVATE KEY-----
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        test_file = tempfile.NamedTemporaryFile(delete=False)
+        test_file.write("""-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOWe8/WW1U7wkM1P
 cAD31Cq2KoKL/sF4RwUObZqXjqa/uWijPoKYHziiyu6w1UWxLkgItusKZ6jDmzFb
 tVW94a54FDJbKeeCXY+aa58DkyHCrRljwK/BX47ubSERfHPBvIZrbdqLXo7MiJo2
@@ -130,20 +132,20 @@ iuiRanrS8dy8Q5UXavmPgBeHXZ4gxWbXD3vC5Qzorgp+P04GhofSCFklXokTPrKN
 jsXbhxAIkrdmpg==
 -----END PRIVATE KEY-----
 """)
-        testFile.close()
-        self.assertIsNone(testCTX.use_PrivateKey_file(testFile.name, SSL_FILETYPE_PEM))
+        test_file.close()
+        self.assertIsNone(test_ssl_ctx.use_PrivateKey_file(test_file.name, SSL_FILETYPE_PEM))
 
     def test_use_PrivateKey_file_bad(self):
         # Bad filename
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'No such file', testCTX.use_PrivateKey_file, 'invalidPath',
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'No such file', test_ssl_ctx.use_PrivateKey_file, 'invalidPath',
                                 SSL_FILETYPE_PEM)
 
 
     def test_check_private_key(self):
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        testFile = tempfile.NamedTemporaryFile(delete=False)
-        testFile.write("""-----BEGIN PRIVATE KEY-----
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        test_file = tempfile.NamedTemporaryFile(delete=False)
+        test_file.write("""-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOWe8/WW1U7wkM1P
 cAD31Cq2KoKL/sF4RwUObZqXjqa/uWijPoKYHziiyu6w1UWxLkgItusKZ6jDmzFb
 tVW94a54FDJbKeeCXY+aa58DkyHCrRljwK/BX47ubSERfHPBvIZrbdqLXo7MiJo2
@@ -160,9 +162,9 @@ iuiRanrS8dy8Q5UXavmPgBeHXZ4gxWbXD3vC5Qzorgp+P04GhofSCFklXokTPrKN
 jsXbhxAIkrdmpg==
 -----END PRIVATE KEY-----
 """)
-        testFile.close()
-        testFile2 = tempfile.NamedTemporaryFile(delete=False)
-        testFile2.write("""-----BEGIN CERTIFICATE-----
+        test_file.close()
+        test_file2 = tempfile.NamedTemporaryFile(delete=False)
+        test_file2.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -201,16 +203,17 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----
 """)
-        testFile2.close()
-        self.assertIsNone(testCTX.use_certificate_chain_file(testFile2.name))
-        self.assertIsNone(testCTX.use_PrivateKey_file(testFile.name, SSL_FILETYPE_PEM))
-        self.assertIsNone(testCTX.check_private_key())
+        test_file2.close()
+        self.assertIsNone(test_ssl_ctx.use_certificate_chain_file(test_file2.name))
+        self.assertIsNone(test_ssl_ctx.use_PrivateKey_file(test_file.name, SSL_FILETYPE_PEM))
+        self.assertIsNone(test_ssl_ctx.check_private_key())
 
 
     def test_check_private_key_bad(self):
-        testCTX = _nassl.SSL_CTX(SSLV23)
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', testCTX.check_private_key)
+        test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', test_ssl_ctx.check_private_key)
 
+    # TODO: add get_ca_list test
 
 def main():
     unittest.main()

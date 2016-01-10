@@ -15,7 +15,7 @@ class X509Certificate:
     """
 
     def __init__(self, x509):
-        self._certDict = None
+        self._cert_dict = None
         self._x509 = x509
 
 
@@ -33,24 +33,23 @@ class X509Certificate:
 
     def as_dict(self):
 
-        if self._certDict:
-            return self._certDict
+        if self._cert_dict:
+            return self._cert_dict
 
-        certDict = \
-            {'version': self._x509.get_version() ,
-             'serialNumber': self._x509.get_serialNumber() ,
-             'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
-             'validity': {'notBefore': self._x509.get_notBefore() ,
-                         'notAfter' : self._x509.get_notAfter()} ,
-             'subject': self._parse_x509_name(self._x509.get_subject_name_entries()) ,
-             'subjectPublicKeyInfo': self._parse_pubkey(),
-             'extensions': self._parse_x509_extensions() ,
-             'signatureAlgorithm': self._parse_signature_algorithm() ,
-             'signatureValue': self._parse_signature()
-             }
-        self._certDict = certDict
+        cert_dict = {'version': self._x509.get_version() ,
+                     'serialNumber': self._x509.get_serialNumber() ,
+                     'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
+                     'validity': {'notBefore': self._x509.get_notBefore() ,
+                                  'notAfter' : self._x509.get_notAfter()} ,
+                     'subject': self._parse_x509_name(self._x509.get_subject_name_entries()) ,
+                     'subjectPublicKeyInfo': self._parse_pubkey(),
+                     'extensions': self._parse_x509_extensions() ,
+                     'signatureAlgorithm': self._parse_signature_algorithm() ,
+                     'signatureValue': self._parse_signature()
+                     }
+        self._cert_dict = cert_dict
 
-        return certDict
+        return cert_dict
 
 
     def matches_hostname(self, hostname):
@@ -61,12 +60,12 @@ class X509Certificate:
         found and X509_NAME_MISMATCH if no match could be found.
         Will raise X509HostnameValidationError if the certificate is malformed.
         """
-        certDict = self.as_dict()
+        cert_dict = self.as_dict()
 
         # First look at Subject Alternative Names
         try:
-            altNames = certDict['extensions']['X509v3 Subject Alternative Name']['DNS']
-            for altname in altNames:
+            subject_alt_names = cert_dict['extensions']['X509v3 Subject Alternative Name']['DNS']
+            for altname in subject_alt_names:
                 if self._dnsname_match(altname, hostname):
                     return X509_NAME_MATCHES_SAN
             return X509_NAME_MISMATCH
@@ -75,11 +74,12 @@ class X509Certificate:
             pass
 
         try:
-            commonName = certDict['subject']['commonName']
-            if self._dnsname_match(commonName, hostname):
+            common_name = cert_dict['subject']['commonName']
+            if self._dnsname_match(common_name, hostname):
                 return X509_NAME_MATCHES_CN
         except KeyError: # No CN either ? This certificate is malformed
-            raise X509HostnameValidationError("Certificate has no subjectAltName and no Common Name; malformed certificate ?")
+            raise X509HostnameValidationError("Certificate has no subjectAltName and no Common Name; "
+                                              "malformed certificate ?")
 
         return X509_NAME_MISMATCH
 
@@ -234,7 +234,7 @@ class X509Certificate:
 
 # Extension Parsing Functions
     def _parse_x509_extensions(self):
-        x509extParsingFunctions = {
+        x509_ext_parsing_methods = {
             'X509v3 Subject Alternative Name': self._parse_multi_valued_extension,
             'X509v3 CRL Distribution Points': self._parse_crl_distribution_points,
             'Authority Information Access': self._parse_authority_information_access,
@@ -243,19 +243,19 @@ class X509Certificate:
             'X509v3 Certificate Policies' : self._parse_crl_distribution_points,
             'X509v3 Issuer Alternative Name' : self._parse_crl_distribution_points }
 
-        extDict = {}
+        ext_dict = {}
 
         for x509ext in self._x509.get_extensions():
-            extName = x509ext.get_object()
-            extData = x509ext.get_data()
+            ext_name = x509ext.get_object()
+            ext_data = x509ext.get_data()
             # TODO: Should we output the critical field ?
             #extCrit = x509ext.get_critical()
-            if extName in x509extParsingFunctions.keys():
-                extDict[extName] = x509extParsingFunctions[extName](extData)
+            if ext_name in x509_ext_parsing_methods.keys():
+                ext_dict[ext_name] = x509_ext_parsing_methods[ext_name](ext_data)
             else:
-                extDict[extName] = extData.strip()
+                ext_dict[ext_name] = ext_data.strip()
 
-        return extDict
+        return ext_dict
 
 
     @staticmethod
