@@ -4,7 +4,7 @@ import socket
 import tempfile
 from nassl import SSLV23, SSL_FILETYPE_PEM, _nassl, SSL_VERIFY_NONE
 from nassl.DebugSslClient import DebugSslClient
-from nassl.SslClient import ClientCertificateRequested
+from nassl.SslClient import ClientCertificateRequested, InvalidPrivateKeyPassword
 
 
 class SslClient_Tests_PrivateKey(unittest.TestCase):
@@ -84,8 +84,8 @@ Pd2eQ9+DkopOz3UGU7c=
 
 
     def test_use_private_key_bad(self):
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'bad decrypt', self.ssl_client._use_private_key,
-                                self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM, 'badPW')
+        with self.assertRaises(InvalidPrivateKeyPassword):
+            self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM, 'badPW')
 
 
 class SslClient_Tests_Handshake(unittest.TestCase):

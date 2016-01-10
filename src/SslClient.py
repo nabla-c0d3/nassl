@@ -24,6 +24,9 @@ class ClientCertificateRequested(Exception):
         return exc_msg
 
 
+class InvalidPrivateKeyPassword(ValueError):
+    pass
+
 
 class SslClient(object):
     """
@@ -277,7 +280,15 @@ class SslClient(object):
         else:
             raise TypeError('keyPassword is not a string')
 
-        self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type)
+        try:
+            self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type)
+        except OpenSSLError as e:
+            if 'bad password read' in str(e) or 'bad decrypt' in str(e):
+                raise InvalidPrivateKeyPassword()
+            else:
+                raise
+
+
         return self._ssl_ctx.check_private_key()
 
 
