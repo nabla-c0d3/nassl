@@ -4,6 +4,7 @@ import socket
 import tempfile
 from nassl import SSLV23, SSL_FILETYPE_PEM, _nassl, SSL_VERIFY_NONE
 from nassl.DebugSslClient import DebugSslClient
+from nassl.SslClient import ClientCertificateRequested
 
 
 class SslClient_Tests_PrivateKey(unittest.TestCase):
@@ -140,12 +141,20 @@ class SslClient_Tests_Online(unittest.TestCase):
         self.assertIsNone(self.ssl_client.shutdown())
 
 
-    def test_shutdown(self):
-        self.assertIsNone(self.ssl_client.shutdown())
-
-
     def test_get_certificate_chain_verify_result(self):
         self.assertEqual(20, self.ssl_client.get_certificate_chain_verify_result()[0])
+
+
+    def test_get_client_CA_list(self):
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(("auth.startssl.com", 443))
+
+        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
+
+        self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
+                                ssl_client.do_handshake)
 
 
 
