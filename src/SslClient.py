@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
-from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp
+from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp, SSL_FILETYPE_PEM
 from X509Certificate import X509Certificate
 from OcspResponse import OcspResponse
 
@@ -31,7 +31,9 @@ class SslClient(object):
     """
 
 
-    def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None, certChainFile=None, keyFile=None, keyType=None, keyPassword=''):
+    def __init__(self, sock=None, ssl_version=SSLV23, ssl_verify=SSL_VERIFY_PEER, ssl_verify_locations=None,
+                 client_certchain_file=None, client_key_file=None, client_key_type=SSL_FILETYPE_PEM,
+                 client_key_password=''):
         # A Python socket handles transmission of the data
         self._sock = sock
         self._handshakeDone = False
@@ -39,13 +41,13 @@ class SslClient(object):
 
         # OpenSSL objects
         # SSL_CTX
-        self._sslCtx = SSL_CTX(sslVersion)
-        self._sslCtx.set_verify(sslVerify)
-        if sslVerifyLocations:
-            self._sslCtx.load_verify_locations(sslVerifyLocations)
+        self._sslCtx = SSL_CTX(ssl_version)
+        self._sslCtx.set_verify(ssl_verify)
+        if ssl_verify_locations:
+            self._sslCtx.load_verify_locations(ssl_verify_locations)
 
-        if certChainFile is not None:
-            self._use_private_key(certChainFile, keyFile, keyType, keyPassword)
+        if client_certchain_file is not None:
+            self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
 
         # SSL
         self._ssl = SSL(self._sslCtx)
@@ -53,7 +55,7 @@ class SslClient(object):
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        if sslVersion != SSLV2: # This makes SSLv2 fail
+        if ssl_version != SSLV2: # This makes SSLv2 fail
             self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
         else:
             # Handshake workaround for SSL2 + IIS 7
