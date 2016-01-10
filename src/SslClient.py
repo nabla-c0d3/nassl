@@ -102,8 +102,8 @@ class SslClient(object):
 
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
-                raise ClientCertificateRequested(self.get_client_CA_list())
-
+                raise ClientCertificateRequested(self.get_client_ca_list())
+                
 
     def do_ssl2_iis_handshake(self):
         if self._sock is None:
