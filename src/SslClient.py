@@ -37,7 +37,7 @@ class SslClient(object):
     """
 
 
-    def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None):
+    def __init__(self, sock=None, sslVersion=SSLV23, sslVerify=SSL_VERIFY_PEER, sslVerifyLocations=None, certChainFile=None, keyFile=None, keyType=None, keyPassword=''):
         # A Python socket handles transmission of the data
         self._sock = sock
         self._handshakeDone = False
@@ -49,6 +49,9 @@ class SslClient(object):
         self._sslCtx.set_verify(sslVerify)
         if sslVerifyLocations:
             self._sslCtx.load_verify_locations(sslVerifyLocations)
+
+        if certChainFile is not None:
+            self._use_private_key(certChainFile, keyFile, keyType, keyPassword)
 
         # SSL
         self._ssl = SSL(self._sslCtx)
@@ -266,7 +269,7 @@ class SslClient(object):
         return self._ssl.get_cipher_bits()
 
 
-    def use_private_key(self, certChainFile, keyFile, keyType, keyPassword=''):
+    def _use_private_key(self, certChainFile, keyFile, keyType, keyPassword=''):
         """The certificate chain file must be in PEM format."""
 
         self._sslCtx.use_certificate_chain_file(certChainFile)
