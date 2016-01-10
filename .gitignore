@@ -38,3 +38,5 @@ nassl/*
 MANIFEST
 build/*
 dist/*
+
+.idea/*
