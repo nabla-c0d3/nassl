@@ -300,7 +300,12 @@ class SslClient(object):
         else:
             return None
 
+
     def get_client_CA_list(self):
         if not self._client_CA_list:
             self._client_CA_list = self._ssl.get_client_CA_list()
         return self._client_CA_list
+
+
+    def set_mode(self, mode):
+        return self._ssl.set_mode(mode)
