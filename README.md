@@ -1,6 +1,9 @@
 nassl
 =====
 
+
+[![Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
+
 Experimental Python wrapper for OpenSSL. **Do NOT use for anything serious**.
 This code has not been properly tested/reviewed and is absolutely not
 production ready. For example, nassl uses an **insecure, outdated version 
