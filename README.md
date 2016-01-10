@@ -23,9 +23,8 @@ Multiple build scripts are available. They will consecutively build Zlib,
 OpenSSL and nassl.
 
 Regardless of the platform you're targeting, you will need to:
-* Download OpenSSL 1.0.2e at
-https://www.openssl.org/source/ and extract the content of
-the source package to nassl/openssl-1.0.2e
+* Download a special fork of OpenSSL 1.0.2 (or the official OpenSSL 1.0.2e) at
+https://github.com/PeterMosmans/openssl and put in nassl's root folder.
 * Download Zlib at http://zlib.net/zlib-1.2.8.tar.gz and extract the content
 of the source package to nassl/zlib-1.2.8.
 
@@ -37,8 +36,7 @@ Mavericks, Ubuntu 13.04 and Debian 7. This is the easiest build script to use.
 
     $ wget http://zlib.net/zlib-1.2.8.tar.gz
     $ tar xvfz  zlib-1.2.8.tar.gz
-    $ wget https://www.openssl.org/source/openssl-1.0.2e.tar.gz
-    $ tar xvfz  openssl-1.0.2e.tar.gz
+    $ git clone https://github.com/PeterMosmans/openssl
     $ python buildAll_unix.py
 
 

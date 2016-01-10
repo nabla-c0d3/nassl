@@ -30,7 +30,7 @@ test/nassl
 *.p12
 
 # Dependencies
-openssl-*/*
+openssl*/*
 zlib-*/*
 
 # Build result
