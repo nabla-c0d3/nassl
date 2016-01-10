@@ -9,24 +9,18 @@ DEFAULT_BUFFER_SIZE = 4096
 
 class ClientCertificateRequested(Exception):
 
-    ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the ' +\
-    'following CAs: {0}.'
+    ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
     ERROR_MSG = 'Server requested a client certificate.'
 
-    def __init__(self, caList):
-        self._caList = caList
+    def __init__(self, ca_list):
+        self._ca_list = ca_list
 
     def __str__(self):
-        exc_msg = ''
-        if len(self._caList) > 0:
-            caListStr = ''
-            for ca in self._caList:
-                if len(caListStr) > 0:
-                    caListStr += ', '
-                caListStr += '\'' + ca + '\''
-            exc_msg = self.ERROR_MSG_CAS.format(caListStr)
-        else:
-            exc_msg = self.ERROR_MSG
+        exc_msg = self.ERROR_MSG
+
+        if len(self._ca_list) > 0:
+            exc_msg = self.ERROR_MSG_CAS.format(', '.join(self._ca_list))
+
         return exc_msg
 
 
