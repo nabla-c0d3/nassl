@@ -5,8 +5,7 @@ python:
 install:
   - wget http://zlib.net/zlib-1.2.8.tar.gz
   - tar xvfz  zlib-1.2.8.tar.gz
-  - wget https://www.openssl.org/source/openssl-1.0.2e.tar.gz
-  - tar xvfz  openssl-1.0.2e.tar.gz
+  - git clone https://github.com/PeterMosmans/openssl.git
   - python buildAll_unix.py
 # command to run tests
 script: python -m unittest discover test -p *Tests.py
