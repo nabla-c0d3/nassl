@@ -65,7 +65,7 @@ class SSL_Tests(unittest.TestCase):
         # No BIO attached to the SSL object
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
         test_ssl.set_connect_state()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'ssl handshake failure', test_ssl.write, ('test'))
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'ssl handshake failure', test_ssl.write, ('tests'))
 
 
     def test_pending(self):
@@ -91,7 +91,7 @@ class SSL_Tests(unittest.TestCase):
 
     def test_set_tlsext_host_name(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))
-        self.assertIsNone(test_ssl.set_tlsext_host_name('test'))
+        self.assertIsNone(test_ssl.set_tlsext_host_name('tests'))
 
     def test_set_tlsext_host_name_bad(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(SSLV23))

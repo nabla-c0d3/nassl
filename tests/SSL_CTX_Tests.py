@@ -51,7 +51,7 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
     def test_load_verify_locations_bad(self):
         # Certificate file doesn't exist
         test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
-        self.assertRaises(_nassl.OpenSSLError, test_ssl_ctx.load_verify_locations, ("test"))
+        self.assertRaises(_nassl.OpenSSLError, test_ssl_ctx.load_verify_locations, ("tests"))
 
     def test_set_private_key_password_null_byte(self):
         # NULL byte embedded in the password
@@ -213,7 +213,7 @@ Pd2eQ9+DkopOz3UGU7c=
         test_ssl_ctx = _nassl.SSL_CTX(SSLV23)
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', test_ssl_ctx.check_private_key)
 
-    # TODO: add get_ca_list test
+    # TODO: add get_ca_list tests
 
 def main():
     unittest.main()

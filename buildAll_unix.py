@@ -82,13 +82,11 @@ def main():
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 
     # Test nassl
-    NASSL_TEST_TASKS = [
-        'python2.7 -m unittest discover --pattern=*_Tests.py']
-
+    NASSL_TEST_TASKS = ['python2.7 run_tests.py']
     perform_build_task('NASSL Tests', NASSL_TEST_TASKS, TEST_DIR)
 
 
-    print '=== All Done! Compiled module is available in ./test/nassl/ ==='
+    print '=== All Done! ==='
 
 
 if __name__ == "__main__":

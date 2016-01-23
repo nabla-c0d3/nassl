@@ -22,7 +22,7 @@ class X509Certificate_Tests_Hostname_Validation(unittest.TestCase):
         self.assertEqual(X509_NAME_MATCHES_SAN, self.cert.matches_hostname('www.google.fr'))
 
     def test_matches_hostname_bad(self):
-        self.assertEqual(X509_NAME_MISMATCH, self.cert.matches_hostname('www.test.com'))
+        self.assertEqual(X509_NAME_MISMATCH, self.cert.matches_hostname('www.tests.com'))
 
 
 
