@@ -6,7 +6,7 @@ install:
 #  - wget http://zlib.net/zlib-1.2.8.tar.gz
 #  - tar xvfz  zlib-1.2.8.tar.gz
 #  - git clone https://github.com/PeterMosmans/openssl.git
-#  - python buildAll_unix.py
+#  - python build_from_scratch.py
    - python setup.py build_ext -i
 # command to run tests
 script: python run_tests.py
