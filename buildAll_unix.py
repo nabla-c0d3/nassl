@@ -5,7 +5,7 @@ from platform import architecture
 from sys import platform
 from os.path import join
 import distutils.util
-from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task, create_folder
+from buildAll_config import OPENSSL_CONF_CMD, BUILD_DIR, PY_VERSION, OPENSSL_DIR, ZLIB_DIR, TEST_DIR, perform_build_task
 
 
 NASSL_INSTALL_DIR = ''
@@ -78,7 +78,7 @@ def main():
 
 
     # Build nassl
-    NASSL_BUILD_TASKS = ['python2.7 setup_unix.py build_ext -i']
+    NASSL_BUILD_TASKS = ['python2.7 setup.py build_ext -i']
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 
     # Test nassl

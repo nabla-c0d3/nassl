@@ -1,8 +1,8 @@
 #!/usr/bin/python2.7
 from distutils.core import setup, Extension
-from sys import platform
 
-from buildAll_config import ZLIB_DIR
+from os.path import join
+
 from buildAll_unix import OPENSSL_INSTALL_DIR
 from nassl import __author__, __version__
 
