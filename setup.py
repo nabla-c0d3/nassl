@@ -1,3 +1,9 @@
+#!/usr/bin/python2.7
+from distutils.core import setup, Extension
+from sys import platform
+
+from buildAll_config import ZLIB_DIR
+from buildAll_unix import OPENSSL_INSTALL_DIR
 from nassl import __author__, __version__
 
 NASSL_SETUP = {
@@ -19,3 +25,19 @@ NASSL_EXT_SETUP = {
                 "nassl/_nassl/nassl_X509_EXTENSION.c", "nassl/_nassl/nassl_X509_NAME_ENTRY.c",
                 "nassl/_nassl/nassl_SSL_SESSION.c", "nassl/_nassl/openssl_utils.c", "nassl/_nassl/nassl_OCSP_RESPONSE.c"]
 }
+
+extra_compile_args = ['-Wall', '-Wno-deprecated-declarations']
+
+# Add arguments specific to Unix builds
+unix_ext_args = NASSL_EXT_SETUP.copy()
+unix_ext_args.update({
+    'include_dirs': [OPENSSL_INSTALL_DIR + '/include'],
+    'extra_compile_args': extra_compile_args,
+    'extra_objects': [OPENSSL_INSTALL_DIR + '/lib/libssl.a', OPENSSL_INSTALL_DIR + '/lib/libcrypto.a',
+                      ZLIB_DIR + '/libz.a']})
+
+unix_setup = NASSL_SETUP.copy()
+unix_setup.update({
+    'ext_modules': [Extension(**unix_ext_args)]})
+
+setup(**unix_setup)
