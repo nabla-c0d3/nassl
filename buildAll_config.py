@@ -16,17 +16,16 @@ ZLIB_DIR = join(getcwd(), 'zlib-1.2.8')
 
 
 TEST_DIR = join(getcwd(), 'test')
-BUILD_DIR = join(getcwd(), 'build')
+BUILD_DIR = join(getcwd(), 'bin')
 
 
 PY_VERSION = str(version_info[0]) + '.' + str(version_info[1])
 
 
 OPENSSL_CONF_CMD = (
-    'perl Configure {0} --prefix={1} zlib no-zlib-dynamic no-shared enable-rc5 '
-    'enable-md2 enable-gost enable-cast enable-idea enable-ripemd '
-    'enable-mdc2 --with-zlib-include={2} '
-    '--with-zlib-lib={3}').format
+    'perl Configure {0} --prefix={1} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost enable-cast '
+    'enable-idea enable-ripemd enable-mdc2 --with-zlib-include={2} --with-zlib-lib={3}'
+).format
 
 
 def perform_build_task(title, commandsDict, cwd=None):
