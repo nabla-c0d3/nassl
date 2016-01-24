@@ -21,62 +21,91 @@ OPENSSL_CONF_CMD = (
 
 # I've only tried building nassl on OS X 64 bits and Linux 32/64 bits
 # This will fail if you're cross-compiling
-ZLIB_INSTALL_PATH = ZLIB_PATH
-OPENSSL_BUILD_EXTRA_ARGS = ' -fPIC'
 
-if CURRENT_PLATFORM == SupportedPlatformEnum.OSX_64:
-    OPENSSL_TARGET = 'darwin64-x86_64-cc'
-
-elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_64:
-    OPENSSL_TARGET = 'linux-x86_64'
-
-elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_32:
-    OPENSSL_TARGET = 'linux-elf'
-
-elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-    OPENSSL_TARGET = 'VC-WIN32'
-    ZLIB_INSTALL_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibstat.lib'
-    OPENSSL_BUILD_EXTRA_ARGS = ' no-asm -DZLIB_WINAPI'  # *hate* zlib
-
-elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
-    OPENSSL_TARGET = 'VC-WIN64A'
-    ZLIB_INSTALL_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib'
-    OPENSSL_BUILD_EXTRA_ARGS = ' -DZLIB_WINAPI'
-
-
-
-def perform_build_task(title, commandsDict, cwd=None):
+def perform_build_task(title, commands_dict, cwd=None):
     print '===BUILDING {0}==='.format(title)
-    for command in commandsDict:
+    for command in commands_dict:
         subprocess.check_call(command, shell=True, cwd=cwd)
 
 
 def main():
     # Build Zlib
-    ZLIB_BUILD_TASKS = [
-        'CFLAGS="-fPIC" ./configure -static',
-        'make clean',
-        'make'
-    ]
-    perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH)
+    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
+        ZLIB_INSTALL_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibstat.lib'
+        ZLIB_BUILD_TASKS = [
+            'bld_ml32.bat',
+            'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|Win32"'
+        ]
+        perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx86\\')
+
+    elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
+        ZLIB_INSTALL_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib'
+        ZLIB_BUILD_TASKS = [
+            'bld_ml64.bat',
+            'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|x64"'
+        ]
+        perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx64\\')
+
+    else:
+        ZLIB_INSTALL_PATH = ZLIB_PATH
+        ZLIB_BUILD_TASKS = [
+            'CFLAGS="-fPIC" ./configure -static',
+            'make clean',
+            'make'
+        ]
+        perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH)
 
 
     # Build OpenSSL
-    OPENSSL_BUILD_TASKS = [
-        OPENSSL_CONF_CMD(target=OPENSSL_TARGET, install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                         zlib_install_path=ZLIB_INSTALL_PATH, extra_args=OPENSSL_BUILD_EXTRA_ARGS),
-        'make clean',
-        'make depend',
-        'make',
-        'make test',
-        'make install_sw',  # Don't build documentation, else will fail on Debian
-    ]
+    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
+        OPENSSL_BUILD_TASKS = [
+            OPENSSL_CONF_CMD(target='VC-WIN32', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' no-asm -DZLIB_WINAPI'),  # *hate* zlib
+            'ms\\do_ms',
+            'nmake -f ms\\nt.mak clean',
+            'nmake -f ms\\nt.mak',
+            'nmake -f ms\\nt.mak install',
+        ]
+
+
+    elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
+        OPENSSL_BUILD_TASKS = [
+            OPENSSL_CONF_CMD(target='VC-WIN64A', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' -DZLIB_WINAPI'),
+            'ms\\do_win64a.bat',
+            #'nmake -f ms\\nt.mak clean', # This mysteriously fails on win64
+            'nmake -f ms\\nt.mak',
+            'nmake -f ms\\nt.mak install',
+        ]
+    else:
+        if CURRENT_PLATFORM == SupportedPlatformEnum.OSX_64:
+            OPENSSL_TARGET = 'darwin64-x86_64-cc'
+
+        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_64:
+            OPENSSL_TARGET = 'linux-x86_64'
+
+        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_32:
+            OPENSSL_TARGET = 'linux-elf'
+
+        OPENSSL_BUILD_TASKS = [
+            OPENSSL_CONF_CMD(target=OPENSSL_TARGET, install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' -fPIC'),
+            'make clean',
+            'make depend',
+            'make',
+            'make test',
+            'make install_sw',  # Don't build documentation, else will fail on Debian
+        ]
     perform_build_task('OPENSSL', OPENSSL_BUILD_TASKS, OPENSSL_PATH)
 
     # Setup the OpenSSL folder
     # Move the static libraries to the root folder
-    shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libcrypto.a'), OPENSSL_LIB_INSTALL_PATH)
-    shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libssl.a'), OPENSSL_LIB_INSTALL_PATH)
+    if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_64]:
+        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libeay32.lib'), OPENSSL_LIB_INSTALL_PATH)
+        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'ssleay32.lib'), OPENSSL_LIB_INSTALL_PATH)
+    else:
+        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libcrypto.a'), OPENSSL_LIB_INSTALL_PATH)
+        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libssl.a'), OPENSSL_LIB_INSTALL_PATH)
 
     # Move the header to ./bin/openssl
     shutil.rmtree(OPENSSL_HEADERS_INSTALL_PATH)
@@ -96,7 +125,13 @@ def main():
 
 
     # Build nassl
-    NASSL_BUILD_TASKS = ['python2.7 setup.py build_ext -i']
+    NASSL_EXTRA_ARGS = ''
+    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
+        NASSL_EXTRA_ARGS = ' --plat-name=win32'
+    elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
+        NASSL_EXTRA_ARGS = ' --plat-name=win-amd64'
+
+    NASSL_BUILD_TASKS = ['python2.7 setup.py build_ext -i{extra_args}'.format(extra_args=NASSL_EXTRA_ARGS)]
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 
     # Test nassl
