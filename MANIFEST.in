@@ -1,0 +1,11 @@
+# Include the license file
+include LICENSE.txt
+include README.md
+
+# Include headers
+include nassl/_nassl/*h
+
+# Include the OpenSSL binaries
+recursive-include bin/openssl *h
+recursive-include bin/openssl *a
+recursive-include bin/openssl *lib
