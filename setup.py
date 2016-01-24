@@ -1,8 +1,6 @@
 #!/usr/bin/python2.7
 import os
 import sys
-from distutils.core import setup, Extension
-#from setuptools import setup, Extension
 from os import getcwd
 from os.path import join
 from platform import architecture
@@ -33,6 +31,14 @@ elif architecture()[0] == '32bit':
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_32
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
+
+
+if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+    # Needed for binary distributions (bdist_wheel) on Windows
+    from setuptools import setup, Extension
+else:
+    # Keeping things simple for Unix as we don't need binary distros
+    from distutils.core import setup, Extension
 
 
 OPENSSL_INSTALL_PATH_DICT = {
