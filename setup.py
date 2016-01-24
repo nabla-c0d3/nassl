@@ -26,13 +26,13 @@ if architecture()[0] == '64bit':
         CURRENT_PLATFORM = SupportedPlatformEnum.OSX_64
     elif platform == 'linux2':
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_64
+    elif platform == 'win32':
+        CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_64
 elif architecture()[0] == '32bit':
     if platform == 'linux2':
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_32
-if platform == 'win32':
-    CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
-# TODO: Add Windows
-
+    elif platform == 'win32':
+        CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
 
 
 OPENSSL_INSTALL_PATH_DICT = {

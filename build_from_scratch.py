@@ -43,6 +43,8 @@ def main():
         # For Windows builds, we need to keep the Zlib around as it is linked into _nassl
         # On Unix, Zlib is linked into OpenSSL
         from setup import ZLIB_LIB_PATH
+        if not os.path.isdir(os.path.dirname(ZLIB_LIB_PATH)):
+            os.makedirs(os.path.dirname(ZLIB_LIB_PATH))
         shutil.copy(ZLIB_INSTALL_PATH, ZLIB_LIB_PATH)
 
 
@@ -56,6 +58,8 @@ def main():
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx64\\')
 
         from setup import ZLIB_LIB_PATH
+        if not os.path.isdir(os.path.dirname(ZLIB_LIB_PATH)):
+            os.makedirs(os.path.dirname(ZLIB_LIB_PATH))
         shutil.copy(ZLIB_INSTALL_PATH, ZLIB_LIB_PATH)
 
     else:
@@ -85,6 +89,9 @@ def main():
                              zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' -DZLIB_WINAPI'),
             'ms\\do_win64a.bat',
             #'nmake -f ms\\nt.mak clean',
+            # The build script will crash during the next step at the very end of the OpenSSL build but you can still
+            # manage to get a full build of nassl by manually copying the OpenSSL libs from openssl/out32 to
+            # bin/openssl/win64.
             'nmake -f ms\\nt.mak',
             'nmake -f ms\\nt.mak install',
         ]
