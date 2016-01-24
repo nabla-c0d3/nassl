@@ -44,7 +44,7 @@ else:
 OPENSSL_INSTALL_PATH_DICT = {
     # Need full paths (hence the getcwd()) as they get passed to OpenSSL in build_from_scratch.py
     SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'openssl', 'darwin64'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'openssl', 'linux64'),
+    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'openssl', 'linux64'),
     SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl', 'linux32'),
     SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl', 'win32'),
     SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'win64'),
