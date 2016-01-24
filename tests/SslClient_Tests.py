@@ -3,8 +3,8 @@ import unittest
 import socket
 import tempfile
 from nassl import SSLV23, SSL_FILETYPE_PEM, _nassl, SSL_VERIFY_NONE
-from nassl.DebugSslClient import DebugSslClient
-from nassl.SslClient import ClientCertificateRequested, InvalidPrivateKeyPassword
+from nassl.debug_ssl_client import DebugSslClient
+from nassl.ssl_client import ClientCertificateRequested, InvalidPrivateKeyPassword
 
 
 class SslClient_Tests_PrivateKey(unittest.TestCase):

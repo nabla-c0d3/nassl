@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 import socket
 from nassl import TLSV1, SSL_VERIFY_NONE, SSL_FILETYPE_PEM, SSL_MODE_SEND_FALLBACK_SCSV
-from nassl.DebugSslClient import DebugSslClient
+from nassl.debug_ssl_client import DebugSslClient
 
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

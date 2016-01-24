@@ -2,7 +2,7 @@
 import unittest
 from nassl import _nassl, SSL_VERIFY_NONE
 import socket
-from nassl.SslClient import SslClient
+from nassl.ssl_client import SslClient
 
 
 class X509_NAME_ENTRY_Tests(unittest.TestCase):

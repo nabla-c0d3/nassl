@@ -1,8 +1,8 @@
 #!/usr/bin/python2.7
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
 from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp, SSL_FILETYPE_PEM
-from X509Certificate import X509Certificate
-from OcspResponse import OcspResponse
+from x509_certificate import X509Certificate
+from ocsp_response import OcspResponse
 
 DEFAULT_BUFFER_SIZE = 4096
 

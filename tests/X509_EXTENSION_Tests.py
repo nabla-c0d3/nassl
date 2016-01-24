@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 import unittest
 from nassl import _nassl, SSL_VERIFY_NONE
-from nassl.SslClient import SslClient
+from nassl.ssl_client import SslClient
 import socket
 
 

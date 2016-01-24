@@ -3,7 +3,7 @@ import unittest
 from nassl import _nassl, SSL_VERIFY_NONE
 import socket
 import tempfile
-from nassl.SslClient import SslClient
+from nassl.ssl_client import SslClient
 
 
 class OCSP_RESPONSE_Tests(unittest.TestCase):

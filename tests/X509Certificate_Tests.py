@@ -2,7 +2,7 @@
 import unittest
 import socket
 from nassl import SSLV23, SSL_VERIFY_NONE, X509_NAME_MISMATCH, X509_NAME_MATCHES_SAN
-from nassl.SslClient import SslClient
+from nassl.ssl_client import SslClient
 
 
 class X509Certificate_Tests_Hostname_Validation(unittest.TestCase):
