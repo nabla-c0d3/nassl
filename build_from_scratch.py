@@ -66,7 +66,7 @@ def main():
         OPENSSL_CONF_CMD(target=OPENSSL_TARGET, install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                          zlib_install_path=ZLIB_INSTALL_PATH, extra_args=OPENSSL_BUILD_EXTRA_ARGS),
         'make clean',
-        #'make depend',  # This makes building with Clang on OS X fail
+        'make depend',
         'make',
         'make test',
         'make install_sw',  # Don't build documentation, else will fail on Debian

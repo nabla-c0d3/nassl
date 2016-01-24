@@ -1,5 +1,6 @@
 #!/usr/bin/python2.7
 from distutils.core import setup, Extension
+from os import getcwd
 from os.path import join
 from platform import architecture
 from sys import platform
@@ -30,11 +31,12 @@ elif architecture()[0] == '32bit':
 
 
 OPENSSL_INSTALL_PATH_DICT = {
-    SupportedPlatformEnum.OSX_64: join('bin', 'openssl', 'darwin64'),
-    SupportedPlatformEnum.LINUX_64: join('bin', 'openssl', 'linux64'),
-    SupportedPlatformEnum.LINUX_32: join('bin', 'openssl', 'linux32'),
-    SupportedPlatformEnum.WINDOWS_32: join('bin', 'openssl', 'windows32'),
-    SupportedPlatformEnum.WINDOWS_64: join('bin', 'openssl', 'windows64'),
+    # Need full paths (hence the getcwd()) as they get passed to OpenSSL in build_from_scratch.py
+    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'openssl', 'darwin64'),
+    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'openssl', 'linux64'),
+    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl', 'linux32'),
+    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl', 'windows32'),
+    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'windows64'),
 }
 
 
