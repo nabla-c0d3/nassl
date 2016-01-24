@@ -1,5 +1,8 @@
 #!/usr/bin/python2.7
+import os
+import sys
 from distutils.core import setup, Extension
+#from setuptools import setup, Extension
 from os import getcwd
 from os.path import join
 from platform import architecture
@@ -26,6 +29,8 @@ if architecture()[0] == '64bit':
 elif architecture()[0] == '32bit':
     if platform == 'linux2':
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_32
+if platform == 'win32':
+    CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
 # TODO: Add Windows
 
 
@@ -35,8 +40,8 @@ OPENSSL_INSTALL_PATH_DICT = {
     SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'openssl', 'darwin64'),
     SupportedPlatformEnum.LINUX_64: join(getcwd(), 'openssl', 'linux64'),
     SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl', 'linux32'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl', 'windows32'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'windows64'),
+    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl', 'win32'),
+    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'win64'),
 }
 
 
@@ -65,18 +70,39 @@ NASSL_EXT_SETUP = {
                 "nassl/_nassl/nassl_OCSP_RESPONSE.c"],
 }
 
-# Add arguments specific to Unix builds
-unix_ext_args = NASSL_EXT_SETUP.copy()
-unix_ext_args.update({
-    'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
-    'extra_compile_args': ['-Wall'],
-    'extra_objects': [join(OPENSSL_LIB_INSTALL_PATH, 'libssl.a'), join(OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a')]
-})
+if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+    # Add arguments specific to Windows builds
+    # Visual Studio is expected to be in the default folder
+    WIN_VISUAL_STUDIO_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\'
+    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
+        WIN_VISUAL_STUDIO_LIB_PATH = join(WIN_VISUAL_STUDIO_PATH, 'lib')
+        ZLIB_LIB_PATH = join('bin', 'zlib', 'win32', 'zlibstat.lib')
+    else:
+        WIN_VISUAL_STUDIO_LIB_PATH = join(WIN_VISUAL_STUDIO_PATH, 'lib', 'amd64')
+        ZLIB_LIB_PATH = join('bin', 'zlib', 'win64', 'zlibstat.lib')
+
+    # Build using the Python that was used to run this script; will not work for cross-compiling
+    PYTHON_LIBS_PATH = join(os.path.dirname(sys.executable), 'libs')
+
+    NASSL_EXT_SETUP.update({
+        'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join(WIN_VISUAL_STUDIO_PATH, 'include')],
+        'library_dirs': [PYTHON_LIBS_PATH, WIN_VISUAL_STUDIO_LIB_PATH],
+        'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32'],
+        'extra_objects': [ZLIB_LIB_PATH, join(OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib'),
+                          join(OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib')]
+    })
+
+else:
+    # Add arguments specific to Unix builds
+    NASSL_EXT_SETUP.update({
+        'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
+        'extra_compile_args': ['-Wall'],
+        'extra_objects': [join(OPENSSL_LIB_INSTALL_PATH, 'libssl.a'), join(OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a')]
+    })
 
 
-unix_setup = NASSL_SETUP.copy()
-unix_setup.update({'ext_modules': [Extension(**unix_ext_args)]})
+NASSL_SETUP.update({'ext_modules': [Extension(**NASSL_EXT_SETUP)]})
 
 
 if __name__ == "__main__":
-    setup(**unix_setup)
+    setup(**NASSL_SETUP)
