@@ -4,93 +4,84 @@ nassl
 
 [![Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
 
-Experimental Python wrapper for OpenSSL. **Do NOT use for anything serious**.
-This code has not been properly tested/reviewed and is absolutely not
-production ready. For example, nassl uses an **insecure, outdated version 
-of OpenSSL**.
+Experimental OpenSSL wrapper for Python 2.7 and SSLyze. **Do NOT use for anything serious**. This code has not been 
+properly tested/reviewed and is absolutely not production ready.
+
+Quick Start
+-----------
+
+Nassl can be installed directly via pip:
+    
+    pip install nassl
+
+On OS X and Linux, it is also easy to directly clone the repository, build the `_nassl` C extension and then run the
+sample client:
+
+    git clone https://github.com/nabla-c0d3/nassl.git
+    python setup.py build_ext -i
+    python sample_client.py
+    
+
+Building the C extension
+------------------------
+
+Nassl relies on a C extension to call into OpenSSL; the extension can be directly built using the pre-compiled OpenSSL
+binaries available in ./bin, by running the following command:
+
+    python setup.py build_ext -i
+
+On Windows, a "Platform Wheel" can be built using:
+
+    pip install wheel
+    python setup.py bdist_wheel
+    
+In order to not use the pre-compiled binaries, compiling the C extension requires successively building:
+ 
+* Zlib 1.2.8 from http://zlib.net/zlib-1.2.8.tar.gz
+* A special fork of OpenSSL 1.0.2 (or the official OpenSSL 1.0.2e) from https://github.com/PeterMosmans/openssl
+* The \_nassl C extension
+
+The whole build process is all taken care of by the _build\_from\_scratch.py_ script: 
+
+    git clone https://github.com/nabla-c0d3/nassl.git
+    cd nassl
+    wget http://zlib.net/zlib-1.2.8.tar.gz
+    tar xvfz  zlib-1.2.8.tar.gz
+    git clone https://github.com/PeterMosmans/openssl
+    python build_from_scratch.py
+    
+For Windows builds, Visual Studio is expected to be installed at the default location. The build script was tested on
+the following platforms: Windows 7 (32 and 64 bits), Debian 7 (32 and 64 bits), OS X El Capitan. It will build the C
+extension for the interpreter and platform that was used to run the script (ie. no cross-compiling).
+    
+
+Project structure
+-----------------
+
+### nassl/
+
+Classes implemented in Python are part of the `nassl` namespace; they are designed to provide a simpler, higher-level 
+interface to perform SSL connections.
 
 
-Usage
------
+### nassl/_nassl/
 
-See test/test_client.py for an example.
+Classes implemented in C are part of the `nassl._nassl` namespace; they try to stay as close as possible to OpenSSL's 
+API. In most cases, Python methods of such objects directly match the OpenSSL function with same name. For example the 
+`_nassl.SSL.read()` Python method matches OpenSSL's `SSL_read()` function. 
 
-
-Build
------
-
-Multiple build scripts are available. They will consecutively build Zlib,
-OpenSSL and nassl.
-
-Regardless of the platform you're targeting, you will need to:
-* Download a special fork of OpenSSL 1.0.2 (or the official OpenSSL 1.0.2e) at
-https://github.com/PeterMosmans/openssl and put in nassl's root folder.
-* Download Zlib at http://zlib.net/zlib-1.2.8.tar.gz and extract the content
-of the source package to nassl/zlib-1.2.8.
+These classes should be considered internal.
 
 
-### buildAll_unix.py
+Why another SSL library?
+------------------------
 
-Build script for OS X 64 bits and Linux 32/64 bits. It was tested on OS X
-Mavericks, Ubuntu 13.04 and Debian 7. This is the easiest build script to use.
+I'm the author of [SSLyze](https://github.com/nabla-c0d3/sslyze), an SSL scanner written in Python. Scanning SSL servers 
+requires access to low-level SSL functions within the OpenSSL API, for example to test for things like insecure 
+renegotiation or session resumption.
 
-    $ wget http://zlib.net/zlib-1.2.8.tar.gz
-    $ tar xvfz  zlib-1.2.8.tar.gz
-    $ git clone https://github.com/PeterMosmans/openssl
-    $ python buildAll_unix.py
-
-
-### buildAll_win32.py
-
-Build script for Windows 7 32 bits. It expects Python to be installed in
-C:\Python27_32.
-
-
-### buildAll_win64.py
-
-Build script for Windows 7 64 bits. It expects Python to be installed in
-C:\Python27. This build script will crash after building OpenSSL but you can
-still manage to get a full build of nassl by manually copying the OpenSSL libs
-from openssl/out32 to the right location in build/. Look at win32 builds.
-
-
-Unit Tests
-----------
-
-    $ python -m unittest discover test -p *Tests.py
-
-
-Structure
----------
-
-### src/
-
-Classes implemented in Python are part of the nassl namespace. This currently
-includes SslClient.py, OcspResponse.py and X509Certificate.py. Such classes
-are designed to provide a simpler, higher-level interface to perform SSL
-connections.
-
-
-### src/_nassl/
-
-Classes implemented in C are part of the nassl.\_nassl namespace. They try to
-stay as close as possible to OpenSSL's API. In most cases, Python methods of
-such objects directly match the OpenSSL function with same name. For example
-the \_nassl.SSL.read() Python method matches OpenSSL's SSL\_read() function.
-These C classes should be considered internal.
-
-
-Why ???
--------
-
-I'm the author of SSLyze, an SSL scanner written in Python:
-https://github.com/nabla-c0d3/sslyze. Scanning SSL servers requires access
-to low-level SSL functions within the OpenSSL API, for example to test for
-things like insecure renegotiation or session resumption.
-
-None of the existing OpenSSL wrappers for Python (including ssl, M2Crypto and
-pyOpenSSL) expose the APIs that I need for SSLyze, so I had to write my own
-wrapper.
+None of the existing OpenSSL wrappers for Python (including ssl, M2Crypto and pyOpenSSL) expose the APIs that I need for 
+SSLyze, so I had to write my own wrapper.
 
 
 License
@@ -106,4 +97,4 @@ Please contact me if this license doesn't work for you.
 Author
 ------
 
-Alban Diquet - https://nabla-c0d3.github.io
+Alban Diquet - @nabla_c0d3 - https://nabla-c0d3.github.io

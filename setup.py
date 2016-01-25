@@ -61,7 +61,7 @@ NASSL_SETUP = {
     'package_dir': {'nassl': 'nassl'},
     'py_modules': ['nassl.__init__', 'nassl.ssl_client', 'nassl.debug_ssl_client', 'nassl.x509_certificate',
                    'nassl.ocsp_response'],
-    'description': 'Experimental OpenSSL wrapper for SSLyze.',
+    'description': 'Experimental OpenSSL wrapper for Python 2.7 and SSLyze.',
     'author': __author__,
     'author_email': 'nabla.c0d3@gmail.com',
     'url': 'https://github.com/nabla-c0d3/nassl',
