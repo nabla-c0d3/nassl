@@ -9,3 +9,7 @@ include nassl/_nassl/*h
 recursive-include bin/openssl *h
 recursive-include bin/openssl *a
 recursive-include bin/openssl *lib
+
+# Include the Zlib binaries
+recursive-include bin/zlib *a
+recursive-include bin/zlib *lib
