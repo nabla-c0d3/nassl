@@ -32,10 +32,9 @@ binaries available in ./bin, by running the following command:
 
 On Windows, a "Platform Wheel" can be built using:
 
-    pip install wheel
     python setup.py bdist_wheel
     
-In order to not use the pre-compiled binaries, compiling the C extension requires successively building:
+If you do not want to use the pre-compiled binaries, compiling the C extension requires successively building:
  
 * Zlib 1.2.8 from http://zlib.net/zlib-1.2.8.tar.gz
 * A special fork of OpenSSL 1.0.2 (or the official OpenSSL 1.0.2e) from https://github.com/PeterMosmans/openssl
@@ -50,9 +49,11 @@ The whole build process is all taken care of by the _build\_from\_scratch.py_ sc
     git clone https://github.com/PeterMosmans/openssl
     python build_from_scratch.py
     
-For Windows builds, Visual Studio is expected to be installed at the default location. The build script was tested on
-the following platforms: Windows 7 (32 and 64 bits), Debian 7 (32 and 64 bits), OS X El Capitan. It will build the C
-extension for the interpreter and platform that was used to run the script (ie. no cross-compiling).
+For Windows builds, Visual Studio is expected to be installed at the default location. 
+
+The build script was tested on the following platforms: Windows 7 (32 and 64 bits), Debian 7 (32 and 64 bits), 
+OS X El Capitan. It will build the C extension for the interpreter and platform that was used to run the script 
+(ie. no cross-compiling).
     
 
 Project structure
