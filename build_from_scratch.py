@@ -7,7 +7,8 @@ cross-compiling).
 import os
 import sys
 import shutil
-from setup import OPENSSL_LIB_INSTALL_PATH, CURRENT_PLATFORM, SupportedPlatformEnum, OPENSSL_HEADERS_INSTALL_PATH
+from setup import OPENSSL_LIB_INSTALL_PATH, CURRENT_PLATFORM, SupportedPlatformEnum, OPENSSL_HEADERS_INSTALL_PATH, \
+    ZLIB_LIB_INSTALL_PATH
 from os import getcwd
 from os.path import join
 import subprocess
@@ -34,36 +35,23 @@ def perform_build_task(title, commands_dict, cwd=None):
 def main():
     # Build Zlib
     if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-        ZLIB_INSTALL_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibstat.lib'
+        ZLIB_LIB_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibstat.lib'
         ZLIB_BUILD_TASKS = [
             'bld_ml32.bat',
             'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|Win32"'
         ]
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx86\\')
-        # For Windows builds, we need to keep the Zlib around as it is linked into _nassl
-        # On Unix, Zlib is linked into OpenSSL
-        from setup import ZLIB_LIB_PATH
-        if not os.path.isdir(os.path.dirname(ZLIB_LIB_PATH)):
-            os.makedirs(os.path.dirname(ZLIB_LIB_PATH))
-        shutil.copy(ZLIB_INSTALL_PATH, ZLIB_LIB_PATH)
-
-
 
     elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
-        ZLIB_INSTALL_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib'
+        ZLIB_LIB_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib'
         ZLIB_BUILD_TASKS = [
             'bld_ml64.bat',
             'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|x64"'
         ]
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx64\\')
 
-        from setup import ZLIB_LIB_PATH
-        if not os.path.isdir(os.path.dirname(ZLIB_LIB_PATH)):
-            os.makedirs(os.path.dirname(ZLIB_LIB_PATH))
-        shutil.copy(ZLIB_INSTALL_PATH, ZLIB_LIB_PATH)
-
     else:
-        ZLIB_INSTALL_PATH = ZLIB_PATH
+        ZLIB_LIB_PATH = join(ZLIB_PATH, 'libz.a')
         ZLIB_BUILD_TASKS = [
             'CFLAGS="-fPIC" ./configure -static',
             'make clean',
@@ -71,12 +59,17 @@ def main():
         ]
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH)
 
+    # Keep the Zlib around as it is linked into _nassl
+    if not os.path.isdir(ZLIB_LIB_INSTALL_PATH):
+        os.makedirs(ZLIB_LIB_INSTALL_PATH)
+    shutil.copy(ZLIB_LIB_PATH, ZLIB_LIB_INSTALL_PATH)
+
 
     # Build OpenSSL
     if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
         OPENSSL_BUILD_TASKS = [
             OPENSSL_CONF_CMD(target='VC-WIN32', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' no-asm -DZLIB_WINAPI'),  # *hate* zlib
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' no-asm -DZLIB_WINAPI'), # *hate* zlib
             'ms\\do_ms',
             #'nmake -f ms\\nt.mak clean',  # This fails when there is nothing to clean
             'nmake -f ms\\nt.mak',
@@ -86,7 +79,7 @@ def main():
     elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
         OPENSSL_BUILD_TASKS = [
             OPENSSL_CONF_CMD(target='VC-WIN64A', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' -DZLIB_WINAPI'),
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -DZLIB_WINAPI'),
             'ms\\do_win64a.bat',
             #'nmake -f ms\\nt.mak clean',
             # The build script will crash during the next step at the very end of the OpenSSL build but you can still
@@ -107,7 +100,7 @@ def main():
 
         OPENSSL_BUILD_TASKS = [
             OPENSSL_CONF_CMD(target=OPENSSL_TARGET, install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_INSTALL_PATH, extra_args=' -fPIC'),
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -fPIC'),
             'make clean',
             'make depend',
             'make',

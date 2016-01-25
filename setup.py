@@ -50,9 +50,18 @@ OPENSSL_INSTALL_PATH_DICT = {
     SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'win64'),
 }
 
+ZLIB_INSTALL_PATH_DICT = {
+    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'zlib', 'darwin64'),
+    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'zlib', 'linux64'),
+    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'zlib', 'linux32'),
+    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'zlib', 'win32'),
+    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'zlib', 'win64'),
+}
+
 
 OPENSSL_LIB_INSTALL_PATH = OPENSSL_INSTALL_PATH_DICT[CURRENT_PLATFORM]
 OPENSSL_HEADERS_INSTALL_PATH = join('bin', 'openssl', 'include')
+ZLIB_LIB_INSTALL_PATH = ZLIB_INSTALL_PATH_DICT[CURRENT_PLATFORM]
 
 
 NASSL_SETUP = {
@@ -76,16 +85,15 @@ NASSL_EXT_SETUP = {
                 "nassl/_nassl/nassl_OCSP_RESPONSE.c"],
 }
 
+
 if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
     # Add arguments specific to Windows builds
     # Visual Studio is expected to be in the default folder
     WIN_VISUAL_STUDIO_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\'
     if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
         WIN_VISUAL_STUDIO_LIB_PATH = join(WIN_VISUAL_STUDIO_PATH, 'lib')
-        ZLIB_LIB_PATH = join('bin', 'zlib', 'win32', 'zlibstat.lib')
     else:
         WIN_VISUAL_STUDIO_LIB_PATH = join(WIN_VISUAL_STUDIO_PATH, 'lib', 'amd64')
-        ZLIB_LIB_PATH = join('bin', 'zlib', 'win64', 'zlibstat.lib')
 
     # Build using the Python that was used to run this script; will not work for cross-compiling
     PYTHON_LIBS_PATH = join(os.path.dirname(sys.executable), 'libs')
@@ -94,7 +102,7 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
         'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join(WIN_VISUAL_STUDIO_PATH, 'include')],
         'library_dirs': [PYTHON_LIBS_PATH, WIN_VISUAL_STUDIO_LIB_PATH],
         'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32'],
-        'extra_objects': [ZLIB_LIB_PATH, join(OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib'),
+        'extra_objects': [join(ZLIB_LIB_INSTALL_PATH, 'zlibstat.lib'), join(OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib'),
                           join(OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib')]
     })
 
@@ -103,7 +111,8 @@ else:
     NASSL_EXT_SETUP.update({
         'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
         'extra_compile_args': ['-Wall'],
-        'extra_objects': [join(OPENSSL_LIB_INSTALL_PATH, 'libssl.a'), join(OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a')]
+        'extra_objects': [join(OPENSSL_LIB_INSTALL_PATH, 'libssl.a'), join(OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a'),
+                          join(ZLIB_LIB_INSTALL_PATH, 'libz.a')]
     })
 
 
