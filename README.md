@@ -18,6 +18,7 @@ On OS X and Linux, it is also easy to directly clone the repository, build the `
 sample client:
 
     git clone https://github.com/nabla-c0d3/nassl.git
+    cd nassl
     python setup.py build_ext -i
     python sample_client.py
     
@@ -36,9 +37,9 @@ On Windows, a "Platform Wheel" can be built using:
     
 If you do not want to use the pre-compiled binaries, compiling the C extension requires successively building:
  
-* Zlib 1.2.8 from http://zlib.net/zlib-1.2.8.tar.gz
-* A special fork of OpenSSL 1.0.2 (or the official OpenSSL 1.0.2e) from https://github.com/PeterMosmans/openssl
-* The \_nassl C extension
+* [Zlib 1.2.8](http://zlib.net/zlib-1.2.8.tar.gz)
+* A [special fork of OpenSSL 1.0.2](https://github.com/PeterMosmans/openssl) (or the official OpenSSL 1.0.2e)
+* The `_nassl` C extension itself
 
 The whole build process is all taken care of by the _build\_from\_scratch.py_ script: 
 
