@@ -60,8 +60,8 @@ def main():
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH)
 
     # Keep the Zlib around as it is linked into _nassl
-    if not os.path.isdir(ZLIB_LIB_INSTALL_PATH):
-        os.makedirs(ZLIB_LIB_INSTALL_PATH)
+    if not os.path.isdir(os.path.dirname(ZLIB_LIB_INSTALL_PATH)):
+        os.makedirs(os.path.dirname(ZLIB_LIB_INSTALL_PATH))
     shutil.copy(ZLIB_LIB_PATH, ZLIB_LIB_INSTALL_PATH)
 
 

@@ -51,11 +51,11 @@ OPENSSL_INSTALL_PATH_DICT = {
 }
 
 ZLIB_INSTALL_PATH_DICT = {
-    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'zlib', 'darwin64'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'zlib', 'linux64'),
-    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'zlib', 'linux32'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'zlib', 'win32'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'zlib', 'win64'),
+    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'zlib', 'darwin64', 'libz.a'),
+    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'zlib', 'linux64', 'libz.a'),
+    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'zlib', 'linux32', 'libz.a'),
+    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'zlib', 'win32', 'zlibstat.lib'),
+    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'zlib', 'win64', 'zlibstat.lib'),
 }
 
 
@@ -102,7 +102,7 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
         'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join(WIN_VISUAL_STUDIO_PATH, 'include')],
         'library_dirs': [PYTHON_LIBS_PATH, WIN_VISUAL_STUDIO_LIB_PATH],
         'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32'],
-        'extra_objects': [join(ZLIB_LIB_INSTALL_PATH, 'zlibstat.lib'), join(OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib'),
+        'extra_objects': [ZLIB_LIB_INSTALL_PATH, join(OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib'),
                           join(OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib')]
     })
 
@@ -112,7 +112,7 @@ else:
         'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
         'extra_compile_args': ['-Wall'],
         'extra_objects': [join(OPENSSL_LIB_INSTALL_PATH, 'libssl.a'), join(OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a'),
-                          join(ZLIB_LIB_INSTALL_PATH, 'libz.a')]
+                          ZLIB_LIB_INSTALL_PATH]
     })
 
 
