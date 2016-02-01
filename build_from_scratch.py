@@ -79,7 +79,7 @@ def main():
     elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
         OPENSSL_BUILD_TASKS = [
             OPENSSL_CONF_CMD(target='VC-WIN64A', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -DZLIB_WINAPI'),
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' no-asm -DZLIB_WINAPI'),
             'ms\\do_win64a.bat',
             #'nmake -f ms\\nt.mak clean',
             # The build script will crash during the next step at the very end of the OpenSSL build but you can still
