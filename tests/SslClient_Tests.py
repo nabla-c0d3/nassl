@@ -148,7 +148,7 @@ class SslClient_Tests_Online(unittest.TestCase):
     def test_client_certificate_requested(self):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
+        sock.settimeout(10)
         sock.connect(("auth.startssl.com", 443))
 
         ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
@@ -160,7 +160,7 @@ class SslClient_Tests_Online(unittest.TestCase):
     def test_ignore_client_authentication_requests(self):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
+        sock.settimeout(10)
         sock.connect(("auth.startssl.com", 443))
 
         ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE,
