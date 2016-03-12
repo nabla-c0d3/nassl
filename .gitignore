@@ -3,6 +3,8 @@
 
 # Python
 *.pyc
+*.pyd
+*.egg-info
 
 # Shared objects (inc. Windows DLLs)
 *.dll
