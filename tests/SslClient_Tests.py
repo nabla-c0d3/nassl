@@ -4,7 +4,7 @@ import socket
 import tempfile
 from nassl import SSLV23, SSL_FILETYPE_PEM, _nassl, SSL_VERIFY_NONE
 from nassl.debug_ssl_client import DebugSslClient
-from nassl.ssl_client import ClientCertificateRequested, InvalidPrivateKeyPassword
+from nassl.ssl_client import ClientCertificateRequested
 
 
 class SslClient_Tests_PrivateKey(unittest.TestCase):
@@ -84,7 +84,7 @@ Pd2eQ9+DkopOz3UGU7c=
 
 
     def test_use_private_key_bad(self):
-        with self.assertRaises(InvalidPrivateKeyPassword):
+        with self.assertRaises(ValueError):
             self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM, 'badPW')
 
 
@@ -148,7 +148,7 @@ class SslClient_Tests_Online(unittest.TestCase):
     def test_client_certificate_requested(self):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
+        sock.settimeout(10)
         sock.connect(("auth.startssl.com", 443))
 
         ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
@@ -160,7 +160,7 @@ class SslClient_Tests_Online(unittest.TestCase):
     def test_ignore_client_authentication_requests(self):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
+        sock.settimeout(10)
         sock.connect(("auth.startssl.com", 443))
 
         ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE,
