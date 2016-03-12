@@ -177,6 +177,10 @@ class SslClient(object):
         while True:
             # Receive available encrypted data from the peer
             encrypted_data = self._sock.recv(DEFAULT_BUFFER_SIZE)
+
+            if len(encrypted_data) == 0:
+                raise IOError('Could not read() - peer closed the connection.')
+
             # Pass it to the SSL engine
             self._network_bio.write(encrypted_data)
 
