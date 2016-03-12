@@ -539,13 +539,14 @@ static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
     SSL_SESSION* session;
     long alg_k;
 
+    // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if ((self->ssl == NULL) || (self->ssl->s3 == NULL) || (self->ssl->s3->tmp.new_cipher == NULL))
     {
         PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
         return NULL;
     }
     alg_k = self->ssl->s3->tmp.new_cipher->algorithm_mkey;
-    session = self->ssl->session;
+    session = SSL_get1_session(self->ssl);
 
     if (!(alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)))
     {
@@ -555,7 +556,7 @@ static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
 
     if (session == NULL)
     {
-        PyErr_SetString(PyExc_TypeError, "Invalid session");
+        PyErr_SetString(PyExc_TypeError, "Unable to get Diffie-Hellman parameters");
         return NULL;
     }
 
@@ -583,13 +584,14 @@ static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self) {
     long alg_k;
     EVP_PKEY *srvr_pub_pkey = NULL;
 
+    // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if ((self->ssl == NULL) || (self->ssl->s3 == NULL) || (self->ssl->s3->tmp.new_cipher == NULL))
     {
         PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
         return NULL;
     }
     alg_k = self->ssl->s3->tmp.new_cipher->algorithm_mkey;
-    session = self->ssl->session;
+    session = SSL_get1_session(self->ssl);
 
     if (!(alg_k & (SSL_kECDHr|SSL_kECDHe|SSL_kEECDH)))
     {
@@ -599,7 +601,7 @@ static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self) {
 
     if ((session == NULL) || (session->sess_cert == NULL))
     {
-        PyErr_SetString(PyExc_TypeError, "Invalid session");
+        PyErr_SetString(PyExc_TypeError, "Unable to get ECDH parameters - Invalid session");
         return NULL;
     }
 

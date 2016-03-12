@@ -1,7 +1,6 @@
 #!/usr/bin/python2.7
 import unittest
-import tempfile
-from nassl import _nassl, SSLV23, SSL_VERIFY_PEER, SSL_FILETYPE_PEM, TLSEXT_STATUSTYPE_ocsp
+from nassl import _nassl, SSLV23, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp
 
 class SSL_Tests(unittest.TestCase):
 
