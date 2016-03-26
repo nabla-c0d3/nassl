@@ -224,7 +224,7 @@ class SslClient(object):
             self._ssl.shutdown()
         except OpenSSLError as e:
             # Ignore "uninitialized" exception
-            if 'SSL_shutdown:uninitialized' not in str(e):
+            if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
                 raise
 
 
