@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 
 __author__ = 'Alban Diquet'
-__version__ = '0.13.4'
+__version__ = '0.13.5'
 
 
 # Verify constants
