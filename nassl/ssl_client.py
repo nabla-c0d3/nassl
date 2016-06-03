@@ -90,13 +90,7 @@ class SslClient(object):
             except WantReadError:
                 # OpenSSL is expecting more data from the peer
                 # Send available handshake data to the peer
-                lengh_to_read = self._network_bio.pending()
-                while lengh_to_read:
-                    # Get the data from the SSL engine
-                    handshake_data_out = self._network_bio.read(lengh_to_read)
-                    # Send it to the peer
-                    self._sock.send(handshake_data_out)
-                    lengh_to_read = self._network_bio.pending()
+                self._flush_ssl_engine()
 
                 # Recover the peer's encrypted response
                 handshake_data_in = self._sock.recv(DEFAULT_BUFFER_SIZE)
@@ -206,6 +200,11 @@ class SslClient(object):
         self._ssl.write(data)
 
         # Recover the corresponding encrypted data
+        final_length = self._flush_ssl_engine()
+
+        return final_length
+
+    def _flush_ssl_engine(self):
         length_to_read = self._network_bio.pending()
         final_length = length_to_read
         while length_to_read:
@@ -222,6 +221,7 @@ class SslClient(object):
         self._is_handshake_completed = False
         try:
             self._ssl.shutdown()
+            self._flush_ssl_engine()
         except OpenSSLError as e:
             # Ignore "uninitialized" exception
             if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
