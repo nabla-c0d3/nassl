@@ -510,6 +510,12 @@
 # define SSL_CLIENT_USE_TLS1_2_CIPHERS(s)        \
                 ((SSL_IS_DTLS(s) && s->client_version <= DTLS1_2_VERSION) || \
                 (!SSL_IS_DTLS(s) && s->client_version >= TLS1_2_VERSION))
+/*
+ * Determine if a client should send signature algorithms extension:
+ * as with TLS1.2 cipher we can't rely on method flags.
+ */
+# define SSL_CLIENT_USE_SIGALGS(s)        \
+    SSL_CLIENT_USE_TLS1_2_CIPHERS(s)
 
 /* Mostly for SSLv3 */
 # define SSL_PKEY_RSA_ENC        0
@@ -707,6 +713,10 @@ typedef struct cert_st {
     custom_ext_methods cli_ext;
     custom_ext_methods srv_ext;
     int references;             /* >1 only if SSL_copy_session_id is used */
+    /* non-optimal, but here due to compatibility */
+    unsigned char *alpn_proposed;   /* server */
+    unsigned int alpn_proposed_len;
+    int alpn_sent;                  /* client */
 } CERT;
 
 typedef struct sess_cert_st {
