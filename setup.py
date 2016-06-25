@@ -16,6 +16,7 @@ class SupportedPlatformEnum:
     LINUX_32 = 3
     WINDOWS_32 = 4
     WINDOWS_64 = 5
+    OPENBSD_64 = 6
 
 
 CURRENT_PLATFORM = None
@@ -26,6 +27,8 @@ if architecture()[0] == '64bit':
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_64
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_64
+    elif platform == 'openbsd5':
+        CURRENT_PLATFORM = SupportedPlatformEnum.OPENBSD_64
 elif architecture()[0] == '32bit':
     if platform == 'linux2':
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_32
@@ -48,6 +51,7 @@ OPENSSL_INSTALL_PATH_DICT = {
     SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl', 'linux32'),
     SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl', 'win32'),
     SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'win64'),
+    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'openssl', 'openbsd64'),
 }
 
 ZLIB_INSTALL_PATH_DICT = {
@@ -56,6 +60,7 @@ ZLIB_INSTALL_PATH_DICT = {
     SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'zlib', 'linux32', 'libz.a'),
     SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'zlib', 'win32', 'zlibstat.lib'),
     SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'zlib', 'win64', 'zlibstat.lib'),
+    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'zlib', 'openbsd64', 'libz.a'),
 }
 
 

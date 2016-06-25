@@ -50,7 +50,7 @@ static PyObject* nassl_BIO_make_bio_pair(PyObject *nullPtr, PyObject *args)  {
     if (!PyArg_ParseTuple(args, "O!O!", &nassl_BIO_Type, &bio1_Object, &nassl_BIO_Type, &bio2_Object)) {
         return NULL;
     }
-    BIO_make_bio_pair(bio1_Object->bio, bio2_Object->bio);
+    (void)BIO_make_bio_pair(bio1_Object->bio, bio2_Object->bio);
     Py_RETURN_NONE;
 }
 
