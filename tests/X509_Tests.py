@@ -3,29 +3,41 @@ import unittest
 import socket
 from nassl.ssl_client import SslClient
 from nassl import _nassl, SSL_VERIFY_NONE
+from nassl.x509_certificate import X509Certificate
 
 
 class X509_Tests(unittest.TestCase):
 
-    def test_new_bad(self):
-        self.assertRaises(NotImplementedError, _nassl.X509, (None))
-
-
-class X509_Tests_Online(unittest.TestCase):
-
     def setUp(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect(("www.google.com", 443))
+        pem_cert = """
+-----BEGIN CERTIFICATE-----
+MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkGA1UEBhMCQkUx
+GTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkds
+b2JhbFNpZ24gUm9vdCBDQTAeFw05ODA5MDExMjAwMDBaFw0yODAxMjgxMjAwMDBaMFcxCzAJBgNV
+BAYTAkJFMRkwFwYDVQQKExBHbG9iYWxTaWduIG52LXNhMRAwDgYDVQQLEwdSb290IENBMRswGQYD
+VQQDExJHbG9iYWxTaWduIFJvb3QgQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDa
+DuaZjc6j40+Kfvvxi4Mla+pIH/EqsLmVEQS98GPR4mdmzxzdzxtIK+6NiY6arymAZavpxy0Sy6sc
+THAHoT0KMM0VjU/43dSMUBUc71DuxC73/OlS8pF94G3VNTCOXkNz8kHp1Wrjsok6Vjk4bwY8iGlb
+Kk3Fp1S4bInMm/k8yuX9ifUSPJJ4ltbcdG6TRGHRjcdGsnUOhugZitVtbNV4FpWi6cgKOOvyJBNP
+c1STE4U6G7weNLWLBYy5d4ux2x8gkasJU26Qzns3dLlwR5EiUWMWea6xrkEmCMgZK9FGqkjWZCrX
+gzT/LCrBbBlDSgeF59N89iFo7+ryUp9/k5DPAgMBAAGjQjBAMA4GA1UdDwEB/wQEAwIBBjAPBgNV
+HRMBAf8EBTADAQH/MB0GA1UdDgQWBBRge2YaRQ2XyolQL30EzTSo//z9SzANBgkqhkiG9w0BAQUF
+AAOCAQEA1nPnfE920I2/7LqivjTFKDK1fPxsnCwrvQmeU79rXqoRSLblCKOzyj1hTdNGCbM+w6Dj
+Y1Ub8rrvrTnhQ7k4o+YviiY776BQVvnGCv04zcQLcFGUl5gE38NflNUVyRRBnMRddWQVDf9VMOyG
+j/8N7yy5Y0b2qvzfvGn9LhJIZJrglfCm7ymPAbEVtQwdpf5pLGkkeB6zpxxxYu7KyJesF12KwvhH
+hm4qxFYxldBniYUr+WymXUadDKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveC
+X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
+-----END CERTIFICATE-----
+        """
+        self.cert = X509Certificate.from_pem(pem_cert)._x509
 
-        ssl_client = SslClient(sock=sock, ssl_verify=SSL_VERIFY_NONE)
-        ssl_client.do_handshake()
-        self.cert = ssl_client.get_peer_certificate()._x509
-
-
-    def test_as_text(self):
+    def test_from_pem(self):
         self.assertIsNotNone(self.cert.as_text())
 
+    def test_from_pem_bad(self):
+        pem_cert = '123123'
+        with self.assertRaises(ValueError):
+            cert = X509Certificate.from_pem(pem_cert)
 
     def test_get_version(self):
         self.assertIsNotNone(self.cert.get_version())
@@ -58,6 +70,20 @@ class X509_Tests_Online(unittest.TestCase):
     def test_get_subject_name_entries(self):
         self.assertIsNotNone(self.cert.get_subject_name_entries())
 
+
+class X509_Tests_Online(unittest.TestCase):
+
+    def setUp(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(("www.google.com", 443))
+
+        ssl_client = SslClient(sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client.do_handshake()
+        self.cert = ssl_client.get_peer_certificate()._x509
+
+    def test_as_text(self):
+        self.assertIsNotNone(self.cert.as_text())
 
     def test_verify_cert_error_string(self):
         self.assertEqual('error number 1', _nassl.X509.verify_cert_error_string(1))

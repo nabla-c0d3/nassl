@@ -21,20 +21,28 @@
 // nassl.X509.new()
 static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 
-    // For now X509.new() is not supposed to be called directly
-    PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509 object. Get it from SSL.get_peer_certificate()");
-    return NULL;
-
-    /*
     nassl_X509_Object *self;
     self = (nassl_X509_Object *)type->tp_alloc(type, 0);
     if (self == NULL)
     	return NULL;
 
-	self->x509 = NULL;
+    // Read the certificate as PEM and create an X509 object
+    char *pemCertificate;
+    if (!PyArg_ParseTuple(args, "s", &pemCertificate)) {
+        return NULL;
+    }
 
+    BIO *bio = BIO_new(BIO_s_mem());
+    BIO_puts(bio, pemCertificate);
+
+    self->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+    BIO_free(bio);
+
+    if (self->x509 == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Could not parse the supplied PEM certificate");
+        return NULL;
+    }
     return (PyObject *)self;
-    */
 }
 
 

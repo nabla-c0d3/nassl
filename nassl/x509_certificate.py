@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 from binascii import hexlify
 import re
-
+from nassl._nassl import X509
 from nassl import X509_NAME_MISMATCH, X509_NAME_MATCHES_SAN, X509_NAME_MATCHES_CN
 
 
@@ -10,13 +10,20 @@ class X509HostnameValidationError(Exception):
 
 
 class X509Certificate:
-    """
-    High level API for parsing an X509 certificate.
+    """High level API for parsing an X509 certificate.
     """
 
     def __init__(self, x509):
         self._cert_dict = None
         self._x509 = x509
+
+
+    @classmethod
+    def from_pem(cls, pem_certificate):
+        """Create an X509Certificate object from a PEM-formatted certificate.
+        """
+        x509 = X509(pem_certificate)
+        return cls(x509)
 
 
     def as_text(self):
