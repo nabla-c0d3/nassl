@@ -93,7 +93,9 @@ static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args) {
 
     readBuffer = (unsigned char *) PyMem_Malloc(EVP_MAX_MD_SIZE);
     if (readBuffer == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     // Only support SHA1 for now
     if (X509_digest(self->x509, EVP_sha1(), readBuffer, &digestLen) == 1) { // Read OK
@@ -214,6 +216,42 @@ static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject
     return PyString_FromString(errorString);
 }
 
+static PyObject* nassl_X509_get_spki_bytes(nassl_X509_Object *self, PyObject *args)
+{
+    int spkiLen = 0;
+    unsigned char *spkiBufferEnd = NULL;
+    unsigned char *spkiBufferStart = NULL;
+    PyObject* spkiBytes = NULL;
+
+    X509_PUBKEY *spki = X509_get_X509_PUBKEY(self->x509);
+    spkiLen = i2d_X509_PUBKEY(spki, NULL);
+    if (spkiLen < 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Could not extract SPKI bytes");
+        return NULL;
+    }
+
+    spkiBufferStart = PyMem_Malloc(spkiLen);
+    spkiBufferEnd = spkiBufferStart;
+    if (spkiBufferStart == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+
+    i2d_X509_PUBKEY(spki, &spkiBufferEnd);
+    if (spkiBufferEnd - spkiBufferStart != spkiLen)
+    {
+        // Should never happen
+        PyErr_SetString(PyExc_ValueError, "Could not extract SPKI bytes");
+    }
+    else
+    {
+        spkiBytes = PyString_FromStringAndSize((char *)spkiBufferStart, spkiLen);
+    }
+    PyMem_Free(spkiBufferStart);
+    return spkiBytes;
+}
+
 
 static PyMethodDef nassl_X509_Object_methods[] = {
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
@@ -248,6 +286,9 @@ static PyMethodDef nassl_X509_Object_methods[] = {
     },
     {"verify_cert_error_string", (PyCFunction)nassl_X509_verify_cert_error_string, METH_VARARGS | METH_STATIC,
      "OpenSSL's X509_verify_cert_error_string()."
+    },
+    {"get_spki_bytes", (PyCFunction)nassl_X509_get_spki_bytes, METH_NOARGS,
+     "Returns the Subject Public Key Info bytes using OpenSSL's X509_get_X509_PUBKEY() and i2d_X509_PUBKEY()."
     },
 
     {NULL}  // Sentinel

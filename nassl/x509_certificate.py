@@ -1,4 +1,6 @@
 #!/usr/bin/python2.7
+import base64
+import hashlib
 from binascii import hexlify
 import re
 from nassl._nassl import X509
@@ -36,6 +38,14 @@ class X509Certificate:
 
     def get_SHA1_fingerprint(self):
         return hexlify(self._x509.digest())
+
+
+    def get_hpkp_pin(self):
+        """Return the SHA-256 of the Subject Public Key Info base64-encoded, to be used for HTTP Public Key Pinning.
+        """
+        spki_bytes = self._x509.get_spki_bytes()
+        hashed_bytes = hashlib.sha256(spki_bytes).digest()
+        return base64.b64encode(hashed_bytes)
 
 
     def as_dict(self):

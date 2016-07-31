@@ -70,6 +70,9 @@ X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
     def test_get_subject_name_entries(self):
         self.assertIsNotNone(self.cert.get_subject_name_entries())
 
+    def test_get_spki_bytes(self):
+        self.assertIsNotNone(self.cert.get_spki_bytes())
+
 
 class X509_Tests_Online(unittest.TestCase):
 
