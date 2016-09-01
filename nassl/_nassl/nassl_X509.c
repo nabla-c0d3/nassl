@@ -22,17 +22,19 @@
 static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
 
     nassl_X509_Object *self;
+    char *pemCertificate;
+	BIO *bio;
+	
     self = (nassl_X509_Object *)type->tp_alloc(type, 0);
     if (self == NULL)
     	return NULL;
 
     // Read the certificate as PEM and create an X509 object
-    char *pemCertificate;
     if (!PyArg_ParseTuple(args, "s", &pemCertificate)) {
         return NULL;
     }
 
-    BIO *bio = BIO_new(BIO_s_mem());
+    bio = BIO_new(BIO_s_mem());
     BIO_puts(bio, pemCertificate);
 
     self->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
