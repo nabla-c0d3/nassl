@@ -252,7 +252,7 @@ class X509Certificate:
 # Extension Parsing Functions
     def _parse_x509_extensions(self):
         x509_ext_parsing_methods = {
-            'X509v3 Subject Alternative Name': self._parse_multi_valued_extension,
+            'X509v3 Subject Alternative Name': self._parse_san,
             'X509v3 CRL Distribution Points': self._parse_crl_distribution_points,
             'Authority Information Access': self._parse_authority_information_access,
             'X509v3 Key Usage': self._parse_multi_valued_extension,
@@ -266,21 +266,25 @@ class X509Certificate:
 
         for x509ext in self._x509.get_extensions():
             ext_name = x509ext.get_object()
-            ext_data = x509ext.get_data()
             # TODO: Should we output the critical field ?
             #extCrit = x509ext.get_critical()
             if ext_name in x509_ext_parsing_methods.keys():
-                ext_dict[ext_name] = x509_ext_parsing_methods[ext_name](ext_data)
+                ext_dict[ext_name] = x509_ext_parsing_methods[ext_name](x509ext)
             else:
-                ext_dict[ext_name] = ext_data.strip()
+                ext_dict[ext_name] = x509ext.get_data().strip()
 
         return ext_dict
 
 
-    @staticmethod
-    def _parse_multi_valued_extension(extension):
 
-        extension = extension.split(', ')
+    @staticmethod
+    def _parse_san(extension):
+        return extension.parse_subject_alt_name()
+
+
+    @staticmethod
+    def _parse_multi_valued_extension(x509ext):
+        extension = x509ext.get_data().split(', ')
         # Split the (key,value) pairs
         parsed_ext = {}
         for value in extension:
@@ -297,9 +301,9 @@ class X509Certificate:
 
 
     @staticmethod
-    def _parse_authority_information_access(auth_ext):
+    def _parse_authority_information_access(x509ext):
         # Hazardous attempt at parsing an Authority Information Access extension
-        auth_ext = auth_ext.strip(' \n').split('\n')
+        auth_ext = x509ext.get_data().strip(' \n').split('\n')
         auth_ext_list = {}
 
         for auth_entry in auth_ext:
@@ -319,9 +323,9 @@ class X509Certificate:
 
 
     @staticmethod
-    def _parse_crl_distribution_points(crl_ext):
+    def _parse_crl_distribution_points(x509ext):
         # Hazardous attempt at parsing a CRL Distribution Point extension
-        crl_ext = crl_ext.strip(' \n').split('\n')
+        crl_ext = x509ext.get_data().strip(' \n').split('\n')
         subcrl = {}
 
         for distrib_point in crl_ext:

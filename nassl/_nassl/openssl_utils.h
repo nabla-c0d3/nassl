@@ -9,3 +9,6 @@
 // Returns a Python string
 // Used by nassl_X509.c and nassl_SSL_SESSION.c
 PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const void *a), const void *dataStruct);
+
+
+PyObject *bioToPyString(BIO *memBio);
