@@ -13,7 +13,7 @@ class X509_NAME_ENTRY_Tests(unittest.TestCase):
 
 class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
 
-    def setUp(self):
+    def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(("www.google.com", 443))
@@ -22,12 +22,7 @@ class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
         ssl_client.do_handshake()
         self.name_entry = ssl_client.get_peer_certificate()._x509.get_subject_name_entries()[0];
 
-
-    def test_get_data(self):
         self.assertIsNotNone(self.name_entry.get_data())
-
-
-    def test_get_object(self):
         self.assertIsNotNone(self.name_entry.get_object())
 
 
