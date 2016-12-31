@@ -5,51 +5,61 @@ from ssl_client import SslClient
 
 
 class DebugSslClient(SslClient):
-    """
-    An SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
+    """An SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
     """
 
     def get_secure_renegotiation_support(self):
+        # type: () -> bool
         return self._ssl.get_secure_renegotiation_support()
 
 
     def get_current_compression_method(self):
+        # type: () -> Optional[str]
         return self._ssl.get_current_compression_method()
 
 
     @staticmethod
     def get_available_compression_methods():
-        """
-        Returns the list of SSL compression methods supported by SslClient.
+        # type: () -> List[str]
+        """Returns the list of SSL compression methods supported by SslClient.
         """
         return SSL.get_available_compression_methods()
 
 
     def do_renegotiate(self):
-        """Initiate an SSL renegotiation."""
+        # type: () -> None
+        """Initiate an SSL renegotiation.
+        """
         if not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot renegotiate.')
 
         self._ssl.renegotiate()
-        return self.do_handshake()
+        self.do_handshake()
 
 
     def get_session(self):
-        """Get the SSL connection's Session object."""
+        # type: () -> nassl._nassl.SSL_SESSION
+        """Get the SSL connection's Session object.
+        """
         return self._ssl.get_session()
 
 
     def set_session(self, ssl_session):
-        """Set the SSL connection's Session object."""
-        return self._ssl.set_session(ssl_session)
+        # type: (nassl._nassl.SSL_SESSION) -> None
+        """Set the SSL connection's Session object.
+        """
+        self._ssl.set_session(ssl_session)
 
 
     def set_options(self, options):
+        # type: (int) -> int
         return self._ssl.set_options(options)
 
 
     def get_dh_param(self):
-        """Retrieve the negotiated Ephemeral Diffie Helmann parameters."""
+        # type: () -> Dict[str, str]
+        """Retrieve the negotiated Ephemeral Diffie Helmann parameters.
+        """
         d = self._openssl_str_to_dic(self._ssl.get_dh_param())
         d['GroupSize'] = d.pop('DH_Parameters').strip('( bit)')
         d['Type'] = "DH"
@@ -58,7 +68,9 @@ class DebugSslClient(SslClient):
 
 
     def get_ecdh_param(self):
-        """Retrieve the negotiated Ephemeral EC Diffie Helmann parameters."""
+        # type: () -> Dict[str, str]
+        """Retrieve the negotiated Ephemeral EC Diffie Helmann parameters.
+        """
         d = self._openssl_str_to_dic(self._ssl.get_ecdh_param(), '        ')
         d['GroupSize'] = d.pop('ECDSA_Parameters').strip('( bit)')
         d['Type'] = "ECDH"
@@ -77,7 +89,9 @@ class DebugSslClient(SslClient):
 
     @staticmethod
     def _openssl_str_to_dic(s, param_tab='            '):
-        """EDH and ECDH parameters pretty-printing."""
+        # type: (str, str) -> Dict[str, str]
+        """EDH and ECDH parameters pretty-printing.
+        """
         d = {}
         to_XML = lambda x : "_".join(m for m in x.replace('-', ' ').split(' '))
         current_arg = None

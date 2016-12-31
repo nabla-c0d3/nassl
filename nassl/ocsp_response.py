@@ -2,25 +2,28 @@
 
 
 class OcspResponse:
-    """
-    High level API for parsing an OCSP response.
+    """High level API for parsing an OCSP response.
     """
 
 
     def __init__(self, ocsp_response):
+        # type: (nassl._nassl.OCSP_RESPONSE) -> None
         self._ocsp_response = ocsp_response
         self._ocsp_response_dict = None
 
 
     def as_text(self):
+        # type: () -> str
         return self._ocsp_response.as_text()
 
 
-    def verify(self, verifyLocations):
-        return self._ocsp_response.basic_verify(verifyLocations)
+    def verify(self, verify_locations):
+        # type: (str) -> None
+        return self._ocsp_response.basic_verify(verify_locations)
 
 
     def as_dict(self):
+        # type: () -> Dict[str, str]
         if self._ocsp_response_dict:
             return self._ocsp_response_dict
 
@@ -52,11 +55,13 @@ class OcspResponse:
 
 # Text parsing
     def _get_value_from_text_output(self, key):
+        # type: (str) -> str
         value = self._ocsp_response.as_text().split(key)
         return value[1].split('\n')[0].strip()
 
 
     def _get_value_from_text_output_no_p(self, key):
+        # type: (str) -> str
         value = self._ocsp_response.as_text().split(key)
         value = value[1].split('\n')[0].strip()
         return value.split('(')[0].strip()

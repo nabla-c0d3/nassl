@@ -124,7 +124,7 @@ static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args) 
     if (result != 1) {
         return raise_OpenSSL_ssl_error(self->ssl, result);
     }
-    return Py_BuildValue("I", result);
+    Py_RETURN_NONE;
 }
 
 
@@ -447,7 +447,7 @@ static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args) {
     if (SSL_set_session(self->ssl, sslSession_PyObject->sslSession) == 0)
         return raise_OpenSSL_error();
 
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 

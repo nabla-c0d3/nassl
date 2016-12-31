@@ -16,12 +16,14 @@ class X509Certificate:
     """
 
     def __init__(self, x509):
+        # type: (X509) -> None
         self._cert_dict = None
         self._x509 = x509
 
 
     @classmethod
     def from_pem(cls, pem_certificate):
+        # type: (str) -> X509Certificate
         """Create an X509Certificate object from a PEM-formatted certificate.
         """
         x509 = X509(pem_certificate)
@@ -29,18 +31,22 @@ class X509Certificate:
 
 
     def as_text(self):
+        # type: () -> str
         return self._x509.as_text()
 
 
     def as_pem(self):
+        # type: () -> str
         return self._x509.as_pem()
 
 
     def get_SHA1_fingerprint(self):
+        # type: () -> str
         return hexlify(self._x509.digest())
 
 
     def get_hpkp_pin(self):
+        # type: () -> str
         """Return the SHA-256 of the Subject Public Key Info base64-encoded, to be used for HTTP Public Key Pinning.
         """
         spki_bytes = self._x509.get_spki_bytes()
@@ -49,7 +55,7 @@ class X509Certificate:
 
 
     def as_dict(self):
-
+        # type: () -> dict
         if self._cert_dict:
             return self._cert_dict
 
@@ -65,7 +71,6 @@ class X509Certificate:
                      'signatureValue': self._parse_signature()
                      }
         self._cert_dict = cert_dict
-
         return cert_dict
 
 

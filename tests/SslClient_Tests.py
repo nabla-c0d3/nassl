@@ -100,7 +100,7 @@ class SslClient_Tests_Handshake(unittest.TestCase):
 
 
     def test_do_handshake(self):
-        self.assertTrue(self.ssl_client.do_handshake())
+        self.ssl_client.do_handshake()
 
 
 class SslClient_Tests_Online(unittest.TestCase):

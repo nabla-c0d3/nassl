@@ -102,7 +102,7 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
         return NULL;
     }
 
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 

@@ -7,12 +7,13 @@ from ocsp_response import OcspResponse
 DEFAULT_BUFFER_SIZE = 4096
 
 
-class ClientCertificateRequested(Exception):
+class ClientCertificateRequested(IOError):
 
     ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
     ERROR_MSG = 'Server requested a client certificate.'
 
     def __init__(self, ca_list):
+        # type: (List[str]) -> None
         self._ca_list = ca_list
 
     def __str__(self):
@@ -25,14 +26,14 @@ class ClientCertificateRequested(Exception):
 
 
 class SslClient(object):
-    """
-    High level API implementing an insecure SSL client.
+    """High level API implementing an SSL client.
     """
 
 
     def __init__(self, sock=None, ssl_version=SSLV23, ssl_verify=SSL_VERIFY_PEER, ssl_verify_locations=None,
                  client_certchain_file=None, client_key_file=None, client_key_type=SSL_FILETYPE_PEM,
                  client_key_password='', ignore_client_authentication_requests=False):
+        # type: (socket.socket, int, int, str, str, str, int, str, bool) -> None
 
         # A Python socket handles transmission of the data
         self._sock = sock
@@ -77,15 +78,17 @@ class SslClient(object):
 
 
     def do_handshake(self):
+        # type: () -> None
         if self._sock is None:
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
 
         while True:
             try:
-                if self._ssl.do_handshake() == 1:
-                    self._is_handshake_completed = True
-                    return True # Handshake was successful
+                self._ssl.do_handshake()
+                self._is_handshake_completed = True
+                # Handshake was successful
+                return
 
             except WantReadError:
                 # OpenSSL is expecting more data from the peer
@@ -105,15 +108,17 @@ class SslClient(object):
                 
 
     def do_ssl2_iis_handshake(self):
+        # type: () -> None
         if self._sock is None:
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
 
         while True:
             try:
-                if self._ssl.do_handshake() == 1:
-                    self._is_handshake_completed = True
-                    return True # Handshake was successful
+                self._ssl.do_handshake()
+                self._is_handshake_completed = True
+                # Handshake was successful
+                return
 
             except WantReadError:
                 # OpenSSL is expecting more data from the peer
@@ -165,6 +170,7 @@ class SslClient(object):
 
 
     def read(self, size):
+        # type: (int) -> str
         if not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot receive data.')
 
@@ -190,8 +196,8 @@ class SslClient(object):
 
 
     def write(self, data):
-        """
-        Returns the number of (encrypted) bytes sent.
+        # type: (str) -> int
+        """Returns the number of (encrypted) bytes sent.
         """
         if not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot send data.')
@@ -205,6 +211,7 @@ class SslClient(object):
         return final_length
 
     def _flush_ssl_engine(self):
+        # type: () -> int
         length_to_read = self._network_bio.pending()
         final_length = length_to_read
         while length_to_read:
@@ -218,6 +225,7 @@ class SslClient(object):
 
 
     def shutdown(self):
+        # type: () -> None
         self._is_handshake_completed = False
         try:
             self._ssl.shutdown()
@@ -229,16 +237,21 @@ class SslClient(object):
 
 
     def _set_verify(self, verify_mode):
-        """Set the OpenSSL verify mode. Private method because it should be set via the constructor."""
-        return self._ssl._set_verify(verify_mode)
+        # type: (int) -> None
+        """Set the OpenSSL verify mode. Private method because it should be set via the constructor.
+        """
+        self._ssl._set_verify(verify_mode)
 
 
-    def set_tlsext_host_name(self, nameIndication):
-        """Set the hostname within the Server Name Indication extension in the client SSL Hello."""
-        return self._ssl.set_tlsext_host_name(nameIndication)
+    def set_tlsext_host_name(self, name_indication):
+        # type: (str) -> None
+        """Set the hostname within the Server Name Indication extension in the client SSL Hello.
+        """
+        self._ssl.set_tlsext_host_name(name_indication)
 
 
     def get_peer_certificate(self):
+        # type: () -> Optional[X509Certificate]
         _x509 = self._ssl.get_peer_certificate()
         if _x509:
             return X509Certificate(_x509)
@@ -247,8 +260,8 @@ class SslClient(object):
 
 
     def get_peer_cert_chain(self):
-        """
-        See the OpenSSL documentation for differences between get_peer_cert_chain() and get_peer_certificate().
+        # type: () -> List[X509Certificate]
+        """See the OpenSSL documentation for differences between get_peer_cert_chain() and get_peer_certificate().
         https://www.openssl.org/docs/ssl/SSL_get_peer_cert_chain.html
         """
         x509_list = self._ssl.get_peer_cert_chain()
@@ -261,25 +274,30 @@ class SslClient(object):
 
 
     def set_cipher_list(self, cipher_list):
-        return self._ssl.set_cipher_list(cipher_list)
+        # type: (str) -> None
+        self._ssl.set_cipher_list(cipher_list)
 
 
     def get_cipher_list(self):
+        # type: () -> List[str]
         return self._ssl.get_cipher_list()
 
 
     def get_current_cipher_name(self):
+        # type: () -> str
         return self._ssl.get_cipher_name()
 
 
     def get_current_cipher_bits(self):
+        # type: () -> int
         return self._ssl.get_cipher_bits()
 
 
     def _use_private_key(self, client_certchain_file, client_key_file, client_key_type, client_key_password):
+        # type: (str, str, int, str) -> None
         """The certificate chain file must be in PEM format. Private method because it should be set via the
-        constructor."""
-
+        constructor.
+        """
         self._ssl_ctx.use_certificate_chain_file(client_certchain_file)
 
         if isinstance(client_key_password, basestring):
@@ -295,22 +313,27 @@ class SslClient(object):
             else:
                 raise
 
-        return self._ssl_ctx.check_private_key()
+        self._ssl_ctx.check_private_key()
 
 
     def get_certificate_chain_verify_result(self):
+        # type: () -> Tuple[int, str]
         verify_result = self._ssl.get_verify_result()
         verify_result_str = X509.verify_cert_error_string(verify_result)
         return verify_result, verify_result_str
 
 
     def set_tlsext_status_ocsp(self):
-        """Enable the OCSP Stapling extension."""
-        return self._ssl.set_tlsext_status_type(TLSEXT_STATUSTYPE_ocsp)
+        # type: () -> None
+        """Enable the OCSP Stapling extension.
+        """
+        self._ssl.set_tlsext_status_type(TLSEXT_STATUSTYPE_ocsp)
 
 
     def get_tlsext_status_ocsp_resp(self):
-        """Retrieve the server's OCSP Stapling status."""
+        # type: () -> Optional[OcspResponse]
+        """Retrieve the server's OCSP Stapling status.
+        """
         ocsp_response = self._ssl.get_tlsext_status_ocsp_resp()
         if ocsp_response:
             return OcspResponse(ocsp_response)
@@ -319,10 +342,12 @@ class SslClient(object):
 
 
     def get_client_CA_list(self):
+        # type: () -> List[str]
         if not self._client_CA_list:
             self._client_CA_list = self._ssl.get_client_CA_list()
         return self._client_CA_list
 
 
     def set_mode(self, mode):
-        return self._ssl.set_mode(mode)
+        # type: (int) -> None
+        self._ssl.set_mode(mode)
