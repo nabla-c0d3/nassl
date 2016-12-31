@@ -3,6 +3,7 @@ nassl
 
 
 [![Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
+[![PyPI version](https://badge.fury.io/py/nassl.svg)](https://badge.fury.io/py/nassl)
 
 Experimental OpenSSL wrapper for Python 2.7 and SSLyze. **Do NOT use for anything serious**. This code has not been 
 properly tested/reviewed and is absolutely not production ready.
@@ -52,8 +53,8 @@ The whole build process is all taken care of by the _build\_from\_scratch.py_ sc
     
 For Windows builds, Visual Studio is expected to be installed at the default location. 
 
-The build script was tested on the following platforms: Windows 7 (32 and 64 bits), Debian 7 (32 and 64 bits), 
-OS X El Capitan. It will build the C extension for the interpreter and platform that was used to run the script 
+The build script was tested on the following platforms: Windows 7 (32 and 64 bits), Debian 7 (32 and 64 bits),
+macOS Sierra. It will build the C extension for the interpreter and platform that was used to run the script
 (ie. no cross-compiling).
     
 
@@ -88,8 +89,6 @@ SSLyze, so I had to write my own wrapper.
 
 License
 -------
-
-Copyright 2015 Alban Diquet
 
 Licensed under the GPLv2; see ./LICENSE
 
