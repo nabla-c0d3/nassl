@@ -72,6 +72,10 @@ static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self
 
 static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSION_Object *self)
 {
+    PyObject *resultDict = NULL;
+    int san_names_nb = 0;
+    int i = 0;
+
     // Try to extract the names within the SAN extension
     STACK_OF(GENERAL_NAME) *san_names = X509V3_EXT_d2i(self->x509ext);
     if (san_names == NULL)
@@ -80,7 +84,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
         return NULL;
     }
 
-    PyObject* resultDict = PyDict_New();
+    resultDict = PyDict_New();
     if (resultDict == NULL)
     {
         sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
@@ -88,13 +92,13 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
     }
 
     // Extract each name within the extension
-    int san_names_nb = sk_GENERAL_NAME_num(san_names);
-    int i = 0;
+    san_names_nb = sk_GENERAL_NAME_num(san_names);
     for (i=0; i<san_names_nb; i++)
     {
         const GENERAL_NAME *gen = sk_GENERAL_NAME_value(san_names, i);
         const char *nameTypeStr = "unknown";
         PyObject *nameDataPyStr = NULL;
+        PyObject* nameList = NULL;
         const char *defaultDataStr = "<unsupported>";
 
         // Heavily inspired from https://github.com/openssl/openssl/blob/master/crypto/x509v3/v3_alt.c
@@ -149,37 +153,37 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
 
             case GEN_IPADD:
                 nameTypeStr = "IP Address";
-
-                unsigned char *p = gen->d.ip->data;
-                if (gen->d.ip->length == 4)
                 {
-                    nameDataPyStr = PyString_FromFormat("%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-                }
-                else if (gen->d.ip->length == 16)
-                {
-                    BIO *bio = BIO_new(BIO_s_mem());
-                    if (bio == NULL)
+                    unsigned char *p = gen->d.ip->data;
+                    if (gen->d.ip->length == 4)
                     {
-                        sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                        raise_OpenSSL_error();
-                        return NULL;
+                        nameDataPyStr = PyString_FromFormat("%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
                     }
-
-                    int j = 0;
-                    for (j=0; j<8; j++)
+                    else if (gen->d.ip->length == 16)
                     {
-                        BIO_printf(bio, ":%X", p[0] << 8 | p[1]);
-                        p += 2;
+                        int j = 0;
+                        BIO *bio = BIO_new(BIO_s_mem());
+                        if (bio == NULL)
+                        {
+                            sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
+                            raise_OpenSSL_error();
+                            return NULL;
+                        }
+
+                        for (j=0; j<8; j++)
+                        {
+                            BIO_printf(bio, ":%X", p[0] << 8 | p[1]);
+                            p += 2;
+                        }
+                        nameDataPyStr = bioToPyString(bio);
+                        BIO_free(bio);
                     }
-                    nameDataPyStr = bioToPyString(bio);
-                    BIO_free(bio);
-                }
-                else
-                {
-                    nameDataPyStr = PyString_FromString("<invalid>");
+                    else
+                    {
+                        nameDataPyStr = PyString_FromString("<invalid>");
+                    }
                 }
                 break;
-
 
             case GEN_RID:
                 nameTypeStr = "Registered ID";
@@ -199,7 +203,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                 break;
         }
         // Store the entry in our result dict
-        PyObject* nameList = PyDict_GetItemString(resultDict, nameTypeStr);
+        nameList = PyDict_GetItemString(resultDict, nameTypeStr);
         if (nameList == NULL)
         {
             // New entry for this type of name
