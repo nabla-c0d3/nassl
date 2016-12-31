@@ -8,14 +8,17 @@
 #include "openssl_utils.h"
 
 
-static PyObject* nassl_SSL_SESSION_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+static PyObject* nassl_SSL_SESSION_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
     PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an SSL_SESSION object. Get it from SSL.get_session()");
     return NULL;
 }
 
 
-static void nassl_SSL_SESSION_dealloc(nassl_SSL_SESSION_Object *self) {
- 	if (self->sslSession != NULL) {
+static void nassl_SSL_SESSION_dealloc(nassl_SSL_SESSION_Object *self)
+{
+ 	if (self->sslSession != NULL)
+ 	{
   		SSL_SESSION_free(self->sslSession);
   		self->sslSession = NULL;
   	}
@@ -23,13 +26,15 @@ static void nassl_SSL_SESSION_dealloc(nassl_SSL_SESSION_Object *self) {
 }
 
 
-static PyObject* nassl_SSL_SESSION_as_text(nassl_SSL_SESSION_Object *self) {
+static PyObject* nassl_SSL_SESSION_as_text(nassl_SSL_SESSION_Object *self)
+{
     return generic_print_to_string((int (*)(BIO *, const void *)) &SSL_SESSION_print, self->sslSession);
 }
 
 
 
-static PyMethodDef nassl_SSL_SESSION_Object_methods[] = {
+static PyMethodDef nassl_SSL_SESSION_Object_methods[] =
+{
     {"as_text", (PyCFunction)nassl_SSL_SESSION_as_text, METH_NOARGS,
      "OpenSSL's SSL_SESSION_print()."
     },
@@ -42,7 +47,8 @@ static PyMemberDef nassl_SSL_SESSION_Object_members[] = {
 };
 */
 
-PyTypeObject nassl_SSL_SESSION_Type = {
+PyTypeObject nassl_SSL_SESSION_Type =
+{
     PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.SSL_SESSION",             /*tp_name*/
     sizeof(nassl_SSL_SESSION_Object),             /*tp_basicsize*/
@@ -85,11 +91,13 @@ PyTypeObject nassl_SSL_SESSION_Type = {
 
 
 
-void module_add_SSL_SESSION(PyObject* m) {
-
+void module_add_SSL_SESSION(PyObject* m)
+{
 	nassl_SSL_SESSION_Type.tp_new = nassl_SSL_SESSION_new;
 	if (PyType_Ready(&nassl_SSL_SESSION_Type) < 0)
+	{
     	return;
+	}
 
     Py_INCREF(&nassl_SSL_SESSION_Type);
     PyModule_AddObject(m, "SSL_SESSION", (PyObject *)&nassl_SSL_SESSION_Type);

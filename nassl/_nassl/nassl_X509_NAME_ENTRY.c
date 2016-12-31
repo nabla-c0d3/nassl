@@ -7,24 +7,26 @@
 #include "nassl_X509_NAME_ENTRY.h"
 
 
-static PyObject* nassl_X509_NAME_ENTRY_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-
+static PyObject* nassl_X509_NAME_ENTRY_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
     PyErr_SetString(PyExc_NotImplementedError, "Cannot directly create an X509_NAME_ENTRY object. Get it from X509.get_issuer_name_entries()");
     return NULL;
 }
 
 
-static void nassl_X509_NAME_ENTRY_dealloc(nassl_X509_NAME_ENTRY_Object *self) {
-    if (self->x509NameEntry != NULL) {
+static void nassl_X509_NAME_ENTRY_dealloc(nassl_X509_NAME_ENTRY_Object *self)
+{
+    if (self->x509NameEntry != NULL)
+    {
         X509_NAME_ENTRY_free(self->x509NameEntry);
         self->x509NameEntry = NULL;
     }
-
     self->ob_type->tp_free((PyObject*)self);
 }
 
 
-static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *self) {
+static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *self)
+{
     unsigned int nameDataSize = 0, objectDataSize = 0, nameUtf8Size = 0;
     ASN1_STRING *nameData = NULL;
     ASN1_OBJECT *objectData = NULL;
@@ -42,7 +44,9 @@ static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *se
 
     objectDataTxt = PyMem_Malloc(objectDataSize);
     if (objectDataTxt == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     OBJ_obj2txt((char *)objectDataTxt, objectDataSize, objectData, 0);
     nameUtf8Size = ASN1_STRING_to_UTF8(&nameDataTxt, nameData);
@@ -66,9 +70,8 @@ static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *se
 }
 
 
-
-
-static PyObject* nassl_X509_NAME_ENTRY_get_object(nassl_X509_NAME_ENTRY_Object *self) {
+static PyObject* nassl_X509_NAME_ENTRY_get_object(nassl_X509_NAME_ENTRY_Object *self)
+{
     unsigned int objectDataSize = 0;
     ASN1_OBJECT *objectData = NULL;
     char *objectDataTxt = NULL;
@@ -79,7 +82,9 @@ static PyObject* nassl_X509_NAME_ENTRY_get_object(nassl_X509_NAME_ENTRY_Object *
 
     objectDataTxt = (char *) PyMem_Malloc(objectDataSize);
     if (objectDataTxt == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     // Extract the text representation
     OBJ_obj2txt(objectDataTxt, objectDataSize, objectData, 0);
@@ -91,7 +96,8 @@ static PyObject* nassl_X509_NAME_ENTRY_get_object(nassl_X509_NAME_ENTRY_Object *
 
 
 
-static PyMethodDef nassl_X509_NAME_ENTRY_Object_methods[] = {
+static PyMethodDef nassl_X509_NAME_ENTRY_Object_methods[] =
+{
     {"get_object", (PyCFunction)nassl_X509_NAME_ENTRY_get_object, METH_NOARGS,
      "Returns a string containing the result of OpenSSL's X509_NAME_get_object() and OBJ_obj2txt()."
     },
@@ -103,7 +109,8 @@ static PyMethodDef nassl_X509_NAME_ENTRY_Object_methods[] = {
 };
 
 
-PyTypeObject nassl_X509_NAME_ENTRY_Type = {
+PyTypeObject nassl_X509_NAME_ENTRY_Type =
+{
     PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.X509_NAME_ENTRY",             /*tp_name*/
     sizeof(nassl_X509_NAME_ENTRY_Object),             /*tp_basicsize*/
@@ -146,11 +153,13 @@ PyTypeObject nassl_X509_NAME_ENTRY_Type = {
 
 
 
-void module_add_X509_NAME_ENTRY(PyObject* m) {
-
+void module_add_X509_NAME_ENTRY(PyObject* m)
+{
 	nassl_X509_NAME_ENTRY_Type.tp_new = nassl_X509_NAME_ENTRY_new;
 	if (PyType_Ready(&nassl_X509_NAME_ENTRY_Type) < 0)
+	{
     	return;
+	}
 
     Py_INCREF(&nassl_X509_NAME_ENTRY_Type);
     PyModule_AddObject(m, "X509_NAME_ENTRY", (PyObject *)&nassl_X509_NAME_ENTRY_Type);

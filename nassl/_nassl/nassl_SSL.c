@@ -31,26 +31,31 @@
 
 
 // nassl.SSL.new()
-static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
     nassl_SSL_Object *self;
     nassl_SSL_CTX_Object *sslCtx_Object;
     SSL *ssl;
 
     self = (nassl_SSL_Object *)type->tp_alloc(type, 0);
     if (self == NULL)
+    {
         return NULL;
+    }
 
     self->ssl = NULL;
     self->sslCtx_Object = NULL;
     self->bio_Object = NULL;
 
     // Recover and store the corresponding ssl_ctx
-    if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object)) {
+    if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object))
+    {
         Py_DECREF(self);
         return NULL;
     }
 
-    if (sslCtx_Object == NULL) {
+    if (sslCtx_Object == NULL)
+    {
         PyErr_SetString(PyExc_RuntimeError, "Received a NULL SSL_CTX object");
         Py_DECREF(self);
         return NULL;
@@ -58,7 +63,8 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
     Py_INCREF(sslCtx_Object);
 
     ssl = SSL_new(sslCtx_Object->sslCtx);
-    if (ssl == NULL) {
+    if (ssl == NULL)
+    {
         Py_DECREF(self);
         return raise_OpenSSL_error();
     }
@@ -71,27 +77,32 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 }
 
 
-static void nassl_SSL_dealloc(nassl_SSL_Object *self) {
-    if (self->ssl != NULL) {
+static void nassl_SSL_dealloc(nassl_SSL_Object *self)
+{
+    if (self->ssl != NULL)
+    {
         SSL_free(self->ssl);
         self->ssl = NULL;
-        if (self->bio_Object != NULL) {
+        if (self->bio_Object != NULL)
+        {
             // BIO is implicitely freed by SSL_free()
             self->bio_Object->bio = NULL;
         }
     }
 
-    if (self->sslCtx_Object != NULL) {
+    if (self->sslCtx_Object != NULL)
+    {
         Py_DECREF(self->sslCtx_Object);
     }
     self->ob_type->tp_free((PyObject*)self);
 }
 
 
-static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args)
+{
     nassl_BIO_Object* bioObject;
-
-    if (!PyArg_ParseTuple(args, "O!", &nassl_BIO_Type, &bioObject)) {
+    if (!PyArg_ParseTuple(args, "O!", &nassl_BIO_Type, &bioObject))
+    {
         return NULL;
     }
 
@@ -101,16 +112,18 @@ static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_SSL_set_connect_state(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_connect_state(nassl_SSL_Object *self, PyObject *args)
+{
     SSL_set_connect_state(self->ssl);
     Py_RETURN_NONE;
 }
 
 
-static PyObject* nassl_SSL_set_mode(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_mode(nassl_SSL_Object *self, PyObject *args)
+{
     long mode;
-
-    if (!PyArg_ParseTuple(args, "l", &mode)) {
+    if (!PyArg_ParseTuple(args, "l", &mode))
+    {
         return NULL;
     }
 
@@ -119,33 +132,43 @@ static PyObject* nassl_SSL_set_mode(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args)
+{
     int result = SSL_do_handshake(self->ssl);
-    if (result != 1) {
+    if (result != 1)
+    {
         return raise_OpenSSL_ssl_error(self->ssl, result);
     }
     Py_RETURN_NONE;
 }
 
 
-static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args)
+{
     int returnValue, readSize;
     char *readBuffer;
     PyObject *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "I", &readSize)) {
+    if (!PyArg_ParseTuple(args, "I", &readSize))
+    {
         return NULL;
     }
 
     readBuffer = (char *) PyMem_Malloc(readSize);
     if (readBuffer == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     returnValue = SSL_read(self->ssl, readBuffer, readSize);
-    if (returnValue > 0) { // Read OK
+    if (returnValue > 0)
+    {
+        // Read OK
         res = PyString_FromStringAndSize(readBuffer, returnValue);
     }
-    else {  // Read failed
+    else
+    {
+        // Read failed
         raise_OpenSSL_ssl_error(self->ssl, returnValue);
     }
 
@@ -154,60 +177,71 @@ static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
+{
     int returnValue, writeSize;
     char *writeBuffer;
     PyObject *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "t#", &writeBuffer, &writeSize)) {
+    if (!PyArg_ParseTuple(args, "t#", &writeBuffer, &writeSize))
+    {
         return NULL;
     }
 
     returnValue = SSL_write(self->ssl, writeBuffer, writeSize);
-    if (returnValue > 0) { // Write OK
+    if (returnValue > 0) \
+    {
+        // Write OK
         res = Py_BuildValue("I", returnValue);
     }
-    else { // Write failed
+    else
+    {
+        // Write failed
         raise_OpenSSL_ssl_error(self->ssl, returnValue);
     }
-
     return res;
 }
 
 
-static PyObject* nassl_SSL_shutdown(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_shutdown(nassl_SSL_Object *self, PyObject *args)
+{
     int returnValue = SSL_shutdown(self->ssl);
     PyObject *res = NULL;
 
-    if (returnValue >= 0) {
+    if (returnValue >= 0)
+    {
         res = Py_BuildValue("I", returnValue);
     }
-    else {
+    else
+    {
         raise_OpenSSL_ssl_error(self->ssl, returnValue);
     }
-
     return res;
 }
 
 
-static PyObject* nassl_SSL_pending(nassl_SSL_Object *self, PyObject *args) {
-    int returnValue;
-
-    returnValue = SSL_pending(self->ssl);
+static PyObject* nassl_SSL_pending(nassl_SSL_Object *self, PyObject *args)
+{
+    int returnValue = SSL_pending(self->ssl);
     return Py_BuildValue("I", returnValue);
 }
 
 
-static PyObject* nassl_SSL_get_secure_renegotiation_support(nassl_SSL_Object *self, PyObject *args) {
-
+static PyObject* nassl_SSL_get_secure_renegotiation_support(nassl_SSL_Object *self, PyObject *args)
+{
     if (SSL_get_secure_renegotiation_support(self->ssl))
+    {
         Py_RETURN_TRUE;
+    }
     else
+    {
         Py_RETURN_FALSE;
+    }
 }
 
 
-static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *self, PyObject *args)
+{
     PyObject* compMethodPyList = NULL;
     int i, compMethodsCount = 0;
     STACK_OF(SSL_COMP) *compMethods = SSL_COMP_get_compression_methods();
@@ -216,19 +250,24 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
     compMethodsCount = sk_SSL_COMP_num(compMethods);
     compMethodPyList = PyList_New(compMethodsCount);
     if (compMethodPyList == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
-    for (i=0;i<compMethodsCount;i++) {
+    for (i=0;i<compMethodsCount;i++)
+    {
         PyObject *methodPyString = NULL;
 
         const SSL_COMP *method = sk_SSL_COMP_value(compMethods, i);
-        if (method == NULL) {
+        if (method == NULL)
+        {
             PyErr_SetString(PyExc_ValueError, "Could not extract a compression method. Should not happen ?");
             return NULL;
         }
 
         methodPyString = PyString_FromString(method->name);
-        if (methodPyString == NULL) {
+        if (methodPyString == NULL)
+        {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
         }
 
@@ -239,25 +278,28 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
 }
 
 
-static PyObject* nassl_SSL_get_current_compression_method(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_current_compression_method(nassl_SSL_Object *self, PyObject *args)
+{
     const COMP_METHOD *compMethod;
-
     compMethod = SSL_get_current_compression(self->ssl);
     if (compMethod == NULL)
+    {
         Py_RETURN_NONE;
-
+    }
     return PyString_FromString(SSL_COMP_get_name(compMethod));
 }
 
 
-static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args)
+{
     int verifyMode;
-
-    if (!PyArg_ParseTuple(args, "I", &verifyMode)) {
+    if (!PyArg_ParseTuple(args, "I", &verifyMode))
+    {
         return NULL;
     }
 
-    switch (verifyMode) {
+    switch (verifyMode)
+    {
         case SSL_VERIFY_NONE:
         case SSL_VERIFY_PEER:
         case SSL_VERIFY_FAIL_IF_NO_PEER_CERT:
@@ -273,14 +315,16 @@ static PyObject* nassl_SSL_set_verify(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject *args)
+{
     char *nameIndication;
-
-    if (!PyArg_ParseTuple(args, "s", &nameIndication)) {
+    if (!PyArg_ParseTuple(args, "s", &nameIndication))
+    {
         return NULL;
     }
 
-    if (!SSL_set_tlsext_host_name(self->ssl, nameIndication)) {
+    if (!SSL_set_tlsext_host_name(self->ssl, nameIndication))
+    {
         PyErr_SetString(PyExc_ValueError, "Error setting the SNI extension. Using SSL 2 ?");
         return NULL;
     }
@@ -289,18 +333,24 @@ static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject
 }
 
 
-static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject *args)
+{
     X509 *cert;
-
     cert = SSL_get_peer_certificate(self->ssl);
-    if (cert == NULL) // Anonymous cipher suite ?
+    if (cert == NULL)
+    {
+        // Anonymous cipher suite ?
         Py_RETURN_NONE;
-    else {
+    }
+    else
+    {
         // Return an _nassl.X509 object
         nassl_X509_Object *x509_Object;
         x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
         if (x509_Object == NULL)
+        {
             return PyErr_NoMemory();
+        }
 
         x509_Object->x509 = cert;
         return (PyObject *) x509_Object;
@@ -308,14 +358,16 @@ static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject
 }
 
 
-static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *args)
+{
     char *cipherList;
-
-    if (!PyArg_ParseTuple(args, "s", &cipherList)) {
+    if (!PyArg_ParseTuple(args, "s", &cipherList))
+    {
         return NULL;
     }
 
-    if (!SSL_set_cipher_list(self->ssl, cipherList)) {
+    if (!SSL_set_cipher_list(self->ssl, cipherList))
+    {
         return raise_OpenSSL_error();
     }
 
@@ -323,28 +375,38 @@ static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *arg
 }
 
 
-static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *args)
+{
     unsigned int priority = 0;
     PyObject* ciphersPyList = NULL;
-
     if (SSL_get_cipher_list(self->ssl, 0) == NULL)
+    {
         Py_RETURN_NONE;
+    }
 
     // Return a list of cipher strings
     ciphersPyList = PyList_New(0);
     if (ciphersPyList == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
-   do { // Extract each cipher name
+   do
+   {
+        // Extract each cipher name
         PyObject *cipherPyString = NULL;
         const char *cipherName = SSL_get_cipher_list(self->ssl, priority);
 
         cipherPyString = PyString_FromString(cipherName);
         if (cipherPyString == NULL)
+        {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+        }
 
         if (PyList_Append(ciphersPyList, cipherPyString) == -1)
-            return NULL; // PyList_Append() set an exception
+        {
+            return NULL; // PyList_Append() sets an exception
+        }
 
         priority++;
     } while (SSL_get_cipher_list(self->ssl, priority) != NULL) ;
@@ -353,19 +415,22 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
 }
 
 
-static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *args)
+{
     int returnValue = SSL_get_cipher_bits(self->ssl, NULL);
     return Py_BuildValue("I", returnValue);
 }
 
 
-static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *args)
+{
     const char *cipherName = SSL_get_cipher_name(self->ssl);
     return PyString_FromString(cipherName);
 }
 
 
-static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *args)
+{
     PyObject* namesPyList = NULL;
     int x509NamesNum = 0;
     int i = 0;
@@ -374,18 +439,22 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
     // Return a list of X509 names
     namesPyList = PyList_New(0);
     if (namesPyList == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     x509Names = SSL_get_client_CA_list(self->ssl); // freed by SSL_free()
     x509NamesNum = sk_X509_NAME_num(x509Names);
 
     // Extract each X509_NAME and store their string representation
-    for (i=0;i<x509NamesNum;i++) {
+    for (i=0; i<x509NamesNum; i++)
+    {
         char *nameStr = NULL;
         PyObject *namePyString = NULL;
 
         X509_NAME *name = sk_X509_NAME_pop(x509Names);
-        if (name == NULL) {
+        if (name == NULL)
+        {
             PyErr_SetString(PyExc_ValueError, "Could not extract an X509_NAME from the client CA list. Should not happen ?");
             return NULL;
         }
@@ -394,42 +463,50 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
         // But that's all we need for now
         nameStr = X509_NAME_oneline(name, NULL, 0);
         namePyString = PyString_FromString(nameStr);
-        if (namePyString == NULL) {
+        if (namePyString == NULL)
+        {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
         }
 
-        if (PyList_Append(namesPyList, namePyString) == -1) {
-            return NULL; // PyList_Append() set an exception
+        if (PyList_Append(namesPyList, namePyString) == -1)
+        {
+            return NULL; // PyList_Append() sets an exception
         }
     }
     return namesPyList;
 }
 
 
-static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *args)
+{
     long returnValue = SSL_get_verify_result(self->ssl);
     return Py_BuildValue("I", returnValue);
 }
 
 
-static PyObject* nassl_SSL_renegotiate(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_renegotiate(nassl_SSL_Object *self, PyObject *args)
+{
     SSL_renegotiate(self->ssl);
     Py_RETURN_NONE;
 }
 
 
-static PyObject* nassl_SSL_get_session(nassl_SSL_Object *self, PyObject *args) {
-    SSL_SESSION *sslSession;
-
-    sslSession = SSL_get1_session(self->ssl);
+static PyObject* nassl_SSL_get_session(nassl_SSL_Object *self, PyObject *args)
+{
+    SSL_SESSION *sslSession = SSL_get1_session(self->ssl);
     if (sslSession == NULL)
+    {
         Py_RETURN_NONE;
-    else {
+    }
+    else
+    {
         // Return an _nassl.SSL_SESSION object
         nassl_SSL_SESSION_Object *sslSession_PyObject;
         sslSession_PyObject = (nassl_SSL_SESSION_Object *)nassl_SSL_SESSION_Type.tp_alloc(&nassl_SSL_SESSION_Type, 0);
         if (sslSession_PyObject == NULL)
+        {
             return PyErr_NoMemory();
+        }
 
         sslSession_PyObject->sslSession = sslSession;
         return (PyObject *) sslSession_PyObject;
@@ -437,33 +514,37 @@ static PyObject* nassl_SSL_get_session(nassl_SSL_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args)
+{
     nassl_SSL_SESSION_Object *sslSession_PyObject = NULL;
-
-    if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_SESSION_Type, &sslSession_PyObject)) {
+    if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_SESSION_Type, &sslSession_PyObject))
+    {
         return NULL;
     }
 
     if (SSL_set_session(self->ssl, sslSession_PyObject->sslSession) == 0)
+    {
         return raise_OpenSSL_error();
+    }
 
     Py_RETURN_NONE;
 }
 
 
-static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args) {
-    long sslOption=0;
-
-    if (!PyArg_ParseTuple(args, "l", &sslOption)) {
+static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args)
+{
+    long sslOption = 0;
+    if (!PyArg_ParseTuple(args, "l", &sslOption))
+    {
         return NULL;
     }
     return Py_BuildValue("I", SSL_set_options(self->ssl, sslOption));
 }
 
 
-static PyObject* nassl_SSL_set_tlsext_status_type(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_set_tlsext_status_type(nassl_SSL_Object *self, PyObject *args)
+{
     int statusType = 0;
-
     if (!PyArg_ParseTuple(args, "I", &statusType)) {
         return NULL;
     }
@@ -473,7 +554,8 @@ static PyObject* nassl_SSL_set_tlsext_status_type(nassl_SSL_Object *self, PyObje
 }
 
 
-static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, PyObject *args)
+{
     OCSP_RESPONSE *ocspResp = NULL;
     nassl_OCSP_RESPONSE_Object *ocspResp_PyObject;
     long ocspRespLen = 0;
@@ -483,18 +565,22 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
     // Get the OCSP response
     ocspRespLen = SSL_get_tlsext_status_ocsp_resp(self->ssl, &ocspBuf);
     if (ocspBuf == NULL)
+    {
         Py_RETURN_NONE;
+    }
 
     // Try to parse it
     ocspResp = d2i_OCSP_RESPONSE(NULL, &ocspBuf, ocspRespLen);
-    if (ocspResp == NULL) {
+    if (ocspResp == NULL)
+    {
         PyErr_SetString(PyExc_ValueError, "Error parsing the OCSP response. Should not happen ?");
         return NULL;
     }
 
     // Get the peer's certificate chain
     certChain = SSL_get_peer_cert_chain(self->ssl); // automatically freed
-    if (certChain == NULL) {
+    if (certChain == NULL)
+    {
         PyErr_SetString(PyExc_ValueError, "Error getting the peer's certificate chain.");
         return NULL;
     }
@@ -503,12 +589,14 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
         int i = 0, certNum = 0;
 
         certChainCpy = sk_X509_new_null();
-        if (certChainCpy == NULL) {
+        if (certChainCpy == NULL)
+        {
             return raise_OpenSSL_error();
         }
 
         certNum = sk_X509_num(certChain);
-        for(i=0;i<certNum;i++) {
+        for(i=0; i<certNum; i++)
+        {
             X509 *cert = sk_X509_value(certChain, i);
             sk_X509_push(certChainCpy, X509_dup(cert));
         }
@@ -517,16 +605,18 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
     // Return an _nassl.OCSP_RESPONSE object
     ocspResp_PyObject = (nassl_OCSP_RESPONSE_Object *)nassl_OCSP_RESPONSE_Type.tp_alloc(&nassl_OCSP_RESPONSE_Type, 0);
     if (ocspResp_PyObject == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     ocspResp_PyObject->ocspResp = ocspResp;
     ocspResp_PyObject->peerCertChain = certChainCpy;
-
     return (PyObject *) ocspResp_PyObject;
 }
 
 
-static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args)
+{
     // This is only used for fixing SSLv2 connections when connecting to IIS7 (like in the 90s)
     // See SslClient.py for more information
     const char *stateString = SSL_state_string_long(self->ssl);
@@ -534,7 +624,8 @@ static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *a
 }
 
 
-static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
+static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self)
+{
     DH *dh_srvr;
     SSL_SESSION* session;
     long alg_k;
@@ -578,7 +669,8 @@ static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self) {
 
 
 /* mostly ripped from OpenSSL's s3_clnt.c */
-static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self) {
+static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self)
+{
     EC_KEY *ec_key;
     SSL_SESSION* session;
     long alg_k;
@@ -631,7 +723,8 @@ static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self) {
 }
 
 
-static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject *args)
+{
     STACK_OF(X509) *certChain = NULL;
     PyObject* certChainPyList = NULL;
     int certChainCount = 0, i = 0;
@@ -648,15 +741,17 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
     certChainCount = sk_X509_num(certChain);
     certChainPyList = PyList_New(certChainCount);
     if (certChainPyList == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
-    for (i=0;i<certChainCount;i++)
+    for (i=0; i<certChainCount; i++)
     {
         nassl_X509_Object *x509_Object = NULL;
-
         // Copy the certificate as the cert chain is freed automatically
         X509 *cert = X509_dup(sk_X509_value(certChain, i));
-        if (cert == NULL) {
+        if (cert == NULL)
+        {
             PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
             return NULL;
         }
@@ -664,7 +759,9 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
         // Store the cert in an _nassl.X509 object
         x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
         if (x509_Object == NULL)
+        {
             return PyErr_NoMemory();
+        }
         x509_Object->x509 = cert;
 
         // Add the X509 object to the final list
@@ -675,7 +772,8 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
 }
 
 
-static PyMethodDef nassl_SSL_Object_methods[] = {
+static PyMethodDef nassl_SSL_Object_methods[] =
+{
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
      "OpenSSL's SSL_set_bio() on the internal BIO of an _nassl.BIO_Pair object."
     },
@@ -775,7 +873,8 @@ static PyMemberDef nassl_SSL_Object_members[] = {
 };
 */
 
-static PyTypeObject nassl_SSL_Type = {
+static PyTypeObject nassl_SSL_Type =
+{
     PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.SSL",             /*tp_name*/
     sizeof(nassl_SSL_Object),             /*tp_basicsize*/
@@ -818,11 +917,13 @@ static PyTypeObject nassl_SSL_Type = {
 
 
 
-void module_add_SSL(PyObject* m) {
-
+void module_add_SSL(PyObject* m)
+{
     nassl_SSL_Type.tp_new = nassl_SSL_new;
     if (PyType_Ready(&nassl_SSL_Type) < 0)
+    {
         return;
+    }
 
     Py_INCREF(&nassl_SSL_Type);
     PyModule_AddObject(m, "SSL", (PyObject *)&nassl_SSL_Type);

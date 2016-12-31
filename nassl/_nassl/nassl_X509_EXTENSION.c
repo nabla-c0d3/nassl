@@ -238,15 +238,21 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
 }
 
 
-static PyObject* nassl_X509_EXTENSION_get_critical(nassl_X509_EXTENSION_Object *self) {
+static PyObject* nassl_X509_EXTENSION_get_critical(nassl_X509_EXTENSION_Object *self)
+{
     if (X509_EXTENSION_get_critical(self->x509ext))
+    {
         Py_RETURN_TRUE;
+    }
     else
+    {
         Py_RETURN_FALSE;
+    }
 }
 
 
-static PyMethodDef nassl_X509_EXTENSION_Object_methods[] = {
+static PyMethodDef nassl_X509_EXTENSION_Object_methods[] =
+{
         {"get_object", (PyCFunction)nassl_X509_EXTENSION_get_object, METH_NOARGS,
                 "Returns a string containing the result of OpenSSL's X509_EXTENSION_get_object() and OBJ_obj2txt()."
         },
@@ -264,7 +270,8 @@ static PyMethodDef nassl_X509_EXTENSION_Object_methods[] = {
 };
 
 
-PyTypeObject nassl_X509_EXTENSION_Type = {
+PyTypeObject nassl_X509_EXTENSION_Type =
+{
         PyVarObject_HEAD_INIT(NULL, 0)
         "_nassl.X509_EXTENSION",             /*tp_name*/
         sizeof(nassl_X509_EXTENSION_Object),             /*tp_basicsize*/
@@ -307,11 +314,13 @@ PyTypeObject nassl_X509_EXTENSION_Type = {
 
 
 
-void module_add_X509_EXTENSION(PyObject* m) {
-
+void module_add_X509_EXTENSION(PyObject* m)
+{
     nassl_X509_EXTENSION_Type.tp_new = nassl_X509_EXTENSION_new;
     if (PyType_Ready(&nassl_X509_EXTENSION_Type) < 0)
+    {
         return;
+    }
 
     Py_INCREF(&nassl_X509_EXTENSION_Type);
     PyModule_AddObject(m, "X509_EXTENSION", (PyObject *)&nassl_X509_EXTENSION_Type);

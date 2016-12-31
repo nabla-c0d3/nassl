@@ -7,7 +7,8 @@
 #include "nassl_SSL_CTX.h"
 
 
-typedef enum {
+typedef enum
+{
 	sslv23,
 	sslv2,
 	sslv3,
@@ -17,7 +18,8 @@ typedef enum {
 } SslProtocolVersion;
 
 
-static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey) {
+static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+{
     // This callback is here so we can detect when the server wants a client cert
     // It will trigger an SSL_ERROR_WANT_X509_LOOKUP error during the handshake
     // if the server expected a client certificate and we didn't provide one
@@ -26,24 +28,29 @@ static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey) {
 
 
 // nassl.SSL_CTX.new()
-static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
 	nassl_SSL_CTX_Object *self;
 	int sslVersion;
 	SSL_CTX *sslCtx;
 
     self = (nassl_SSL_CTX_Object *)type->tp_alloc(type, 0);
     if (self == NULL)
+    {
     	return NULL;
+    }
 
     self->sslCtx = NULL;
     self->pkeyPasswordBuf = NULL;
 
-	if (!PyArg_ParseTuple(args, "I", &sslVersion)) {
+	if (!PyArg_ParseTuple(args, "I", &sslVersion))
+	{
 		Py_DECREF(self);
     	return NULL;
     }
 
-    switch (sslVersion) {
+    switch (sslVersion)
+    {
 		case sslv23:
 			sslCtx = SSL_CTX_new(SSLv23_method());
 			break;
@@ -67,7 +74,8 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
         	Py_DECREF(self);
 			return NULL;
 	}
-	if (sslCtx == NULL) {
+	if (sslCtx == NULL)
+	{
         raise_OpenSSL_error();
         Py_DECREF(self);
 		return NULL;
@@ -82,13 +90,16 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 
 
 
-static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self) {
- 	if (self->sslCtx != NULL) {
+static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self)
+{
+ 	if (self->sslCtx != NULL)
+ 	{
   		SSL_CTX_free(self->sslCtx);
   		self->sslCtx = NULL;
   	}
 
-    if (self->pkeyPasswordBuf != NULL) {
+    if (self->pkeyPasswordBuf != NULL)
+    {
         PyMem_Free(self->pkeyPasswordBuf);
         self->pkeyPasswordBuf = NULL;
     }
@@ -97,14 +108,16 @@ static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self) {
 }
 
 
-static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *args)
+{
 	int verifyMode;
-
-	if (!PyArg_ParseTuple(args, "I", &verifyMode)) {
+	if (!PyArg_ParseTuple(args, "I", &verifyMode))
+	{
     	return NULL;
     }
 
-    switch (verifyMode) {
+    switch (verifyMode)
+    {
         case SSL_VERIFY_NONE:
         case SSL_VERIFY_PEER:
         case SSL_VERIFY_FAIL_IF_NO_PEER_CERT:
@@ -121,14 +134,16 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
 
 
 
-static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args)
+{
     char *caFile = NULL;
-
-    if (!PyArg_ParseTuple(args, "s", &caFile)) {
+    if (!PyArg_ParseTuple(args, "s", &caFile))
+    {
         return NULL;
     }
 
-    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL)) {
+    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL))
+    {
         return raise_OpenSSL_error();
     }
 
@@ -136,7 +151,8 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
 }
 
 
-static PyObject* nassl_SSL_CTX_use_certificate_chain_file(nassl_SSL_CTX_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_CTX_use_certificate_chain_file(nassl_SSL_CTX_Object *self, PyObject *args)
+{
     const char *filePath = NULL;
 
     if (!PyArg_ParseTuple(args, "s", &filePath)) {
@@ -151,15 +167,17 @@ static PyObject* nassl_SSL_CTX_use_certificate_chain_file(nassl_SSL_CTX_Object *
 }
 
 
-static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, PyObject *args)
+{
     const char *filePath = NULL;
     int certType = 0;
-
-    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType)) {
+    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType))
+    {
         return NULL;
     }
 
-    if (SSL_CTX_use_PrivateKey_file(self->sslCtx, filePath, certType) != 1) {
+    if (SSL_CTX_use_PrivateKey_file(self->sslCtx, filePath, certType) != 1)
+    {
         return raise_OpenSSL_error();
     }
 
@@ -167,8 +185,10 @@ static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, P
 }
 
 
-static PyObject* nassl_SSL_CTX_check_private_key(nassl_SSL_CTX_Object *self, PyObject *args) {
-    if (SSL_CTX_check_private_key(self->sslCtx) != 1){
+static PyObject* nassl_SSL_CTX_check_private_key(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+    if (SSL_CTX_check_private_key(self->sslCtx) != 1)
+    {
         return raise_OpenSSL_error();
     }
 
@@ -177,7 +197,8 @@ static PyObject* nassl_SSL_CTX_check_private_key(nassl_SSL_CTX_Object *self, PyO
 
 
 // passwd callback for encrypted PEM file handling
-static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
+static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata)
+{
     // This is a hack to allow callers to provide the password to unlock
     // a PEM private key whenever they want instead of when the SSL_CTX
     // object gets created (which would be less hacky and convenient)
@@ -185,13 +206,16 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
     size_t passwordSize = 0;
     char *passwordBuf = (char *)userdata;
 
-    if ((userdata == NULL) || (buf == NULL)) {
+    if ((userdata == NULL) || (buf == NULL))
+    {
         return 0;
     }
 
     // NUL-terminated string as it will come from Python
     passwordSize = strlen(passwordBuf) + 1;
-    if (passwordSize > size){  // Not enough space in OpenSSL's buffer
+    if (passwordSize > size)
+    {
+        // Not enough space in OpenSSL's buffer
         return 0;
     }
 
@@ -201,11 +225,12 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata) {
 }
 
 
-static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *self, PyObject *args)
+{
     size_t passwordSize = 0;
     char *passwordStr = NULL;
-
-    if (!PyArg_ParseTuple(args, "s", &passwordStr)) {
+    if (!PyArg_ParseTuple(args, "s", &passwordStr))
+    {
         return NULL;
     }
 
@@ -213,7 +238,9 @@ static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *se
     passwordSize = strlen(passwordStr) + 1;
     self->pkeyPasswordBuf = (char *) PyMem_Malloc(passwordSize);
     if (self->pkeyPasswordBuf == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     strncpy(self->pkeyPasswordBuf, passwordStr, passwordSize);
 
@@ -224,13 +251,15 @@ static PyObject* nassl_SSL_CTX_set_private_key_password(nassl_SSL_CTX_Object *se
     Py_RETURN_NONE;
 }
 
-static PyObject* nassl_SSL_CTX_set_client_cert_cb_NULL(nassl_SSL_CTX_Object *self, PyObject *args) {
+static PyObject* nassl_SSL_CTX_set_client_cert_cb_NULL(nassl_SSL_CTX_Object *self, PyObject *args)
+{
     SSL_CTX_set_client_cert_cb(self->sslCtx, NULL);
     Py_RETURN_NONE;
 }
 
 
-static PyMethodDef nassl_SSL_CTX_Object_methods[] = {
+static PyMethodDef nassl_SSL_CTX_Object_methods[] =
+{
     {"set_verify", (PyCFunction)nassl_SSL_CTX_set_verify, METH_VARARGS,
      "OpenSSL's SSL_CTX_set_verify() with a NULL verify_callback."
     },
@@ -261,7 +290,8 @@ static PyMemberDef nassl_SSL_CTX_Object_members[] = {
 };
 */
 
-PyTypeObject nassl_SSL_CTX_Type = {
+PyTypeObject nassl_SSL_CTX_Type =
+{
     PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.SSL_CTX",             /*tp_name*/
     sizeof(nassl_SSL_CTX_Object),             /*tp_basicsize*/
@@ -304,11 +334,13 @@ PyTypeObject nassl_SSL_CTX_Type = {
 
 
 
-void module_add_SSL_CTX(PyObject* m) {
-
+void module_add_SSL_CTX(PyObject* m)
+{
 	nassl_SSL_CTX_Type.tp_new = nassl_SSL_CTX_new;
 	if (PyType_Ready(&nassl_SSL_CTX_Type) < 0)
+	{
     	return;
+	}
 
     Py_INCREF(&nassl_SSL_CTX_Type);
     PyModule_AddObject(m, "SSL_CTX", (PyObject *)&nassl_SSL_CTX_Type);

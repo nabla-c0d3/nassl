@@ -19,18 +19,21 @@
 
 
 // nassl.X509.new()
-static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds) {
-
+static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
     nassl_X509_Object *self;
     char *pemCertificate;
 	BIO *bio;
 	
     self = (nassl_X509_Object *)type->tp_alloc(type, 0);
     if (self == NULL)
+    {
     	return NULL;
+    }
 
     // Read the certificate as PEM and create an X509 object
-    if (!PyArg_ParseTuple(args, "s", &pemCertificate)) {
+    if (!PyArg_ParseTuple(args, "s", &pemCertificate))
+    {
         return NULL;
     }
 
@@ -40,7 +43,8 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
     self->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
     BIO_free(bio);
 
-    if (self->x509 == NULL) {
+    if (self->x509 == NULL)
+    {
         PyErr_SetString(PyExc_ValueError, "Could not parse the supplied PEM certificate");
         return NULL;
     }
@@ -49,50 +53,56 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
 
 
 
-static void nassl_X509_dealloc(nassl_X509_Object *self) {
- 	if (self->x509 != NULL) {
+static void nassl_X509_dealloc(nassl_X509_Object *self)
+{
+ 	if (self->x509 != NULL)
+ 	{
   		X509_free(self->x509);
   		self->x509 = NULL;
   	}
-
     self->ob_type->tp_free((PyObject*)self);
 }
 
 
-static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_as_text(nassl_X509_Object *self, PyObject *args)
+{
     return generic_print_to_string((int (*)(BIO *, const void *)) &X509_print, self->x509);
 }
 
 
-static PyObject* nassl_X509_get_notBefore(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_notBefore(nassl_X509_Object *self, PyObject *args)
+{
     ASN1_TIME *asn1Time = X509_get_notBefore(self->x509);
     return generic_print_to_string((int (*)(BIO *, const void *)) &ASN1_TIME_print, asn1Time);
 }
 
 
-static PyObject* nassl_X509_get_notAfter(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_notAfter(nassl_X509_Object *self, PyObject *args)
+{
     ASN1_TIME *asn1Time = X509_get_notAfter(self->x509);
     return generic_print_to_string((int (*)(BIO *, const void *)) &ASN1_TIME_print, asn1Time);
 }
 
 
-static PyObject* nassl_X509_get_version(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_version(nassl_X509_Object *self, PyObject *args)
+{
     long version = X509_get_version(self->x509);
     return Py_BuildValue("I", version);
 }
 
 
-static PyObject* nassl_X509_get_serialNumber(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_serialNumber(nassl_X509_Object *self, PyObject *args)
+{
     ASN1_INTEGER *serialNum = X509_get_serialNumber(self->x509);
     return generic_print_to_string((int (*)(BIO *, const void *)) &i2a_ASN1_INTEGER, serialNum);
 }
 
 
-static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args)
+{
     unsigned char *readBuffer;
     unsigned int digestLen;
     PyObject *res = NULL;
-
     readBuffer = (unsigned char *) PyMem_Malloc(EVP_MAX_MD_SIZE);
     if (readBuffer == NULL)
     {
@@ -100,10 +110,13 @@ static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args) {
     }
 
     // Only support SHA1 for now
-    if (X509_digest(self->x509, EVP_sha1(), readBuffer, &digestLen) == 1) { // Read OK
+    if (X509_digest(self->x509, EVP_sha1(), readBuffer, &digestLen) == 1)
+    {
+        // Read OK
         res = PyString_FromStringAndSize((char *)readBuffer, digestLen);
     }
-    else {
+    else
+    {
         PyErr_SetString(nassl_OpenSSLError_Exception, "X509_digest() failed.");
     }
 
@@ -112,12 +125,14 @@ static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args) {
 }
 
 
-static PyObject* nassl_X509_as_pem(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_as_pem(nassl_X509_Object *self, PyObject *args)
+{
     return generic_print_to_string((int (*)(BIO *, const void *)) &PEM_write_bio_X509, self->x509);
 }
 
 
-static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *args)
+{
     PyObject* extensionsPyList = NULL;
     unsigned int i=0;
     unsigned int extCount = X509_get_ext_count(self->x509);
@@ -126,21 +141,27 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
    // We'll return a Python list containing each extension
     extensionsPyList = PyList_New(extCount);
     if (extensionsPyList == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
 
     // Return a list of X509_EXTENSION Python objects
-    for (i=0;i<extCount;i++) {
+    for (i=0; i<extCount; i++)
+    {
         nassl_X509_EXTENSION_Object *x509ext_Object;
         X509_EXTENSION *x509ext = X509_get_ext(self->x509, i);
-        if (x509ext == NULL) {
+        if (x509ext == NULL)
+        {
             PyErr_SetString(PyExc_ValueError, "Could not extract a X509_EXTENSION from the certificate. Exotic certificate ?");
             return NULL;
         }
 
         x509ext_Object = (nassl_X509_EXTENSION_Object *)nassl_X509_EXTENSION_Type.tp_alloc(&nassl_X509_EXTENSION_Type, 0);
         if (x509ext_Object == NULL)
+        {
             return PyErr_NoMemory();
+        }
 
         // We need a copy of the X509_EXTENSION OpenSSL structure,
         // otherwise the X509 Python object might get garbage collected
@@ -156,7 +177,8 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
 
 // Generic function to extract the list of X509_NAME_ENTRY from an X509_NAME.
 // Used to get the subject name entries and the issuer name entries. Returns a Python list
-static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a), nassl_X509_Object *self) {
+static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a), nassl_X509_Object *self)
+{
     unsigned int i=0;
     X509_NAME * x509Name = NULL;
     unsigned int nameEntryCount = 0;
@@ -164,7 +186,8 @@ static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a
 
     // Extract the name field
     x509Name = X509GetNameFunc(self->x509);
-    if (x509Name == NULL) {
+    if (x509Name == NULL)
+    {
         PyErr_SetString(PyExc_ValueError, "Could not extract a X509_NAME from the certificate. Exotic certificate ?");
         return NULL;
     }
@@ -173,20 +196,26 @@ static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a
    // We'll return a Python list containing each name entry
     nameEntriesPyList = PyList_New(nameEntryCount);
     if (nameEntriesPyList == NULL)
+    {
         return PyErr_NoMemory();
+    }
 
     // Extract each name entry and create a Python object
-    for (i=0; i<nameEntryCount; i++) {
+    for (i=0; i<nameEntryCount; i++)
+    {
         nassl_X509_NAME_ENTRY_Object *nameEntry_Object;
         X509_NAME_ENTRY *nameEntry = X509_NAME_get_entry(x509Name, i);
-        if (nameEntry == NULL) {
+        if (nameEntry == NULL)
+        {
             PyErr_SetString(PyExc_ValueError, "Could not extract a X509_NAME_ENTRY from the certificate. Exotic certificate ?");
             return NULL;
         }
 
         nameEntry_Object = (nassl_X509_NAME_ENTRY_Object *)nassl_X509_NAME_ENTRY_Type.tp_alloc(&nassl_X509_NAME_ENTRY_Type, 0);
         if (nameEntry_Object == NULL)
+        {
             return PyErr_NoMemory();
+        }
 
         nameEntry_Object->x509NameEntry = X509_NAME_ENTRY_dup(nameEntry);
         PyList_SET_ITEM(nameEntriesPyList, i, (PyObject *) nameEntry_Object);
@@ -196,21 +225,24 @@ static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a
 }
 
 
-static PyObject* nassl_X509_get_issuer_name_entries(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_issuer_name_entries(nassl_X509_Object *self, PyObject *args)
+{
     return generic_get_name_entries(&X509_get_issuer_name, self);
 }
 
 
-static PyObject* nassl_X509_get_subject_name_entries(nassl_X509_Object *self, PyObject *args) {
+static PyObject* nassl_X509_get_subject_name_entries(nassl_X509_Object *self, PyObject *args)
+{
     return generic_get_name_entries(&X509_get_subject_name, self);
 }
 
 
-static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject *args) {
+static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject *args)
+{
     const char *errorString = NULL;
     long verifyError = 0;
-
-    if (!PyArg_ParseTuple(args, "l", &verifyError)) {
+    if (!PyArg_ParseTuple(args, "l", &verifyError))
+    {
         return NULL;
     }
 
@@ -255,7 +287,8 @@ static PyObject* nassl_X509_get_spki_bytes(nassl_X509_Object *self, PyObject *ar
 }
 
 
-static PyMethodDef nassl_X509_Object_methods[] = {
+static PyMethodDef nassl_X509_Object_methods[] =
+{
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
      "Returns a string containing the result of OpenSSL's X509_print()."
     },
@@ -297,7 +330,8 @@ static PyMethodDef nassl_X509_Object_methods[] = {
 };
 
 
-PyTypeObject nassl_X509_Type = {
+PyTypeObject nassl_X509_Type =
+{
     PyVarObject_HEAD_INIT(NULL, 0)
     "_nassl.X509",             /*tp_name*/
     sizeof(nassl_X509_Object),             /*tp_basicsize*/
@@ -340,11 +374,13 @@ PyTypeObject nassl_X509_Type = {
 
 
 
-void module_add_X509(PyObject* m) {
-
+void module_add_X509(PyObject* m)
+{
 	nassl_X509_Type.tp_new = nassl_X509_new;
 	if (PyType_Ready(&nassl_X509_Type) < 0)
+	{
     	return;
+	}
 
     Py_INCREF(&nassl_X509_Type);
     PyModule_AddObject(m, "X509", (PyObject *)&nassl_X509_Type);
