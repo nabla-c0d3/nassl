@@ -1,9 +1,9 @@
 #!/usr/bin/python2.7
 
 __author__ = 'Alban Diquet'
-__version__ = '0.14.1'
+__version__ = '0.14.2'
 
-
+# TODO(ad): Switch to enums
 # Verify constants
 SSL_VERIFY_NONE =                   0x00
 SSL_VERIFY_PEER =                   0x01
