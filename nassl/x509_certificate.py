@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+
 import base64
 import hashlib
 from binascii import hexlify
@@ -7,11 +7,11 @@ from nassl._nassl import X509
 from nassl import X509_NAME_MISMATCH, X509_NAME_MATCHES_SAN, X509_NAME_MATCHES_CN
 
 
-class X509HostnameValidationError(Exception):
+class X509HostnameValidationError(ValueError):
     pass
 
 
-class X509Certificate:
+class X509Certificate(object):
     """High level API for parsing an X509 certificate.
     """
 
@@ -75,9 +75,10 @@ class X509Certificate:
 
 
     def matches_hostname(self, hostname):
-        """
-        Attempts to match the given hostname with the name(s) the certificate
-        was issued to.
+        # type: (unicode) -> int
+        
+        """Attempt to match the given hostname with the name(s) the certificate was issued to.
+        
         Returns X509_NAME_MATCHES_SAN or X509_NAME_MATCHES_CN if a match is
         found and X509_NAME_MISMATCH if no match could be found.
         Will raise X509HostnameValidationError if the certificate is malformed.

@@ -1,10 +1,10 @@
-#!/usr/bin/python2.7
+import nassl
+from typing import Dict
 
 
-class OcspResponse:
+class OcspResponse(object):
     """High level API for parsing an OCSP response.
     """
-
 
     def __init__(self, ocsp_response):
         # type: (nassl._nassl.OCSP_RESPONSE) -> None
@@ -18,50 +18,60 @@ class OcspResponse:
 
 
     def verify(self, verify_locations):
-        # type: (str) -> None
-        return self._ocsp_response.basic_verify(verify_locations)
+        # type: (unicode) -> None
+        """Verify that the OCSP response is trusted.
+
+        Args:
+            verify_locations: The file path to a trust store containing pem-formatted certificates, to be used for
+            validating the OCSP response.
+
+        Raises OpenSSLError if the validation failed ie. the OCSP response is not trusted.
+        """
+        self._ocsp_response.basic_verify(verify_locations)
 
 
     def as_dict(self):
-        # type: () -> Dict[str, str]
+        # type: () -> Dict[unicode, unicode]
         if self._ocsp_response_dict:
             return self._ocsp_response_dict
 
         # For now we just parse OpenSSL's text output and make a lot of assumptions
         response_dict = {
-            'responseStatus': self._get_value_from_text_output_no_p('OCSP Response Status:'),
-            'version' : self._get_value_from_text_output_no_p('Version:'),
-            'responseType': self._get_value_from_text_output('Response Type:'),
-            'responderID': self._get_value_from_text_output('Responder Id:'),
-            'producedAt': self._get_value_from_text_output('Produced At:')}
+            u'responseStatus': self._get_value_from_text_output_no_p(u'OCSP Response Status:'),
+            u'version' : self._get_value_from_text_output_no_p(u'Version:'),
+            u'responseType': self._get_value_from_text_output(u'Response Type:'),
+            u'responderID': self._get_value_from_text_output(u'Responder Id:'),
+            u'producedAt': self._get_value_from_text_output(u'Produced At:')}
 
-        if 'successful' not in response_dict['responseStatus']:
+        if u'successful' not in response_dict[u'responseStatus']:
             return response_dict
 
-        response_dict['responses'] = [ {
-                                      'certID': {
-                'hashAlgorithm': self._get_value_from_text_output('Hash Algorithm:'),
-                'issuerNameHash': self._get_value_from_text_output('Issuer Name Hash:'),
-                'issuerKeyHash': self._get_value_from_text_output('Issuer Key Hash:'),
-                'serialNumber': self._get_value_from_text_output('Serial Number:')
+        response_dict[u'responses'] = [
+            {
+                u'certID': {
+                    u'hashAlgorithm': self._get_value_from_text_output(u'Hash Algorithm:'),
+                    u'issuerNameHash': self._get_value_from_text_output(u'Issuer Name Hash:'),
+                    u'issuerKeyHash': self._get_value_from_text_output(u'Issuer Key Hash:'),
+                    u'serialNumber': self._get_value_from_text_output(u'Serial Number:')
                 },
-            'certStatus': self._get_value_from_text_output('Cert Status:'),
-            'thisUpdate': self._get_value_from_text_output('This Update:'),
-            'nextUpdate': self._get_value_from_text_output('Next Update:')
-            }]
+                u'certStatus': self._get_value_from_text_output(u'Cert Status:'),
+                u'thisUpdate': self._get_value_from_text_output(u'This Update:'),
+                u'nextUpdate': self._get_value_from_text_output(u'Next Update:')
+            }
+        ]
         self._ocsp_response_dict = response_dict
         return response_dict
 
 
 # Text parsing
     def _get_value_from_text_output(self, key):
-        # type: (str) -> str
+        # type: (unicode) -> unicode
         value = self._ocsp_response.as_text().split(key)
         return value[1].split('\n')[0].strip()
 
 
     def _get_value_from_text_output_no_p(self, key):
-        # type: (str) -> str
+        # type: (unicode) -> unicode
         value = self._ocsp_response.as_text().split(key)
         value = value[1].split('\n')[0].strip()
         return value.split('(')[0].strip()
