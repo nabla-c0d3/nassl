@@ -5,6 +5,7 @@
 *.pyc
 *.pyd
 *.egg-info
+lib/*
 
 # Shared objects (inc. Windows DLLs)
 *.dll
