@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 import unittest
-from nassl import _nassl, SSL_VERIFY_NONE
+from nassl import _nassl, OpenSslVerifyEnum
 import socket
 import tempfile
 from nassl.ssl_client import SslClient
@@ -17,9 +17,9 @@ class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(("login.live.com", 443))
+        sock.connect((u'login.live.com', 443))
 
-        ssl_client = SslClient(sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         self.ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()._ocsp_response
@@ -32,7 +32,7 @@ class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
     def test_basic_verify_bad(self):
         # Wrong certificate
         test_file = tempfile.NamedTemporaryFile(delete=False)
-        test_file.write("""-----BEGIN CERTIFICATE-----
+        test_file.write(u"""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -50,15 +50,14 @@ NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
 gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
 dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----
-""")
+-----END CERTIFICATE-----""")
         test_file.close()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', self.ocsp_response.basic_verify,
+        self.assertRaisesRegexp(_nassl.OpenSSLError, u'certificate verify error', self.ocsp_response.basic_verify,
                                 test_file.name)
 
 
 def main():
     unittest.main()
 
-if __name__ == '__main__':
+if __name__ == u'__main__':
     main()

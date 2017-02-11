@@ -2,7 +2,8 @@
 import unittest
 import socket
 import tempfile
-from nassl import SSLV23, SSL_FILETYPE_PEM, _nassl, SSL_VERIFY_NONE
+
+from nassl import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 from nassl.debug_ssl_client import DebugSslClient
 from nassl.ssl_client import ClientCertificateRequested
 
@@ -10,10 +11,10 @@ from nassl.ssl_client import ClientCertificateRequested
 class SslClient_Tests_PrivateKey(unittest.TestCase):
 
     def setUp(self):
-        self.ssl_client = DebugSslClient(ssl_version=SSLV23, ssl_verify=SSL_VERIFY_NONE)
+        self.ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
 
         test_file = tempfile.NamedTemporaryFile(delete=False)
-        test_file.write("""-----BEGIN RSA PRIVATE KEY-----
+        test_file.write(u"""-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: DES-EDE3-CBC,7D15D836EE9E1B77
 
@@ -30,12 +31,11 @@ CFJVbuWVJCyoRFv+0Gypi7zn1ZZGkE4inDHxqIzUa0sSmbShEWooTxCyGUSoosaY
 u2ozh8ESQCy03JFR9DY6mo3YekbIcCEjgdmE35nK4lJQFbo3A8YlHunEdVK0tb8Z
 Wxf7cJ6J55bG5/Kft65kJnXAHrV9LnM1tPiRkB8umZkj/ou5NpDKiuLjR+WBfwi0
 tqXk90NdSqJtMMGgrtVM84TYFPXP58QCBnE9oAI7XYM1rusuVBOXZw==
------END RSA PRIVATE KEY-----
-""")
+-----END RSA PRIVATE KEY-----""")
         test_file.close()
         self.test_file = test_file
         test_file2 = tempfile.NamedTemporaryFile(delete=False)
-        test_file2.write("""-----BEGIN CERTIFICATE-----
+        test_file2.write(u"""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -72,20 +72,19 @@ NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
 gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
 dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----
-""")
+-----END CERTIFICATE-----""")
         test_file2.close()
         self.testFile2 = test_file2
 
 
     def test_use_private_key(self):
-        self.assertIsNone(self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM,
-                                                         'testPW'))
+        self.assertIsNone(self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name,
+                                                           OpenSslFileTypeEnum.PEM, u'testPW'))
 
 
     def test_use_private_key_bad(self):
         with self.assertRaises(ValueError):
-            self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, SSL_FILETYPE_PEM, 'badPW')
+            self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, OpenSslFileTypeEnum.PEM, u'bad')
 
 
 class SslClient_Tests_Handshake(unittest.TestCase):
@@ -93,9 +92,9 @@ class SslClient_Tests_Handshake(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(("www.google.com", 443))
+        sock.connect((u'www.google.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         self.ssl_client = ssl_client
 
 
@@ -108,21 +107,21 @@ class SslClient_Tests_Online(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(("www.google.com", 443))
+        sock.connect((u'www.google.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
-        ssl_client.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client.set_cipher_list(u'ECDH')  # Needed for test_get_ecdh_param()
         ssl_client.do_handshake()
         self.ssl_client = ssl_client
 
 
     def test_write(self):
-        self.assertGreater(self.ssl_client.write('GET / HTTP/1.0\r\n\r\n'), 1)
+        self.assertGreater(self.ssl_client.write(b'GET / HTTP/1.0\r\n\r\n'), 1)
 
 
     def test_read(self):
-        self.ssl_client.write('GET / HTTP/1.0\r\n\r\n')
-        self.assertRegexpMatches(self.ssl_client.read(1024), 'google')
+        self.ssl_client.write(b'GET / HTTP/1.0\r\n\r\n')
+        self.assertRegexpMatches(self.ssl_client.read(1024), b'google')
 
 
     def test_get_peer_certificate(self):
@@ -149,11 +148,11 @@ class SslClient_Tests_Online(unittest.TestCase):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
-        sock.connect(("auth.startssl.com", 443))
+        sock.connect((u'auth.startssl.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
 
-        self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
+        self.assertRaisesRegexp(ClientCertificateRequested, u'Server requested a client certificate',
                                 ssl_client.do_handshake)
 
 
@@ -161,9 +160,9 @@ class SslClient_Tests_Online(unittest.TestCase):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
-        sock.connect(("auth.startssl.com", 443))
+        sock.connect((u'auth.startssl.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=SSLV23, sock=sock, ssl_verify=SSL_VERIFY_NONE,
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE,
                                     ignore_client_authentication_requests=True)
 
         ssl_client.do_handshake()
@@ -173,5 +172,5 @@ class SslClient_Tests_Online(unittest.TestCase):
 def main():
     unittest.main()
 
-if __name__ == '__main__':
+if __name__ == u'__main__':
     main()

@@ -2,14 +2,14 @@
 import unittest
 import socket
 from nassl.ssl_client import SslClient
-from nassl import _nassl, SSL_VERIFY_NONE
+from nassl import _nassl, OpenSslVerifyEnum
 from nassl.x509_certificate import X509Certificate
 
 
 class X509_Tests(unittest.TestCase):
 
     def setUp(self):
-        pem_cert = """
+        pem_cert = u"""
 -----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkGA1UEBhMCQkUx
 GTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkds
@@ -27,8 +27,8 @@ Y1Ub8rrvrTnhQ7k4o+YviiY776BQVvnGCv04zcQLcFGUl5gE38NflNUVyRRBnMRddWQVDf9VMOyG
 j/8N7yy5Y0b2qvzfvGn9LhJIZJrglfCm7ymPAbEVtQwdpf5pLGkkeB6zpxxxYu7KyJesF12KwvhH
 hm4qxFYxldBniYUr+WymXUadDKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveC
 X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
------END CERTIFICATE-----
-        """
+-----END CERTIFICATE-----"""
+
         self.cert = X509Certificate.from_pem(pem_cert)._x509
 
     def test_from_pem(self):
@@ -79,9 +79,9 @@ class X509_Tests_Online(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(("www.google.com", 443))
+        sock.connect((u'www.google.com', 443))
 
-        ssl_client = SslClient(sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
         self.cert = ssl_client.get_peer_certificate()._x509
 
@@ -89,12 +89,12 @@ class X509_Tests_Online(unittest.TestCase):
         self.assertIsNotNone(self.cert.as_text())
 
     def test_verify_cert_error_string(self):
-        self.assertEqual('error number 1', _nassl.X509.verify_cert_error_string(1))
+        self.assertEqual(u'error number 1', _nassl.X509.verify_cert_error_string(1))
 
 
 
 def main():
     unittest.main()
 
-if __name__ == '__main__':
+if __name__ == u'__main__':
     main()

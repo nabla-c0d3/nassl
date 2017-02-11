@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 import unittest
-from nassl import _nassl, SSL_VERIFY_NONE
+from nassl import _nassl, OpenSslVerifyEnum
 from nassl.ssl_client import SslClient
 from nassl.x509_certificate import X509Certificate
 import socket
@@ -17,9 +17,9 @@ class X509_EXTENSION_Tests_Online(unittest.TestCase):
     def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(("www.google.com", 443))
+        sock.connect((u'www.google.com', 443))
 
-        sslClient = SslClient(sock=sock, ssl_verify=SSL_VERIFY_NONE)
+        sslClient = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         sslClient.do_handshake()
         self.x509ext = sslClient.get_peer_certificate()._x509.get_extensions()[0]
 
@@ -30,7 +30,7 @@ class X509_EXTENSION_Tests_Online(unittest.TestCase):
 
     def test_parse_subject_alt_name(self):
         # Certificate with all sorts of SANs
-        pem = """-----BEGIN CERTIFICATE-----
+        pem = u"""-----BEGIN CERTIFICATE-----
 MIID4TCCAsmgAwIBAgIJAMeVemVoHWLHMA0GCSqGSIb3DQEBBQUAMGQxCzAJBgNV
 BAYTAlVTMQswCQYDVQQIDAJWQTESMBAGA1UEBwwJU29tZXdoZXJlMQ4wDAYDVQQK
 DAVNeU9yZzENMAsGA1UECwwETXlPVTEVMBMGA1UEAwwMTXlTZXJ2ZXJOYW1lMB4X
@@ -52,22 +52,22 @@ YH95uEvbDXGsgeNEJqMyZWR4HoIopYig/55VzT8/VkHgo9sesRyXHUUu6F8/kXVQ
 +X12hrVR6ZBayrpOZK/zU8DvdsIfmp6n/ESABmKc4Utgq91Y8bwNJH6xzbBinYH6
 n/vAwbwt6Cm1ewtnDyWjMX7kXDkG608n80Y1efuzfiL36oMok9/uXrm1qv4bjJnj
 +9wyx/zu3r+Ij1KtUCocMMxPMnaMZzmL4Yh5l7reaOAgUTWDew==
------END CERTIFICATE-----
-"""
+-----END CERTIFICATE-----"""
+
         cert = X509Certificate.from_pem(pem)
         expected_sans = {
-            'IP Address': ['10.0.1.34', ':2001:4860:4860:0:0:0:0:8888'],
-            'URI': ['https://www.google.com/'],
-            'DNS': ['test.com', '10.0.1.34'],
-            'email': ['test@test.com', 'test2@test.com']
+            u'IP Address': [u'10.0.1.34', u':2001:4860:4860:0:0:0:0:8888'],
+            u'URI': [u'https://www.google.com/'],
+            u'DNS': [u'test.com', u'10.0.1.34'],
+            u'email': [u'test@test.com', u'test2@test.com']
         }
-        self.assertEqual(cert.as_dict()['extensions']['X509v3 Subject Alternative Name'], expected_sans)
+        self.assertEqual(cert.as_dict()[u'extensions'][u'X509v3 Subject Alternative Name'], expected_sans)
 
 
     def test_parse_subject_alt_name_allsans(self):
         # Certificate with all sorts of SANs from the Python tests suite
         # https://github.com/python/cpython/blob/master/Lib/test/allsans.pem
-        pem = """-----BEGIN CERTIFICATE-----
+        pem = u"""-----BEGIN CERTIFICATE-----
 MIIDcjCCAtugAwIBAgIJAN5dc9TOWjB7MA0GCSqGSIb3DQEBCwUAMF0xCzAJBgNV
 BAYTAlhZMRcwFQYDVQQHDA5DYXN0bGUgQW50aHJheDEjMCEGA1UECgwaUHl0aG9u
 IFNvZnR3YXJlIEZvdW5kYXRpb24xEDAOBgNVBAMMB2FsbHNhbnMwHhcNMTYwODA1
@@ -87,25 +87,25 @@ AAAAAAAAAAAAAAAAAYgEKgMEBTANBgkqhkiG9w0BAQsFAAOBgQAy16h+F+nOmeiT
 VWR0fc8F/j6FcadbLseAUaogcC15OGxCl4UYpLV88HBkABOoGCpP155qwWTwOrdG
 iYPGJSusf1OnJEbvzFejZf6u078bPd9/ZL4VWLjv+FPGkjd+N+/OaqMvgj8Lu99f
 3Y/C4S7YbHxxwff6C6l2Xli+q6gnuQ==
------END CERTIFICATE-----
-"""
+-----END CERTIFICATE-----"""
+
         cert = X509Certificate.from_pem(pem)
         expected_sans = {
-            'othername': ['<unsupported>', '<unsupported>'],
-            'URI': ['https://www.python.org/'],
-            'IP Address': ['127.0.0.1', ':0:0:0:0:0:0:0:1'],
-            'Registered ID': ['1.2.3.4.5'],
-            'DNS': ['allsans', 'www.example.org'],
-            'DirName': ['C = XY, L = Castle Anthrax, O = Python Software Foundation, CN = dirname example'],
-            'email': ['user@example.org']
+            u'othername': [u'<unsupported>', u'<unsupported>'],
+            u'URI': [u'https://www.python.org/'],
+            u'IP Address': [u'127.0.0.1', u':0:0:0:0:0:0:0:1'],
+            u'Registered ID': [u'1.2.3.4.5'],
+            u'DNS': [u'allsans', u'www.example.org'],
+            u'DirName': [u'C = XY, L = Castle Anthrax, O = Python Software Foundation, CN = dirname example'],
+            u'email': [u'user@example.org']
         }
-        self.assertEqual(cert.as_dict()['extensions']['X509v3 Subject Alternative Name'], expected_sans)
+        self.assertEqual(cert.as_dict()[u'extensions'][u'X509v3 Subject Alternative Name'], expected_sans)
 
 
     def test_parse_subject_alt_name_null_bytes(self):
         # Certificate with SANs that have null bytes, from the Python tests suite
         # https://github.com/python/cpython/blob/master/Lib/test/nullbytecert.pem
-        pem = """-----BEGIN CERTIFICATE-----
+        pem = u"""-----BEGIN CERTIFICATE-----
 MIIE2DCCA8CgAwIBAgIBADANBgkqhkiG9w0BAQUFADCBxTELMAkGA1UEBhMCVVMx
 DzANBgNVBAgMBk9yZWdvbjESMBAGA1UEBwwJQmVhdmVydG9uMSMwIQYDVQQKDBpQ
 eXRob24gU29mdHdhcmUgRm91bmRhdGlvbjEgMB4GA1UECwwXUHl0aG9uIENvcmUg
@@ -132,20 +132,20 @@ HPERs1ZuytCNNJTmhyqZ8q6uzMLoht4IqH/FBfpvgaeC5tBTnTT0rD5A/olXeimk
 kX4LxlEx5RAvpGB2zZVRGr6LobD9rVK91xuHYNIxxxfEGE8tCCWjp0+3ksri9SXx
 VHWBnbM9YaL32u3hxm8sYB/Yb8WSBavJCWJJqRStVRHM1koZlJmXNx2BX4vPo6iW
 RFEIPQsFZRLrtnCAiEhyT8bC2s/Njlu6ly9gtJZWSV46Q3ZjBL4q9sHKqZQ=
------END CERTIFICATE-----
-"""
+-----END CERTIFICATE-----"""
+
         cert = X509Certificate.from_pem(pem)
         expected_sans = {
-            'IP Address': ['192.0.2.1', ':2001:DB8:0:0:0:0:0:1'],
-            'email': ['null@python.org\x00user@example.org'],
-            'DNS': ['altnull.python.org\x00example.com'],
-            'URI': ['http://null.python.org\x00http://example.org']
+            u'IP Address': [u'192.0.2.1', u':2001:DB8:0:0:0:0:0:1'],
+            u'email': [u'null@python.org\x00user@example.org'],
+            u'DNS': [u'altnull.python.org\x00example.com'],
+            u'URI': [u'http://null.python.org\x00http://example.org']
         }
-        self.assertEqual(cert.as_dict()['extensions']['X509v3 Subject Alternative Name'], expected_sans)
+        self.assertEqual(cert.as_dict()[u'extensions'][u'X509v3 Subject Alternative Name'], expected_sans)
 
 
 def main():
     unittest.main()
 
-if __name__ == '__main__':
+if __name__ == u'__main__':
     main()

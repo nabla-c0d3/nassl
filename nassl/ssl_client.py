@@ -1,13 +1,16 @@
-#!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
+import socket
+
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
-from nassl import SSLV23, SSLV2, SSL_VERIFY_PEER, TLSEXT_STATUSTYPE_ocsp, SSL_FILETYPE_PEM
+
+from nassl import OpenSslModeEnum
+from nassl import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 from typing import List
 from typing import Optional
+from typing import Text
 from typing import Tuple
 from x509_certificate import X509Certificate
 from ocsp_response import OcspResponse
-
-DEFAULT_BUFFER_SIZE = 4096
 
 
 class ClientCertificateRequested(IOError):
@@ -32,11 +35,21 @@ class SslClient(object):
     """High level API implementing an SSL client.
     """
 
+    _DEFAULT_BUFFER_SIZE = 4096
 
-    def __init__(self, sock=None, ssl_version=SSLV23, ssl_verify=SSL_VERIFY_PEER, ssl_verify_locations=None,
-                 client_certchain_file=None, client_key_file=None, client_key_type=SSL_FILETYPE_PEM,
-                 client_key_password='', ignore_client_authentication_requests=False):
-        # type: (socket.socket, int, int, str, str, str, int, str, bool) -> None
+    def __init__(
+            self,
+            sock=None,                                      # type: Optional[socket.socket]
+            ssl_version=OpenSslVersionEnum.SSLV23,          # type: OpenSslVersionEnum
+            ssl_verify=OpenSslVerifyEnum.PEER,              # type: OpenSslVerifyEnum
+            ssl_verify_locations=None,                      # type: Optional[Text]
+            client_certchain_file=None,                     # type: Optional[Text]
+            client_key_file=None,                           # type: Optional[Text]
+            client_key_type=OpenSslFileTypeEnum.PEM,        # type: OpenSslFileTypeEnum
+            client_key_password=u'',                        # type: Text
+            ignore_client_authentication_requests=False     # type: bool
+    ):
+        # type: (...) -> None
 
         # A Python socket handles transmission of the data
         self._sock = sock
@@ -55,7 +68,7 @@ class SslClient(object):
 
         if ignore_client_authentication_requests:
             if client_certchain_file:
-                raise ValueError('Cannot enable both client_certchain_file and ignore_client_authentication_requests')
+                raise ValueError(u'Cannot enable both client_certchain_file and ignore_client_authentication_requests')
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
@@ -65,8 +78,8 @@ class SslClient(object):
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        if ssl_version != SSLV2: # This makes SSLv2 fail
-            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
+        if ssl_version != OpenSslVersionEnum.SSLV2: # This makes SSLv2 fail
+            self._ssl.set_cipher_list(u'HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
         else:
             # Handshake workaround for SSL2 + IIS 7
             self.do_handshake = self.do_ssl2_iis_handshake
@@ -84,7 +97,7 @@ class SslClient(object):
         # type: () -> None
         if self._sock is None:
             # TODO: Auto create a socket ?
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError(u'Internal socket set to None; cannot perform handshake.')
 
         while True:
             try:
@@ -99,9 +112,9 @@ class SslClient(object):
                 self._flush_ssl_engine()
 
                 # Recover the peer's encrypted response
-                handshake_data_in = self._sock.recv(DEFAULT_BUFFER_SIZE)
+                handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
-                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                    raise IOError(u'Nassl SSL handshake failed: peer did not send data back.')
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 
@@ -114,7 +127,7 @@ class SslClient(object):
         # type: () -> None
         if self._sock is None:
             # TODO: Auto create a socket ?
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError(u'Internal socket set to None; cannot perform handshake.')
 
         while True:
             try:
@@ -148,10 +161,10 @@ class SslClient(object):
                             data_packet = handshake_data_out[size+2::]
                             self._sock.send(cmk_packet)
 
-                            handshake_data_in = self._sock.recv(DEFAULT_BUFFER_SIZE)
+                            handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                             # print repr(handshake_data_in)
                             if len(handshake_data_in) == 0:
-                                raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                                raise IOError(u'Nassl SSL handshake failed: peer did not send data back.')
                             # Pass the data to the SSL engine
                             self._network_bio.write(handshake_data_in)
                             handshake_data_out = data_packet
@@ -160,9 +173,9 @@ class SslClient(object):
                     self._sock.send(handshake_data_out)
                     lengh_to_read = self._network_bio.pending()
 
-                handshake_data_in = self._sock.recv(DEFAULT_BUFFER_SIZE)
+                handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
-                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                    raise IOError(u'Nassl SSL handshake failed: peer did not send data back.')
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 
@@ -173,16 +186,16 @@ class SslClient(object):
 
 
     def read(self, size):
-        # type: (int) -> str
+        # type: (int) -> bytes
         if not self._is_handshake_completed:
-            raise IOError('SSL Handshake was not completed; cannot receive data.')
+            raise IOError(u'SSL Handshake was not completed; cannot receive data.')
 
         while True:
             # Receive available encrypted data from the peer
-            encrypted_data = self._sock.recv(DEFAULT_BUFFER_SIZE)
+            encrypted_data = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
 
             if len(encrypted_data) == 0:
-                raise IOError('Could not read() - peer closed the connection.')
+                raise IOError(u'Could not read() - peer closed the connection.')
 
             # Pass it to the SSL engine
             self._network_bio.write(encrypted_data)
@@ -199,11 +212,11 @@ class SslClient(object):
 
 
     def write(self, data):
-        # type: (str) -> int
+        # type: (bytes) -> int
         """Returns the number of (encrypted) bytes sent.
         """
         if not self._is_handshake_completed:
-            raise IOError('SSL Handshake was not completed; cannot send data.')
+            raise IOError(u'SSL Handshake was not completed; cannot send data.')
 
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
@@ -239,15 +252,8 @@ class SslClient(object):
                 raise
 
 
-    def _set_verify(self, verify_mode):
-        # type: (int) -> None
-        """Set the OpenSSL verify mode. Private method because it should be set via the constructor.
-        """
-        self._ssl._set_verify(verify_mode)
-
-
     def set_tlsext_host_name(self, name_indication):
-        # type: (str) -> None
+        # type: (Text) -> None
         """Set the hostname within the Server Name Indication extension in the client SSL Hello.
         """
         self._ssl.set_tlsext_host_name(name_indication)
@@ -272,22 +278,21 @@ class SslClient(object):
         if x509_list:
             for x509_cert in x509_list:
                 final_list.append(X509Certificate(x509_cert))
-
         return final_list
 
 
     def set_cipher_list(self, cipher_list):
-        # type: (str) -> None
+        # type: (Text) -> None
         self._ssl.set_cipher_list(cipher_list)
 
 
     def get_cipher_list(self):
-        # type: () -> List[str]
+        # type: () -> List[Text]
         return self._ssl.get_cipher_list()
 
 
     def get_current_cipher_name(self):
-        # type: () -> str
+        # type: () -> Text
         return self._ssl.get_cipher_name()
 
 
@@ -297,22 +302,17 @@ class SslClient(object):
 
 
     def _use_private_key(self, client_certchain_file, client_key_file, client_key_type, client_key_password):
-        # type: (str, str, int, str) -> None
+        # type: (Text, Text, OpenSslFileTypeEnum, Text) -> None
         """The certificate chain file must be in PEM format. Private method because it should be set via the
         constructor.
         """
         self._ssl_ctx.use_certificate_chain_file(client_certchain_file)
-
-        if isinstance(client_key_password, basestring):
-            self._ssl_ctx.set_private_key_password(client_key_password)
-        else:
-            raise TypeError('client_key_password is not a string')
-
+        self._ssl_ctx.set_private_key_password(client_key_password)
         try:
             self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type)
         except OpenSSLError as e:
             if 'bad password read' in str(e) or 'bad decrypt' in str(e):
-                raise ValueError('Invalid Private Key')
+                raise ValueError(u'Invalid Private Key')
             else:
                 raise
 
@@ -320,17 +320,19 @@ class SslClient(object):
 
 
     def get_certificate_chain_verify_result(self):
-        # type: () -> Tuple[int, str]
+        # type: () -> Tuple[int, Text]
         verify_result = self._ssl.get_verify_result()
         verify_result_str = X509.verify_cert_error_string(verify_result)
         return verify_result, verify_result_str
 
 
+    _TLSEXT_STATUSTYPE_ocsp = 1
+
     def set_tlsext_status_ocsp(self):
         # type: () -> None
         """Enable the OCSP Stapling extension.
         """
-        self._ssl.set_tlsext_status_type(TLSEXT_STATUSTYPE_ocsp)
+        self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
 
 
     def get_tlsext_status_ocsp_resp(self):
@@ -345,12 +347,12 @@ class SslClient(object):
 
 
     def get_client_CA_list(self):
-        # type: () -> List[str]
+        # type: () -> List[Text]
         if not self._client_CA_list:
             self._client_CA_list = self._ssl.get_client_CA_list()
         return self._client_CA_list
 
 
     def set_mode(self, mode):
-        # type: (int) -> None
+        # type: (OpenSslModeEnum) -> None
         self._ssl.set_mode(mode)

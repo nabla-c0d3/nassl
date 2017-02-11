@@ -1,10 +1,21 @@
-
+# -*- coding: utf-8 -*-
 import base64
 import hashlib
 from binascii import hexlify
 import re
 from nassl._nassl import X509
-from nassl import X509_NAME_MISMATCH, X509_NAME_MATCHES_SAN, X509_NAME_MATCHES_CN
+
+from enum import Enum
+from typing import Dict
+from typing import Text
+
+
+class HostnameValidationResultEnum(Enum):
+    """Hostname validation result constants.
+    """
+    NAME_DOES_NOT_MATCH = 0
+    NAME_MATCHES_SAN = 1
+    NAME_MATCHES_CN = 2
 
 
 class X509HostnameValidationError(ValueError):
@@ -23,7 +34,7 @@ class X509Certificate(object):
 
     @classmethod
     def from_pem(cls, pem_certificate):
-        # type: (str) -> X509Certificate
+        # type: (Text) -> X509Certificate
         """Create an X509Certificate object from a PEM-formatted certificate.
         """
         x509 = X509(pem_certificate)
@@ -31,22 +42,22 @@ class X509Certificate(object):
 
 
     def as_text(self):
-        # type: () -> str
+        # type: () -> Text
         return self._x509.as_text()
 
 
     def as_pem(self):
-        # type: () -> str
+        # type: () -> Text
         return self._x509.as_pem()
 
 
     def get_SHA1_fingerprint(self):
-        # type: () -> str
+        # type: () -> Text
         return hexlify(self._x509.digest())
 
 
     def get_hpkp_pin(self):
-        # type: () -> str
+        # type: () -> Text
         """Return the SHA-256 of the Subject Public Key Info base64-encoded, to be used for HTTP Public Key Pinning.
         """
         spki_bytes = self._x509.get_spki_bytes()
@@ -55,56 +66,55 @@ class X509Certificate(object):
 
 
     def as_dict(self):
-        # type: () -> dict
+        # type: () -> Dict
         if self._cert_dict:
             return self._cert_dict
 
-        cert_dict = {'version': self._x509.get_version() ,
-                     'serialNumber': self._x509.get_serialNumber() ,
-                     'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()) ,
-                     'validity': {'notBefore': self._x509.get_notBefore() ,
-                                  'notAfter' : self._x509.get_notAfter()} ,
-                     'subject': self._parse_x509_name(self._x509.get_subject_name_entries()) ,
-                     'subjectPublicKeyInfo': self._parse_pubkey(),
-                     'extensions': self._parse_x509_extensions() ,
-                     'signatureAlgorithm': self._parse_signature_algorithm() ,
-                     'signatureValue': self._parse_signature()
-                     }
+        cert_dict = {u'version': self._x509.get_version(),
+                     u'serialNumber': self._x509.get_serialNumber(),
+                     u'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()),
+                     u'validity': {
+                         u'notBefore': self._x509.get_notBefore(),
+                         u'notAfter' : self._x509.get_notAfter()
+                     },
+                     u'subject': self._parse_x509_name(self._x509.get_subject_name_entries()),
+                     u'subjectPublicKeyInfo': self._parse_pubkey(),
+                     u'extensions': self._parse_x509_extensions(),
+                     u'signatureAlgorithm': self._parse_signature_algorithm(),
+                     u'signatureValue': self._parse_signature()}
         self._cert_dict = cert_dict
         return cert_dict
 
 
     def matches_hostname(self, hostname):
-        # type: (unicode) -> int
-        
+        # type: (Text) -> HostnameValidationResultEnum
+
         """Attempt to match the given hostname with the name(s) the certificate was issued to.
-        
-        Returns X509_NAME_MATCHES_SAN or X509_NAME_MATCHES_CN if a match is
-        found and X509_NAME_MISMATCH if no match could be found.
+
         Will raise X509HostnameValidationError if the certificate is malformed.
         """
         cert_dict = self.as_dict()
 
         # First look at Subject Alternative Names
         try:
-            subject_alt_names = cert_dict['extensions']['X509v3 Subject Alternative Name']['DNS']
+            subject_alt_names = cert_dict[u'extensions'][u'X509v3 Subject Alternative Name'][u'DNS']
             for altname in subject_alt_names:
                 if self._dnsname_match(altname, hostname):
-                    return X509_NAME_MATCHES_SAN
-            return X509_NAME_MISMATCH
+                    return HostnameValidationResultEnum.NAME_MATCHES_SAN
+            return HostnameValidationResultEnum.NAME_DOES_NOT_MATCH
 
         except KeyError: # No SAN in this cert; try the Common Name
             pass
 
         try:
-            common_name = cert_dict['subject']['commonName']
+            common_name = cert_dict[u'subject'][u'commonName']
             if self._dnsname_match(common_name, hostname):
-                return X509_NAME_MATCHES_CN
+                return HostnameValidationResultEnum.NAME_MATCHES_CN
         except KeyError: # No CN either ? This certificate is malformed
-            raise X509HostnameValidationError("Certificate has no subjectAltName and no Common Name; "
-                                              "malformed certificate ?")
+            raise X509HostnameValidationError(u'Certificate has no subjectAltName and no Common Name; '
+                                              u'malformed certificate ?')
 
-        return X509_NAME_MISMATCH
+        return HostnameValidationResultEnum.NAME_DOES_NOT_MATCH
 
 
 
@@ -132,8 +142,7 @@ class X509Certificate(object):
             # than one wildcard per fragment.  A survey of established
             # policy among SSL implementations showed it to be a
             # reasonable choice.
-            raise X509HostnameValidationError(
-                "too many wildcards in certificate DNS name: " + repr(dn))
+            raise X509HostnameValidationError(u'too many wildcards in certificate DNS name: {}'.format(repr(dn)))
 
         # speed up common case w/o wildcards
         if not wildcards:
@@ -172,25 +181,25 @@ class X509Certificate(object):
 
 
     def _parse_signature_algorithm(self):
-        return self._extract_cert_value('Signature Algorithm: ')
+        return self._extract_cert_value(u'Signature Algorithm: ')
 
 
     def _parse_signature(self):
         cert_txt = self.as_text()
-        sig_txt = cert_txt.split('Signature Algorithm:', 1)[1].split('Signature Algorithm:')[1].split('\n',1)[1]
+        sig_txt = cert_txt.split(u'Signature Algorithm:', 1)[1].split(u'Signature Algorithm:')[1].split('\n',1)[1]
         sig_parts = sig_txt.split('\n')
-        signature = ''
+        signature = u''
         for part in sig_parts:
             signature += part.strip()
         return signature.strip()
 
 
     @staticmethod
-    def _parse_x509_name(nameEntries):
-        nameEntriesDict= {}
-        for entry in nameEntries:
-            nameEntriesDict[entry.get_object()] = entry.get_data()
-        return nameEntriesDict
+    def _parse_x509_name(name_entries):
+        name_entries_dict = {}
+        for entry in name_entries:
+            name_entries_dict[entry.get_object()] = entry.get_data()
+        return name_entries_dict
 
 
 # Public Key Parsing Functions
@@ -201,23 +210,23 @@ class X509Certificate(object):
     def _parse_pubkey(self):
 
         algo = self._parse_pubkey_algorithm()
-        if algo in ['id-ecPublicKey', 'id-ecDH', 'id-ecMQV']:
-            paramDict = {'pub': self._parse_ec_pubkey(),
-                         'curve': self._parse_ec_pubkey_curve() }
+        if algo in [u'id-ecPublicKey', u'id-ecDH', u'id-ecMQV']:
+            paramDict = {u'pub': self._parse_ec_pubkey(),
+                         u'curve': self._parse_ec_pubkey_curve() }
         else: # RSA, DSA
-            paramDict = {'modulus': self._parse_pubkey_modulus(),
-                         'exponent': self._parse_pubkey_exponent() }
+            paramDict = {u'modulus': self._parse_pubkey_modulus(),
+                         u'exponent': self._parse_pubkey_exponent() }
 
         pubkeyDict = {
-            'publicKeyAlgorithm': algo ,
-            'publicKeySize': str( self._parse_pubkey_size()) ,
-            'publicKey': paramDict }
+            u'publicKeyAlgorithm': algo ,
+            u'publicKeySize': str( self._parse_pubkey_size()) ,
+            u'publicKey': paramDict }
         return pubkeyDict
 
 
     def _parse_ec_pubkey(self):
         cert =  self.as_text()
-        eckey_lines = cert.split('pub:')[1].split('\n',1)[1].split('ASN1 OID:')[0].strip().split('\n')
+        eckey_lines = cert.split(u'pub:')[1].split('\n',1)[1].split(u'ASN1 OID:')[0].strip().split('\n')
         pubkey_txt = ''
 
         for line in eckey_lines:
@@ -226,13 +235,13 @@ class X509Certificate(object):
 
 
     def _parse_ec_pubkey_curve(self):
-        exp = self._extract_cert_value('ASN1 OID:')
+        exp = self._extract_cert_value(u'ASN1 OID:')
         return exp.split('(')[0].strip()
 
 
     def _parse_pubkey_modulus(self):
         cert =  self.as_text()
-        modulus_lines = cert.split('Modulus')[1].split('\n',1)[1].split('Exponent:')[0].strip().split('\n')
+        modulus_lines = cert.split(u'Modulus')[1].split('\n',1)[1].split(u'Exponent:')[0].strip().split('\n')
         pubkey_modulus_txt = ''
 
         for line in modulus_lines:
@@ -241,31 +250,31 @@ class X509Certificate(object):
 
 
     def _parse_pubkey_exponent(self):
-        exp = self._extract_cert_value('Exponent:')
+        exp = self._extract_cert_value(u'Exponent:')
         return exp.split('(')[0].strip()
 
 
     def _parse_pubkey_size(self):
-        exp = self._extract_cert_value('Public-Key: ')
-        return exp.strip(' ()')
+        exp = self._extract_cert_value(u'Public-Key: ')
+        return exp.strip(u' ()')
 
 
     def _parse_pubkey_algorithm(self):
-        return self._extract_cert_value('Public Key Algorithm: ')
+        return self._extract_cert_value(u'Public Key Algorithm: ')
 
 
 
 # Extension Parsing Functions
     def _parse_x509_extensions(self):
         x509_ext_parsing_methods = {
-            'X509v3 Subject Alternative Name': self._parse_san,
-            'X509v3 CRL Distribution Points': self._parse_crl_distribution_points,
-            'Authority Information Access': self._parse_authority_information_access,
-            'X509v3 Key Usage': self._parse_multi_valued_extension,
-            'X509v3 Extended Key Usage': self._parse_multi_valued_extension,
-            'X509v3 Certificate Policies': self._parse_crl_distribution_points,
-            'X509v3 Issuer Alternative Name': self._parse_crl_distribution_points,
-            'X509v3 Basic Constraints': self._parse_multi_valued_extension
+            u'X509v3 Subject Alternative Name': self._parse_san,
+            u'X509v3 CRL Distribution Points': self._parse_crl_distribution_points,
+            u'Authority Information Access': self._parse_authority_information_access,
+            u'X509v3 Key Usage': self._parse_multi_valued_extension,
+            u'X509v3 Extended Key Usage': self._parse_multi_valued_extension,
+            u'X509v3 Certificate Policies': self._parse_crl_distribution_points,
+            u'X509v3 Issuer Alternative Name': self._parse_crl_distribution_points,
+            u'X509v3 Basic Constraints': self._parse_multi_valued_extension
         }
 
         ext_dict = {}
@@ -309,11 +318,11 @@ class X509Certificate(object):
     @staticmethod
     def _parse_authority_information_access(x509ext):
         # Hazardous attempt at parsing an Authority Information Access extension
-        auth_ext = x509ext.get_data().strip(' \n').split('\n')
+        auth_ext = x509ext.get_data().strip(u' \n').split('\n')
         auth_ext_list = {}
 
         for auth_entry in auth_ext:
-            auth_entry = auth_entry.split(' - ')
+            auth_entry = auth_entry.split(u' - ')
             entry_name = auth_entry[0].replace(' ', '')
 
             if not auth_ext_list.has_key(entry_name):
@@ -331,7 +340,7 @@ class X509Certificate(object):
     @staticmethod
     def _parse_crl_distribution_points(x509ext):
         # Hazardous attempt at parsing a CRL Distribution Point extension
-        crl_ext = x509ext.get_data().strip(' \n').split('\n')
+        crl_ext = x509ext.get_data().strip(u' \n').split('\n')
         subcrl = {}
 
         for distrib_point in crl_ext:

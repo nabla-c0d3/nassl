@@ -1,7 +1,10 @@
-#!/usr/bin/python2.7
-from nassl._nassl import SSL
+# -*- coding: utf-8 -*-
+from nassl._nassl import SSL, SSL_SESSION
 from ssl_client import SslClient
-
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Text
 
 
 class DebugSslClient(SslClient):
@@ -14,13 +17,13 @@ class DebugSslClient(SslClient):
 
 
     def get_current_compression_method(self):
-        # type: () -> Optional[str]
+        # type: () -> Optional[Text]
         return self._ssl.get_current_compression_method()
 
 
     @staticmethod
     def get_available_compression_methods():
-        # type: () -> List[str]
+        # type: () -> List[Text]
         """Returns the list of SSL compression methods supported by SslClient.
         """
         return SSL.get_available_compression_methods()
@@ -31,21 +34,21 @@ class DebugSslClient(SslClient):
         """Initiate an SSL renegotiation.
         """
         if not self._is_handshake_completed:
-            raise IOError('SSL Handshake was not completed; cannot renegotiate.')
+            raise IOError(u'SSL Handshake was not completed; cannot renegotiate.')
 
         self._ssl.renegotiate()
         self.do_handshake()
 
 
     def get_session(self):
-        # type: () -> nassl._nassl.SSL_SESSION
+        # type: () -> SSL_SESSION
         """Get the SSL connection's Session object.
         """
         return self._ssl.get_session()
 
 
     def set_session(self, ssl_session):
-        # type: (nassl._nassl.SSL_SESSION) -> None
+        # type: (SSL_SESSION) -> None
         """Set the SSL connection's Session object.
         """
         self._ssl.set_session(ssl_session)

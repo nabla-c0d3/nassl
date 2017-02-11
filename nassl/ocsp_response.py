@@ -1,13 +1,13 @@
-import nassl
+# -*- coding: utf-8 -*-
 import _nassl
 from typing import Dict
+from typing import Text
 
 
-
-class OcspResponseNotTrustedError(ValueError):
+class OcspResponseNotTrustedError(IOError):
 
     def __init__(self, trust_store_path):
-        # type: (unicode) -> None
+        # type: (Text) -> None
         self.trust_store_path = trust_store_path
 
 
@@ -16,18 +16,18 @@ class OcspResponse(object):
     """
 
     def __init__(self, ocsp_response):
-        # type: (nassl._nassl.OCSP_RESPONSE) -> None
+        # type: (_nassl.OCSP_RESPONSE) -> None
         self._ocsp_response = ocsp_response
         self._ocsp_response_dict = None
 
 
     def as_text(self):
-        # type: () -> str
+        # type: () -> Text
         return self._ocsp_response.as_text()
 
 
     def verify(self, verify_locations):
-        # type: (unicode) -> None
+        # type: (Text) -> None
         """Verify that the OCSP response is trusted.
 
         Args:
@@ -45,7 +45,7 @@ class OcspResponse(object):
 
 
     def as_dict(self):
-        # type: () -> Dict[unicode, unicode]
+        # type: () -> Dict[Text, Text]
         if self._ocsp_response_dict:
             return self._ocsp_response_dict
 
@@ -79,13 +79,13 @@ class OcspResponse(object):
 
 # Text parsing
     def _get_value_from_text_output(self, key):
-        # type: (unicode) -> unicode
+        # type: (Text) -> Text
         value = self._ocsp_response.as_text().split(key)
         return value[1].split('\n')[0].strip()
 
 
     def _get_value_from_text_output_no_p(self, key):
-        # type: (unicode) -> unicode
+        # type: (Text) -> Text
         value = self._ocsp_response.as_text().split(key)
         value = value[1].split('\n')[0].strip()
         return value.split('(')[0].strip()
