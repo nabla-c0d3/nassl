@@ -3,7 +3,6 @@ import socket
 
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
 
-from nassl import OpenSslModeEnum
 from nassl import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 from typing import List
 from typing import Optional
