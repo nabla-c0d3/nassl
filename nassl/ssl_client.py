@@ -19,7 +19,7 @@ class ClientCertificateRequested(IOError):
     ERROR_MSG = 'Server requested a client certificate.'
 
     def __init__(self, ca_list):
-        # type: (List[str]) -> None
+        # type: (List[Text]) -> None
         self._ca_list = ca_list
 
     def __str__(self):
@@ -58,13 +58,13 @@ class SslClient(object):
 
         # OpenSSL objects
         # SSL_CTX
-        self._ssl_ctx = SSL_CTX(ssl_version)
-        self._ssl_ctx.set_verify(ssl_verify)
+        self._ssl_ctx = SSL_CTX(ssl_version.value)
+        self._ssl_ctx.set_verify(ssl_verify.value)
         if ssl_verify_locations:
             self._ssl_ctx.load_verify_locations(ssl_verify_locations)
 
         if client_certchain_file is not None:
-            self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
+            self._use_private_key(client_certchain_file, client_key_file, client_key_type.value, client_key_password)
 
         if ignore_client_authentication_requests:
             if client_certchain_file:
@@ -309,9 +309,9 @@ class SslClient(object):
         self._ssl_ctx.use_certificate_chain_file(client_certchain_file)
         self._ssl_ctx.set_private_key_password(client_key_password)
         try:
-            self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type)
+            self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type.value)
         except OpenSSLError as e:
-            if 'bad password read' in str(e) or 'bad decrypt' in str(e):
+            if u'bad password read' in str(e) or u'bad decrypt' in str(e):
                 raise ValueError(u'Invalid Private Key')
             else:
                 raise
