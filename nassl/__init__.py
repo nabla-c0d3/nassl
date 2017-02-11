@@ -25,21 +25,8 @@ class OpenSslVersionEnum(Enum):
     TLSV1_2 = 5
 
 
-class OpenSslModeEnum(Enum):
-    """SSL mode constants which map to SSL_MODE_XXX OpenSSL constants.
-    """
-    SEND_FALLBACK_SCSV = 0x00000080
-
-
 class OpenSslFileTypeEnum(Enum):
     """Certificate and private key format constants which map to the SSL_FILETYPE_XXX OpenSSL constants.
     """
     PEM = 1
     ASN1 = 2
-
-
-class OpenSslOptionEnum(Enum):
-    """SSL option constants which map to SSL_OP_XXX OpenSSL constants.
-    """
-    SSL_OP_NO_TICKET = 0x00004000  # No TLS Session Tickets
-

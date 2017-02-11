@@ -54,9 +54,18 @@ class DebugSslClient(SslClient):
         self._ssl.set_session(ssl_session)
 
 
-    def set_options(self, options):
-        # type: (int) -> int
-        return self._ssl.set_options(options)
+    _SSL_OP_NO_TICKET = 0x00004000  # No TLS Session tickets
+
+    def disable_stateless_session_resumption(self):
+        # type: () -> None
+        self._ssl.set_options(self._SSL_OP_NO_TICKET)
+
+
+    _SSL_MODE_SEND_FALLBACK_SCSV = 0x00000080
+
+    def enable_fallback_scsv(self):
+        # type: () -> None
+        self._ssl.set_mode(self._SSL_MODE_SEND_FALLBACK_SCSV)
 
 
     def get_dh_param(self):
