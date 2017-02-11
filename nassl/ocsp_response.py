@@ -1,5 +1,14 @@
 import nassl
+import _nassl
 from typing import Dict
+
+
+
+class OcspResponseNotTrustedError(ValueError):
+
+    def __init__(self, trust_store_path):
+        # type: (unicode) -> None
+        self.trust_store_path = trust_store_path
 
 
 class OcspResponse(object):
@@ -25,9 +34,14 @@ class OcspResponse(object):
             verify_locations: The file path to a trust store containing pem-formatted certificates, to be used for
             validating the OCSP response.
 
-        Raises OpenSSLError if the validation failed ie. the OCSP response is not trusted.
+        Raises OcspResponseNotTrustedError if the validation failed ie. the OCSP response is not trusted.
         """
-        self._ocsp_response.basic_verify(verify_locations)
+        try:
+            self._ocsp_response.basic_verify(verify_locations)
+        except _nassl.OpenSSLError as e:
+            if u'certificate verify error' in e[0]:
+                raise OcspResponseNotTrustedError(verify_locations)
+            raise
 
 
     def as_dict(self):
