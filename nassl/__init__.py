@@ -2,5 +2,5 @@
 
 
 __author__ = u'Alban Diquet'
-__version__ = u'0.14.2'
+__version__ = u'0.15.0'
 
