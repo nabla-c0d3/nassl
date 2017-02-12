@@ -22,7 +22,6 @@ lib/*
 .DS_Store
 
 # S3cr3ts
-*.pem
 *.key
 *.p12
 
