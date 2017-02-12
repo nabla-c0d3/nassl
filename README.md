@@ -20,6 +20,7 @@ sample client:
 
     git clone https://github.com/nabla-c0d3/nassl.git
     cd nassl
+    pip install -r requirements.txt --target ./lib
     python setup.py build_ext -i
     python sample_client.py
     
@@ -47,6 +48,7 @@ The whole build process is all taken care of by the _build\_from\_scratch.py_ sc
 
     git clone https://github.com/nabla-c0d3/nassl.git
     cd nassl
+    pip install -r requirements.txt --target ./lib
     wget http://zlib.net/zlib-1.2.11.tar.gz
     tar xvfz  zlib-1.2.11.tar.gz
     git clone https://github.com/PeterMosmans/openssl
