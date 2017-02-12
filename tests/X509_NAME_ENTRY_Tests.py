@@ -1,8 +1,8 @@
 #!/usr/bin/python2.7
 import unittest
-from nassl import _nassl, OpenSslVerifyEnum
+from nassl import _nassl
 import socket
-from nassl.ssl_client import SslClient
+from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
 class X509_NAME_ENTRY_Tests(unittest.TestCase):

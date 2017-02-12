@@ -1,7 +1,7 @@
 #!/usr/bin/python2.7
 import unittest
-from nassl import _nassl, OpenSslVersionEnum, OpenSslVerifyEnum
-from nassl.ssl_client import SslClient
+from nassl import _nassl
+from nassl.ssl_client import SslClient, OpenSslVersionEnum, OpenSslVerifyEnum
 
 
 class SSL_Tests(unittest.TestCase):

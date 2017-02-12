@@ -1,8 +1,8 @@
 #!/usr/bin/python2.7
 import unittest
 import socket
-from nassl.ssl_client import SslClient
-from nassl import _nassl, OpenSslVerifyEnum
+from nassl.ssl_client import SslClient, OpenSslVerifyEnum
+from nassl import _nassl
 from nassl.x509_certificate import X509Certificate
 
 

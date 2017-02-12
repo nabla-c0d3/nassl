@@ -2,8 +2,7 @@
 import unittest
 import socket
 
-from nassl import OpenSslVerifyEnum, OpenSslVersionEnum
-from nassl.ssl_client import SslClient
+from nassl.ssl_client import SslClient, OpenSslVerifyEnum, OpenSslVersionEnum
 from nassl.x509_certificate import X509Certificate, HostnameValidationResultEnum
 
 

@@ -1,7 +1,8 @@
 #!/usr/bin/python2.7
 import unittest
 import tempfile
-from nassl import _nassl, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
+from nassl import _nassl
+from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 
 
 class SSL_CTX_Tests(unittest.TestCase):

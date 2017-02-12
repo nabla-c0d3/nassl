@@ -3,9 +3,8 @@ import unittest
 import socket
 import tempfile
 
-from nassl import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 from nassl.debug_ssl_client import DebugSslClient
-from nassl.ssl_client import ClientCertificateRequested
+from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 
 
 class SslClient_Tests_PrivateKey(unittest.TestCase):
