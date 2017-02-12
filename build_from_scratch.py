@@ -16,7 +16,7 @@ import subprocess
 # The build script expects the OpenSSL and Zlib src packages to be in nassl's root folder
 # Warning: use a fresh Zlib src tree on Windows or build will fail ie. do not use the same Zlib src folder for Windows
 # and Unix build
-ZLIB_PATH = join(getcwd(), 'zlib-1.2.8')
+ZLIB_PATH = join(getcwd(), 'zlib-1.2.11')
 OPENSSL_PATH = join(getcwd(), 'openssl')
 OPENSSL_CONF_CMD = (
     'perl Configure {target} --prefix={install_path} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
