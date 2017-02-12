@@ -6,6 +6,7 @@ install:
   - wget http://zlib.net/zlib-1.2.11.tar.gz
   - tar xvfz  zlib-1.2.11.tar.gz
   - git clone https://github.com/PeterMosmans/openssl.git
+  - pip install -r requirements.txt --target ./lib
   - python build_from_scratch.py
 #  - python setup.py build_ext -i
 # command to run tests
