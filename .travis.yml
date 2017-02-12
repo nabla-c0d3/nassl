@@ -3,8 +3,8 @@ python:
   - "2.7"
 # command to install dependencies
 install:
-  - wget http://zlib.net/zlib-1.2.8.tar.gz
-  - tar xvfz  zlib-1.2.8.tar.gz
+  - wget http://zlib.net/zlib-1.2.11.tar.gz
+  - tar xvfz  zlib-1.2.11.tar.gz
   - git clone https://github.com/PeterMosmans/openssl.git
   - python build_from_scratch.py
 #  - python setup.py build_ext -i

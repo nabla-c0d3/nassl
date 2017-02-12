@@ -38,16 +38,16 @@ On Windows, a "Platform Wheel" can be built using:
     
 If you do not want to use the pre-compiled binaries, compiling the C extension requires successively building:
  
-* [Zlib 1.2.8](http://zlib.net/zlib-1.2.8.tar.gz)
 * A [special fork of OpenSSL 1.0.2](https://github.com/PeterMosmans/openssl) (or the official OpenSSL 1.0.2e)
+* [Zlib 1.2.11](http://zlib.net/zlib-1.2.11.tar.gz)
 * The `_nassl` C extension itself
 
 The whole build process is all taken care of by the _build\_from\_scratch.py_ script: 
 
     git clone https://github.com/nabla-c0d3/nassl.git
     cd nassl
-    wget http://zlib.net/zlib-1.2.8.tar.gz
-    tar xvfz  zlib-1.2.8.tar.gz
+    wget http://zlib.net/zlib-1.2.11.tar.gz
+    tar xvfz  zlib-1.2.11.tar.gz
     git clone https://github.com/PeterMosmans/openssl
     python build_from_scratch.py
     
