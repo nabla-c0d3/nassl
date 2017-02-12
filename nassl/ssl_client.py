@@ -87,6 +87,9 @@ class SslClient(object):
         self._ssl_ctx = SSL_CTX(ssl_version.value)
         self._ssl_ctx.set_verify(ssl_verify.value)
         if ssl_verify_locations:
+            # Ensure the file exists
+            with open(ssl_verify_locations):
+                pass
             self._ssl_ctx.load_verify_locations(ssl_verify_locations)
 
         if client_certchain_file is not None:
@@ -332,6 +335,12 @@ class SslClient(object):
         """The certificate chain file must be in PEM format. Private method because it should be set via the
         constructor.
         """
+        # Ensure the files exist
+        with open(client_certchain_file):
+            pass
+        with open(client_key_file):
+            pass
+
         self._ssl_ctx.use_certificate_chain_file(client_certchain_file)
         self._ssl_ctx.set_private_key_password(client_key_password)
         try:

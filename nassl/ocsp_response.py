@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import os
+
 import _nassl
 from typing import Dict
 from typing import Text
@@ -36,6 +38,10 @@ class OcspResponse(object):
 
         Raises OcspResponseNotTrustedError if the validation failed ie. the OCSP response is not trusted.
         """
+        # Ensure the file exists
+        with open(verify_locations):
+            pass
+
         try:
             self._ocsp_response.basic_verify(verify_locations)
         except _nassl.OpenSSLError as e:
