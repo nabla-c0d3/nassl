@@ -4,7 +4,7 @@ import os
 import sys
 sys.path.insert(1, os.path.join(os.path.dirname(__file__), u'lib'))
 
-from nassl import OpenSslVersionEnum, OpenSslVerifyEnum
+from nassl.ssl_client import OpenSslVersionEnum
 import socket
 from nassl.debug_ssl_client import DebugSslClient
 
