@@ -75,7 +75,7 @@ class X509Certificate(object):
                      u'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()),
                      u'validity': {
                          u'notBefore': self._x509.get_notBefore(),
-                         u'notAfter' : self._x509.get_notAfter()
+                         u'notAfter': self._x509.get_notAfter()
                      },
                      u'subject': self._parse_x509_name(self._x509.get_subject_name_entries()),
                      u'subjectPublicKeyInfo': self._parse_pubkey(),
@@ -181,14 +181,14 @@ class X509Certificate(object):
 
 
     def _parse_signature_algorithm(self):
-        return self._extract_cert_value(u'Signature Algorithm: ')
+        return self._extract_cert_value('Signature Algorithm: ')
 
 
     def _parse_signature(self):
         cert_txt = self.as_text()
-        sig_txt = cert_txt.split(u'Signature Algorithm:', 1)[1].split(u'Signature Algorithm:')[1].split('\n',1)[1]
+        sig_txt = cert_txt.split('Signature Algorithm:', 1)[1].split('Signature Algorithm:')[1].split('\n',1)[1]
         sig_parts = sig_txt.split('\n')
-        signature = u''
+        signature = ''
         for part in sig_parts:
             signature += part.strip()
         return signature.strip()
@@ -208,7 +208,6 @@ class X509Certificate(object):
 # Of course lots of assumptions here regarding the format of the text output
 
     def _parse_pubkey(self):
-
         algo = self._parse_pubkey_algorithm()
         if algo in [u'id-ecPublicKey', u'id-ecDH', u'id-ecMQV']:
             paramDict = {u'pub': self._parse_ec_pubkey(),
@@ -226,7 +225,7 @@ class X509Certificate(object):
 
     def _parse_ec_pubkey(self):
         cert =  self.as_text()
-        eckey_lines = cert.split(u'pub:')[1].split('\n',1)[1].split(u'ASN1 OID:')[0].strip().split('\n')
+        eckey_lines = cert.split('pub:')[1].split('\n', 1)[1].split('ASN1 OID:')[0].strip().split('\n')
         pubkey_txt = ''
 
         for line in eckey_lines:
@@ -235,13 +234,13 @@ class X509Certificate(object):
 
 
     def _parse_ec_pubkey_curve(self):
-        exp = self._extract_cert_value(u'ASN1 OID:')
+        exp = self._extract_cert_value('ASN1 OID:')
         return exp.split('(')[0].strip()
 
 
     def _parse_pubkey_modulus(self):
         cert =  self.as_text()
-        modulus_lines = cert.split(u'Modulus')[1].split('\n',1)[1].split(u'Exponent:')[0].strip().split('\n')
+        modulus_lines = cert.split('Modulus')[1].split('\n',1)[1].split('Exponent:')[0].strip().split('\n')
         pubkey_modulus_txt = ''
 
         for line in modulus_lines:
@@ -250,17 +249,17 @@ class X509Certificate(object):
 
 
     def _parse_pubkey_exponent(self):
-        exp = self._extract_cert_value(u'Exponent:')
+        exp = self._extract_cert_value('Exponent:')
         return exp.split('(')[0].strip()
 
 
     def _parse_pubkey_size(self):
-        exp = self._extract_cert_value(u'Public-Key: ')
-        return exp.strip(u' ()')
+        exp = self._extract_cert_value('Public-Key: ')
+        return exp.strip(' ()')
 
 
     def _parse_pubkey_algorithm(self):
-        return self._extract_cert_value(u'Public Key Algorithm: ')
+        return self._extract_cert_value('Public Key Algorithm: ')
 
 
 
@@ -318,11 +317,11 @@ class X509Certificate(object):
     @staticmethod
     def _parse_authority_information_access(x509ext):
         # Hazardous attempt at parsing an Authority Information Access extension
-        auth_ext = x509ext.get_data().strip(u' \n').split('\n')
+        auth_ext = x509ext.get_data().strip(' \n').split('\n')
         auth_ext_list = {}
 
         for auth_entry in auth_ext:
-            auth_entry = auth_entry.split(u' - ')
+            auth_entry = auth_entry.split(' - ')
             entry_name = auth_entry[0].replace(' ', '')
 
             if not auth_ext_list.has_key(entry_name):
@@ -340,7 +339,7 @@ class X509Certificate(object):
     @staticmethod
     def _parse_crl_distribution_points(x509ext):
         # Hazardous attempt at parsing a CRL Distribution Point extension
-        crl_ext = x509ext.get_data().strip(u' \n').split('\n')
+        crl_ext = x509ext.get_data().strip(' \n').split('\n')
         subcrl = {}
 
         for distrib_point in crl_ext:
