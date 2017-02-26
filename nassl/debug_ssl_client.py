@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from nassl._nassl import SSL, SSL_SESSION
-from ssl_client import SslClient
+from nassl.ssl_client import SslClient
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -34,7 +36,7 @@ class DebugSslClient(SslClient):
         """Initiate an SSL renegotiation.
         """
         if not self._is_handshake_completed:
-            raise IOError(u'SSL Handshake was not completed; cannot renegotiate.')
+            raise IOError('SSL Handshake was not completed; cannot renegotiate.')
 
         self._ssl.renegotiate()
         self.do_handshake()

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import os
-
-import _nassl
+from __future__ import absolute_import
+from __future__ import unicode_literals
+from nassl import _nassl
 from typing import Dict
 from typing import Text
 
@@ -45,7 +45,7 @@ class OcspResponse(object):
         try:
             self._ocsp_response.basic_verify(verify_locations)
         except _nassl.OpenSSLError as e:
-            if u'certificate verify error' in e[0]:
+            if 'certificate verify error' in e[0]:
                 raise OcspResponseNotTrustedError(verify_locations)
             raise
 
@@ -57,26 +57,26 @@ class OcspResponse(object):
 
         # For now we just parse OpenSSL's text output and make a lot of assumptions
         response_dict = {
-            u'responseStatus': self._get_value_from_text_output_no_p(u'OCSP Response Status:'),
-            u'version' : self._get_value_from_text_output_no_p(u'Version:'),
-            u'responseType': self._get_value_from_text_output(u'Response Type:'),
-            u'responderID': self._get_value_from_text_output(u'Responder Id:'),
-            u'producedAt': self._get_value_from_text_output(u'Produced At:')}
+            'responseStatus': self._get_value_from_text_output_no_p('OCSP Response Status:'),
+            'version' : self._get_value_from_text_output_no_p('Version:'),
+            'responseType': self._get_value_from_text_output('Response Type:'),
+            'responderID': self._get_value_from_text_output('Responder Id:'),
+            'producedAt': self._get_value_from_text_output('Produced At:')}
 
-        if u'successful' not in response_dict[u'responseStatus']:
+        if 'successful' not in response_dict['responseStatus']:
             return response_dict
 
-        response_dict[u'responses'] = [
+        response_dict['responses'] = [
             {
-                u'certID': {
-                    u'hashAlgorithm': self._get_value_from_text_output(u'Hash Algorithm:'),
-                    u'issuerNameHash': self._get_value_from_text_output(u'Issuer Name Hash:'),
-                    u'issuerKeyHash': self._get_value_from_text_output(u'Issuer Key Hash:'),
-                    u'serialNumber': self._get_value_from_text_output(u'Serial Number:')
+                'certID': {
+                    'hashAlgorithm': self._get_value_from_text_output('Hash Algorithm:'),
+                    'issuerNameHash': self._get_value_from_text_output('Issuer Name Hash:'),
+                    'issuerKeyHash': self._get_value_from_text_output('Issuer Key Hash:'),
+                    'serialNumber': self._get_value_from_text_output('Serial Number:')
                 },
-                u'certStatus': self._get_value_from_text_output(u'Cert Status:'),
-                u'thisUpdate': self._get_value_from_text_output(u'This Update:'),
-                u'nextUpdate': self._get_value_from_text_output(u'Next Update:')
+                'certStatus': self._get_value_from_text_output('Cert Status:'),
+                'thisUpdate': self._get_value_from_text_output('This Update:'),
+                'nextUpdate': self._get_value_from_text_output('Next Update:')
             }
         ]
         self._ocsp_response_dict = response_dict

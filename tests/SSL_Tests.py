@@ -1,4 +1,7 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import unittest
 from nassl import _nassl
 from nassl.ssl_client import SslClient, OpenSslVersionEnum, OpenSslVerifyEnum
@@ -44,14 +47,14 @@ class SSL_Tests(unittest.TestCase):
     def test_do_handshake_bad(self):
         # Connection type not set
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertRaisesRegexp(_nassl.OpenSSLError, u'connection type not set', test_ssl.do_handshake)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'connection type not set', test_ssl.do_handshake)
 
 
     def test_do_handshake_bad_eof(self):
         # No BIO attached to the SSL object
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        self.assertRaisesRegexp(_nassl.SslError, u'An EOF was observed that violates the protocol',
+        self.assertRaisesRegexp(_nassl.SslError, 'An EOF was observed that violates the protocol',
                                 test_ssl.do_handshake)
 
 
@@ -59,14 +62,14 @@ class SSL_Tests(unittest.TestCase):
         # No BIO attached to the SSL object
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, u'ssl handshake failure', test_ssl.read, (128))
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'ssl handshake failure', test_ssl.read, (128))
 
 
     def test_write_bad(self):
         # No BIO attached to the SSL object
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, u'ssl handshake failure', test_ssl.write, u'tests')
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'ssl handshake failure', test_ssl.write, 'tests')
 
 
     def test_pending(self):
@@ -87,12 +90,12 @@ class SSL_Tests(unittest.TestCase):
 
     def test_get_available_compression_methods_has_zlib(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertEqual([u'zlib compression'], test_ssl.get_available_compression_methods())
+        self.assertEqual(['zlib compression'], test_ssl.get_available_compression_methods())
 
 
     def test_set_tlsext_host_name(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertIsNone(test_ssl.set_tlsext_host_name(u'tests'))
+        self.assertIsNone(test_ssl.set_tlsext_host_name('tests'))
 
     def test_set_tlsext_host_name_bad(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
@@ -106,18 +109,18 @@ class SSL_Tests(unittest.TestCase):
 
     def test_set_cipher_list(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertIsNone(test_ssl.set_cipher_list(u'LOW'))
+        self.assertIsNone(test_ssl.set_cipher_list('LOW'))
 
 
     def test_set_cipher_list_bad(self):
         # Invalid cipher string
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertRaises(_nassl.OpenSSLError, test_ssl.set_cipher_list, u'badcipherstring')
+        self.assertRaises(_nassl.OpenSSLError, test_ssl.set_cipher_list, 'badcipherstring')
 
 
     def test_shutdown_bad(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertRaisesRegexp(_nassl.OpenSSLError, u'uninitialized', test_ssl.shutdown)
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'uninitialized', test_ssl.shutdown)
 
 
     def test_get_cipher_list(self):
@@ -156,7 +159,7 @@ class SSL_Tests(unittest.TestCase):
 
     def test_set_session_bad(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertRaisesRegexp(TypeError, u'must be _nassl.SSL_SESSION', test_ssl.set_session, None)
+        self.assertRaisesRegexp(TypeError, 'must be _nassl.SSL_SESSION', test_ssl.set_session, None)
 
 
     def test_set_options_bad(self):
@@ -177,5 +180,5 @@ class SSL_Tests(unittest.TestCase):
 def main():
     unittest.main()
 
-if __name__ == u'__main__':
+if __name__ == '__main__':
     main()

@@ -1,4 +1,8 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import unittest
 from nassl import _nassl
 import socket
@@ -16,7 +20,7 @@ class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
     def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect((u'www.google.com', 443))
+        sock.connect(('www.google.com', 443))
 
         ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
@@ -29,5 +33,5 @@ class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
 def main():
     unittest.main()
 
-if __name__ == u'__main__':
+if __name__ == '__main__':
     main()

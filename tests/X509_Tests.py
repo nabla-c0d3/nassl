@@ -1,4 +1,8 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import unittest
 import socket
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
@@ -9,7 +13,7 @@ from nassl.x509_certificate import X509Certificate
 class X509_Tests(unittest.TestCase):
 
     def setUp(self):
-        pem_cert = u"""
+        pem_cert = """
 -----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkGA1UEBhMCQkUx
 GTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkds
@@ -79,7 +83,7 @@ class X509_Tests_Online(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect((u'www.google.com', 443))
+        sock.connect(('www.google.com', 443))
 
         ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
@@ -89,12 +93,12 @@ class X509_Tests_Online(unittest.TestCase):
         self.assertIsNotNone(self.cert.as_text())
 
     def test_verify_cert_error_string(self):
-        self.assertEqual(u'error number 1', _nassl.X509.verify_cert_error_string(1))
+        self.assertEqual('error number 1', _nassl.X509.verify_cert_error_string(1))
 
 
 
 def main():
     unittest.main()
 
-if __name__ == u'__main__':
+if __name__ == '__main__':
     main()
