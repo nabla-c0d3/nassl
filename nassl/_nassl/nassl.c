@@ -87,7 +87,7 @@ PyMODINIT_FUNC init_nassl(void)
 #endif
 {
     PyObject* module;
-    struct module_state *st = GETSTATE(module);
+    struct module_state *state;
 
     // Initialize OpenSSL
     SSL_library_init();
@@ -105,7 +105,6 @@ PyMODINIT_FUNC init_nassl(void)
 #else
     module = Py_InitModule3("_nassl", nassl_methods, "Nassl internal module.");
 #endif
-
     if (module == NULL)
     {
         INITERROR;
@@ -121,9 +120,9 @@ PyMODINIT_FUNC init_nassl(void)
     module_add_SSL_SESSION(module);
     module_add_OCSP_RESPONSE(module);
 
-
-    st->error = PyErr_NewException("_nassl.Error", NULL, NULL);
-    if (st->error == NULL)
+    state = GETSTATE(module);
+    state->error = PyErr_NewException("_nassl.Error", NULL, NULL);
+    if (state->error == NULL)
     {
         Py_DECREF(module);
         INITERROR;
