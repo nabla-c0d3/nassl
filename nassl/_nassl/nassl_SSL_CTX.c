@@ -104,7 +104,7 @@ static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self)
         self->pkeyPasswordBuf = NULL;
     }
 
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 

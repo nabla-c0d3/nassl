@@ -21,7 +21,7 @@ static void nassl_X509_NAME_ENTRY_dealloc(nassl_X509_NAME_ENTRY_Object *self)
         X509_NAME_ENTRY_free(self->x509NameEntry);
         self->x509NameEntry = NULL;
     }
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -65,7 +65,7 @@ static PyObject* nassl_X509_NAME_ENTRY_get_data(nassl_X509_NAME_ENTRY_Object *se
         }
     }
     PyMem_Free(objectDataTxt);
-    res = PyString_FromStringAndSize((const char*) nameDataTxt, nameDataSize);
+    res = PyUnicode_FromStringAndSize((const char*) nameDataTxt, nameDataSize);
     return res;
 }
 
@@ -88,7 +88,7 @@ static PyObject* nassl_X509_NAME_ENTRY_get_object(nassl_X509_NAME_ENTRY_Object *
 
     // Extract the text representation
     OBJ_obj2txt(objectDataTxt, objectDataSize, objectData, 0);
-    res = PyString_FromStringAndSize(objectDataTxt, objectDataSize - 1);
+    res = PyUnicode_FromStringAndSize(objectDataTxt, objectDataSize - 1);
     PyMem_Free(objectDataTxt);
     return res;
 }

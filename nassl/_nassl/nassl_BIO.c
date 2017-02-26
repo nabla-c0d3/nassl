@@ -45,7 +45,7 @@ static void nassl_BIO_dealloc(nassl_BIO_Object *self)
         BIO_free(self->bio);
         self->bio = NULL;
     }
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -80,7 +80,7 @@ static PyObject* nassl_BIO_read(nassl_BIO_Object *self, PyObject *args)
 
     if (BIO_read(self->bio, readBuffer, readSize) > 0)
     {
-        res = PyString_FromStringAndSize(readBuffer, readSize);
+        res = PyBytes_FromStringAndSize(readBuffer, readSize);
     }
     else
     {
@@ -106,7 +106,7 @@ static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args)
     unsigned int writeSize;
     int returnValue;
     char *writeBuffer;
-    if (!PyArg_ParseTuple(args, "t#", &writeBuffer, &writeSize))
+    if (!PyArg_ParseTuple(args, "s#", &writeBuffer, &writeSize))
     {
         return NULL;
     }
