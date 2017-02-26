@@ -23,14 +23,14 @@ CURRENT_PLATFORM = None
 if architecture()[0] == '64bit':
     if platform == 'darwin':
         CURRENT_PLATFORM = SupportedPlatformEnum.OSX_64
-    elif platform == 'linux2':
+    elif platform in ['linux', 'linux2']:
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_64
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_64
     elif platform == 'openbsd5':
         CURRENT_PLATFORM = SupportedPlatformEnum.OPENBSD_64
 elif architecture()[0] == '32bit':
-    if platform == 'linux2':
+    if platform in ['linux', 'linux2']:
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_32
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
