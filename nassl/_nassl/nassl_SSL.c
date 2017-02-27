@@ -79,15 +79,17 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
 static void nassl_SSL_dealloc(nassl_SSL_Object *self)
 {
+    if (self->bio_Object != NULL)
+    {
+        Py_DECREF(self->bio_Object);
+        // The underlying OpenSSL BIO is implicitly freed by SSL_free()
+        self->bio_Object = NULL;
+    }
+
     if (self->ssl != NULL)
     {
         SSL_free(self->ssl);
         self->ssl = NULL;
-        if (self->bio_Object != NULL)
-        {
-            // BIO is implicitely freed by SSL_free()
-            self->bio_Object->bio = NULL;
-        }
     }
 
     if (self->sslCtx_Object != NULL)
@@ -106,6 +108,7 @@ static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args)
         return NULL;
     }
 
+    Py_INCREF(bioObject);
     self->bio_Object = bioObject;
     SSL_set_bio(self->ssl, bioObject->bio, bioObject->bio);
     Py_RETURN_NONE;

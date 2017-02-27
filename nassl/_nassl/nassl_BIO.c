@@ -42,7 +42,9 @@ static void nassl_BIO_dealloc(nassl_BIO_Object *self)
 {
     if (self->bio != NULL)
     {
-        BIO_free(self->bio);
+        // This might be a small memory leak, but the BIOs should implicitly freed by SSL_free() called from
+        // nassl_SSL_dealloc(); enabling BIO_free here leads to a double free crash
+        //BIO_free(self->bio);
         self->bio = NULL;
     }
     Py_TYPE(self)->tp_free((PyObject*)self);

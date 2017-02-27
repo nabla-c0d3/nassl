@@ -59,7 +59,8 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
     def test_set_private_key_password_null_byte(self):
         # NULL byte embedded in the password
         test_ssl_ctx = _nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        self.assertRaisesRegexp(TypeError, 'without null', test_ssl_ctx.set_private_key_password, ('AAA\x00AAAA'))
+        # It raises a TypeError on Python 2.7 and 3.4, and a ValueError on 3.5
+        self.assertRaisesRegexp(Exception, ' null', test_ssl_ctx.set_private_key_password, ('AAA\x00AAAA'))
 
 
     def test_use_certificate_file(self):
