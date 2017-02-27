@@ -10,6 +10,7 @@
 #include <openssl/x509.h>
 #include <openssl/ocsp.h>
 
+#include "python_utils.h"
 #include "nassl_errors.h"
 #include "nassl_OCSP_RESPONSE.h"
 
@@ -38,7 +39,7 @@ static void nassl_OCSP_RESPONSE_dealloc(nassl_OCSP_RESPONSE_Object *self)
         sk_X509_free(self->peerCertChain);
         self->peerCertChain = NULL;
     }
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -53,8 +54,7 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
     memBio = BIO_new(BIO_s_mem());
     if (memBio == NULL)
     {
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
 
     OCSP_RESPONSE_print(memBio, self->ocspResp, 0);
@@ -68,7 +68,7 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
     }
 
     BIO_read(memBio, txtBuffer, txtLen);
-    ocsResp_PyString = PyString_FromStringAndSize(txtBuffer, txtLen);
+    ocsResp_PyString = PyUnicode_FromStringAndSize(txtBuffer, txtLen);
     PyMem_Free(txtBuffer);
 
     return ocsResp_PyString;
@@ -80,9 +80,8 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
     X509_STORE *trustedCAs = NULL;
     int certNum = 0, verifyRes = 0, i = 0;
     OCSP_BASICRESP *basicResp = NULL;
-
-    char *caFile = NULL;
-    if (!PyArg_ParseTuple(args, "s", &caFile))
+    char *caFilePath = NULL;
+    if (PyArg_ParseFilePath(args, &caFilePath) == NULL)
     {
         return NULL;
     }
@@ -94,7 +93,7 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
         return raise_OpenSSL_error();
     }
 
-    X509_STORE_load_locations(trustedCAs, caFile, NULL);
+    X509_STORE_load_locations(trustedCAs, caFilePath, NULL);
 
     // Verify the OCSP response
     basicResp = OCSP_response_get1_basic(self->ocspResp);
@@ -112,10 +111,8 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
     OCSP_BASICRESP_free(basicResp);
     if (verifyRes <= 0)
     {
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
-
     Py_RETURN_NONE;
 }
 

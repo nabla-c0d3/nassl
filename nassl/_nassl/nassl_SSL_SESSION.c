@@ -22,7 +22,7 @@ static void nassl_SSL_SESSION_dealloc(nassl_SSL_SESSION_Object *self)
   		SSL_SESSION_free(self->sslSession);
   		self->sslSession = NULL;
   	}
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 

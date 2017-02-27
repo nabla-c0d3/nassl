@@ -1,4 +1,8 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import unittest
 from nassl import _nassl
 import socket
@@ -14,25 +18,22 @@ class OCSP_RESPONSE_Tests(unittest.TestCase):
 
 class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
 
-    def setUp(self):
+    def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect((u'login.live.com', 443))
+        sock.connect(('login.live.com', 443))
 
         ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
-        self.ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()._ocsp_response
+        ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()._ocsp_response
 
+        # Test as_text()
+        self.assertIsNotNone(ocsp_response.as_text())
 
-    def test_as_text(self):
-        self.assertIsNotNone(self.ocsp_response.as_text())
-
-
-    def test_basic_verify_bad(self):
-        # Wrong certificate
-        test_file = tempfile.NamedTemporaryFile(delete=False)
-        test_file.write(u"""-----BEGIN CERTIFICATE-----
+        # Test verify with a wrong certificate
+        test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
+        test_file.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -52,12 +53,12 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----""")
         test_file.close()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, u'certificate verify error', self.ocsp_response.basic_verify,
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', ocsp_response.basic_verify,
                                 test_file.name)
 
 
 def main():
     unittest.main()
 
-if __name__ == u'__main__':
+if __name__ == '__main__':
     main()

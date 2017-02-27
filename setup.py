@@ -1,4 +1,7 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+
 import os
 import sys
 from os import getcwd
@@ -23,14 +26,14 @@ CURRENT_PLATFORM = None
 if architecture()[0] == '64bit':
     if platform == 'darwin':
         CURRENT_PLATFORM = SupportedPlatformEnum.OSX_64
-    elif platform == 'linux2':
+    elif platform in ['linux', 'linux2']:
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_64
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_64
     elif platform == 'openbsd5':
         CURRENT_PLATFORM = SupportedPlatformEnum.OPENBSD_64
 elif architecture()[0] == '32bit':
-    if platform == 'linux2':
+    if platform in ['linux', 'linux2']:
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_32
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
@@ -88,7 +91,7 @@ NASSL_EXT_SETUP = {
                 "nassl/_nassl/nassl_X509.c", "nassl/_nassl/nassl_errors.c", "nassl/_nassl/nassl_BIO.c",
                 "nassl/_nassl/nassl_X509_EXTENSION.c", "nassl/_nassl/nassl_X509_NAME_ENTRY.c",
                 "nassl/_nassl/nassl_SSL_SESSION.c", "nassl/_nassl/openssl_utils.c",
-                "nassl/_nassl/nassl_OCSP_RESPONSE.c"],
+                "nassl/_nassl/nassl_OCSP_RESPONSE.c", "nassl/_nassl/python_utils.c"],
 }
 
 

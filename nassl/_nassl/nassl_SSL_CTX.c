@@ -5,6 +5,7 @@
 
 #include "nassl_errors.h"
 #include "nassl_SSL_CTX.h"
+#include "python_utils.h"
 
 
 typedef enum
@@ -104,7 +105,7 @@ static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self)
         self->pkeyPasswordBuf = NULL;
     }
 
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -136,13 +137,13 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
 
 static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args)
 {
-    char *caFile = NULL;
-    if (!PyArg_ParseTuple(args, "s", &caFile))
+    char *caFilePath = NULL;
+    if (PyArg_ParseFilePath(args, &caFilePath) == NULL)
     {
         return NULL;
     }
 
-    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFile, NULL))
+    if (!SSL_CTX_load_verify_locations(self->sslCtx, caFilePath, NULL))
     {
         return raise_OpenSSL_error();
     }
@@ -153,9 +154,9 @@ static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self,
 
 static PyObject* nassl_SSL_CTX_use_certificate_chain_file(nassl_SSL_CTX_Object *self, PyObject *args)
 {
-    const char *filePath = NULL;
-
-    if (!PyArg_ParseTuple(args, "s", &filePath)) {
+    char *filePath = NULL;
+    if (PyArg_ParseFilePath(args, &filePath) == NULL)
+    {
         return NULL;
     }
 
@@ -169,12 +170,26 @@ static PyObject* nassl_SSL_CTX_use_certificate_chain_file(nassl_SSL_CTX_Object *
 
 static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, PyObject *args)
 {
-    const char *filePath = NULL;
+    char *filePath = NULL;
     int certType = 0;
+#if PY_MAJOR_VERSION >= 3
+    PyObject *pyFilePath = NULL;
+    if (!PyArg_ParseTuple(args, "O&I", PyUnicode_FSConverter, &pyFilePath, &certType))
+    {
+        return NULL;
+    }
+    filePath = PyBytes_AsString(pyFilePath);
+    if (filePath == NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "Could not extract the file path");
+        return NULL;
+    }
+#else
     if (!PyArg_ParseTuple(args, "sI", &filePath, &certType))
     {
         return NULL;
     }
+#endif
 
     if (SSL_CTX_use_PrivateKey_file(self->sslCtx, filePath, certType) != 1)
     {

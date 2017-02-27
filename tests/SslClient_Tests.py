@@ -1,4 +1,7 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import unittest
 import socket
 import tempfile
@@ -12,8 +15,8 @@ class SslClient_Tests_PrivateKey(unittest.TestCase):
     def setUp(self):
         self.ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
 
-        test_file = tempfile.NamedTemporaryFile(delete=False)
-        test_file.write(u"""-----BEGIN RSA PRIVATE KEY-----
+        test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
+        test_file.write("""-----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: DES-EDE3-CBC,7D15D836EE9E1B77
 
@@ -33,8 +36,8 @@ tqXk90NdSqJtMMGgrtVM84TYFPXP58QCBnE9oAI7XYM1rusuVBOXZw==
 -----END RSA PRIVATE KEY-----""")
         test_file.close()
         self.test_file = test_file
-        test_file2 = tempfile.NamedTemporaryFile(delete=False)
-        test_file2.write(u"""-----BEGIN CERTIFICATE-----
+        test_file2 = tempfile.NamedTemporaryFile(delete=False, mode='wt')
+        test_file2.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -78,12 +81,12 @@ Pd2eQ9+DkopOz3UGU7c=
 
     def test_use_private_key(self):
         self.assertIsNone(self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name,
-                                                           OpenSslFileTypeEnum.PEM, u'testPW'))
+                                                           OpenSslFileTypeEnum.PEM, 'testPW'))
 
 
     def test_use_private_key_bad(self):
         with self.assertRaises(ValueError):
-            self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, OpenSslFileTypeEnum.PEM, u'bad')
+            self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, OpenSslFileTypeEnum.PEM, 'bad')
 
 
 class SslClient_Tests_Handshake(unittest.TestCase):
@@ -91,7 +94,7 @@ class SslClient_Tests_Handshake(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect((u'www.google.com', 443))
+        sock.connect(('www.google.com', 443))
 
         ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         self.ssl_client = ssl_client
@@ -106,10 +109,10 @@ class SslClient_Tests_Online(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect((u'www.google.com', 443))
+        sock.connect(('www.google.com', 443))
 
         ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
-        ssl_client.set_cipher_list(u'ECDH')  # Needed for test_get_ecdh_param()
+        ssl_client.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
         ssl_client.do_handshake()
         self.ssl_client = ssl_client
 
@@ -147,11 +150,11 @@ class SslClient_Tests_Online(unittest.TestCase):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
-        sock.connect((u'auth.startssl.com', 443))
+        sock.connect(('auth.startssl.com', 443))
 
         ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
 
-        self.assertRaisesRegexp(ClientCertificateRequested, u'Server requested a client certificate',
+        self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
                                 ssl_client.do_handshake)
 
 
@@ -159,17 +162,17 @@ class SslClient_Tests_Online(unittest.TestCase):
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
-        sock.connect((u'auth.startssl.com', 443))
+        sock.connect(('auth.startssl.com', 443))
 
         ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE,
                                     ignore_client_authentication_requests=True)
 
         ssl_client.do_handshake()
-        self.assertGreater(ssl_client.get_client_CA_list(), 2)
+        self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
 
 
 def main():
     unittest.main()
 
-if __name__ == u'__main__':
+if __name__ == '__main__':
     main()

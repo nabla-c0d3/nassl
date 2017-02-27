@@ -25,8 +25,7 @@ static void nassl_X509_EXTENSION_dealloc(nassl_X509_EXTENSION_Object *self)
         X509_EXTENSION_free(self->x509ext);
         self->x509ext = NULL;
     }
-
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -50,7 +49,7 @@ static PyObject* nassl_X509_EXTENSION_get_object(nassl_X509_EXTENSION_Object *se
 
     // Extract the text representation
     OBJ_obj2txt(objTxtBuffer, objTxtSize, x509extObj, 0);
-    res = PyString_FromStringAndSize(objTxtBuffer, objTxtSize - 1);
+    res = PyUnicode_FromStringAndSize(objTxtBuffer, objTxtSize - 1);
     PyMem_Free(objTxtBuffer);
     return res;
 }
@@ -61,8 +60,7 @@ static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self
     BIO *memBio = BIO_new(BIO_s_mem());
     if (memBio == NULL)
     {
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
 
     X509V3_EXT_print(memBio, self->x509ext, X509V3_EXT_ERROR_UNKNOWN, 0);
@@ -106,32 +104,32 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
         {
             case GEN_OTHERNAME:
                 nameTypeStr = "othername";
-                nameDataPyStr = PyString_FromString(defaultDataStr);
+                nameDataPyStr = PyUnicode_FromString(defaultDataStr);
                 break;
 
             case GEN_X400:
                 nameTypeStr = "X400Name";
-                nameDataPyStr = PyString_FromString(defaultDataStr);
+                nameDataPyStr = PyUnicode_FromString(defaultDataStr);
                 break;
 
             case GEN_EDIPARTY:
                 nameTypeStr = "EdiPartyName";
-                nameDataPyStr = PyString_FromString(defaultDataStr);
+                nameDataPyStr = PyUnicode_FromString(defaultDataStr);
                 break;
 
             case GEN_EMAIL:
                 nameTypeStr = "email";
-                nameDataPyStr = PyString_FromStringAndSize((char *) gen->d.ia5->data, gen->d.ia5->length);
+                nameDataPyStr = PyUnicode_FromStringAndSize((char *) gen->d.ia5->data, gen->d.ia5->length);
                 break;
 
             case GEN_DNS:
                 nameTypeStr = "DNS";
-                nameDataPyStr = PyString_FromStringAndSize((char *) gen->d.ia5->data, gen->d.ia5->length);
+                nameDataPyStr = PyUnicode_FromStringAndSize((char *) gen->d.ia5->data, gen->d.ia5->length);
                 break;
 
             case GEN_URI:
                 nameTypeStr = "URI";
-                nameDataPyStr = PyString_FromStringAndSize((char *) gen->d.ia5->data, gen->d.ia5->length);
+                nameDataPyStr = PyUnicode_FromStringAndSize((char *) gen->d.ia5->data, gen->d.ia5->length);
                 break;
 
             case GEN_DIRNAME:
@@ -141,8 +139,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                     if (bio == NULL)
                     {
                         sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                        raise_OpenSSL_error();
-                        return NULL;
+                        return raise_OpenSSL_error();
                     }
 
                     X509_NAME_print_ex(bio, gen->d.dirn, 0, XN_FLAG_ONELINE);
@@ -157,7 +154,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                     unsigned char *p = gen->d.ip->data;
                     if (gen->d.ip->length == 4)
                     {
-                        nameDataPyStr = PyString_FromFormat("%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+                        nameDataPyStr = PyUnicode_FromFormat("%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
                     }
                     else if (gen->d.ip->length == 16)
                     {
@@ -166,8 +163,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                         if (bio == NULL)
                         {
                             sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                            raise_OpenSSL_error();
-                            return NULL;
+                            return raise_OpenSSL_error();
                         }
 
                         for (j=0; j<8; j++)
@@ -180,7 +176,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                     }
                     else
                     {
-                        nameDataPyStr = PyString_FromString("<invalid>");
+                        nameDataPyStr = PyUnicode_FromString("<invalid>");
                     }
                 }
                 break;
@@ -192,8 +188,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                     if (bio == NULL)
                     {
                         sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                        raise_OpenSSL_error();
-                        return NULL;
+                        return raise_OpenSSL_error();
                     }
                     i2a_ASN1_OBJECT(bio, gen->d.rid);
                     nameDataPyStr = bioToPyString(bio);

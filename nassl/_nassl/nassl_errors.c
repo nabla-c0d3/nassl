@@ -19,34 +19,65 @@ static PyObject *nassl_WantX509LookupError_Exception;
 
 PyObject* raise_OpenSSL_error()
 {
-    PyObject *pyFinalErrorString = PyString_FromString("");
-    unsigned long iterateOpenSslError = ERR_get_error();
+    PyObject *pyFinalErrorString = NULL;
+    PyObject *pyNewLineString = NULL;
+    unsigned long iterateOpenSslError = 0;
+
+    pyFinalErrorString = PyUnicode_FromString("");
+    if (pyFinalErrorString == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+
+    pyNewLineString = PyUnicode_FromString("\n");
+    if (pyNewLineString == NULL)
+    {
+        return PyErr_NoMemory();
+    }
 
     // Just queue all the errors in the error queue to create a giant error string
     // TODO: Improve error handling so we only return one single error; no sure if OpenSSL allows that...
+    iterateOpenSslError = ERR_get_error();
     while(iterateOpenSslError != 0)
     {
-        PyObject* pyIterateErrorString;
-        char iterateErrorString[128];
-        iterateErrorString[0] = '\0';
+        PyObject *oldPyFinalErrorString = NULL;
+        // Get the current error string
+        char *iterateErrorString = ERR_error_string(iterateOpenSslError, NULL);  // This includes a NUL character
+        PyObject *pyIterateErrorString = PyUnicode_FromString(iterateErrorString);
+        if (pyIterateErrorString == NULL)
+            {
+                return PyErr_NoMemory();
+            }
 
-        // Get the current error string and convert it to a Python string
-        ERR_error_string_n(iterateOpenSslError, iterateErrorString, 128);
-        pyIterateErrorString = PyString_FromString(iterateErrorString);
-
-        // Concatenate it with the previous error strings
-        PyString_ConcatAndDel(&pyFinalErrorString,PyString_FromString("\n"));
-        PyString_ConcatAndDel(&pyFinalErrorString, pyIterateErrorString);
+        // Add it to our final error
+        oldPyFinalErrorString = pyFinalErrorString;
+        pyFinalErrorString = PyUnicode_Concat(pyFinalErrorString, pyIterateErrorString);
         if (pyFinalErrorString == NULL)
-        {
-            return PyErr_NoMemory();
-        }
+            {
+                return PyErr_NoMemory();
+            }
+        Py_DECREF(oldPyFinalErrorString);
 
+        // Add a new line
+        oldPyFinalErrorString = pyFinalErrorString;
+        pyFinalErrorString = PyUnicode_Concat(pyFinalErrorString, pyNewLineString);
+        if (pyFinalErrorString == NULL)
+            {
+                return PyErr_NoMemory();
+            }
+        Py_DECREF(oldPyFinalErrorString);
+
+        Py_DECREF(pyIterateErrorString);
         iterateOpenSslError = ERR_get_error();
     }
 
-    PyErr_SetObject(nassl_OpenSSLError_Exception, pyFinalErrorString);
+#if PY_MAJOR_VERSION >= 3
+    PyErr_SetString(nassl_OpenSSLError_Exception, PyUnicode_AsUTF8(pyFinalErrorString));
+#else
+    PyErr_SetString(nassl_OpenSSLError_Exception, PyString_AsString(pyFinalErrorString));
+#endif
     Py_DECREF(pyFinalErrorString);
+    Py_DECREF(pyNewLineString);
     return NULL;
 }
 

@@ -79,22 +79,24 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
 static void nassl_SSL_dealloc(nassl_SSL_Object *self)
 {
+    if (self->bio_Object != NULL)
+    {
+        Py_DECREF(self->bio_Object);
+        // The underlying OpenSSL BIO is implicitly freed by SSL_free()
+        self->bio_Object = NULL;
+    }
+
     if (self->ssl != NULL)
     {
         SSL_free(self->ssl);
         self->ssl = NULL;
-        if (self->bio_Object != NULL)
-        {
-            // BIO is implicitely freed by SSL_free()
-            self->bio_Object->bio = NULL;
-        }
     }
 
     if (self->sslCtx_Object != NULL)
     {
         Py_DECREF(self->sslCtx_Object);
     }
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -106,6 +108,7 @@ static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args)
         return NULL;
     }
 
+    Py_INCREF(bioObject);
     self->bio_Object = bioObject;
     SSL_set_bio(self->ssl, bioObject->bio, bioObject->bio);
     Py_RETURN_NONE;
@@ -164,7 +167,7 @@ static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args)
     if (returnValue > 0)
     {
         // Read OK
-        res = PyString_FromStringAndSize(readBuffer, returnValue);
+        res = PyBytes_FromStringAndSize(readBuffer, returnValue);
     }
     else
     {
@@ -183,7 +186,7 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
     char *writeBuffer;
     PyObject *res = NULL;
 
-    if (!PyArg_ParseTuple(args, "t#", &writeBuffer, &writeSize))
+    if (!PyArg_ParseTuple(args, "s#", &writeBuffer, &writeSize))
     {
         return NULL;
     }
@@ -265,7 +268,7 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
             return NULL;
         }
 
-        methodPyString = PyString_FromString(method->name);
+        methodPyString = PyUnicode_FromString(method->name);
         if (methodPyString == NULL)
         {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
@@ -286,7 +289,7 @@ static PyObject* nassl_SSL_get_current_compression_method(nassl_SSL_Object *self
     {
         Py_RETURN_NONE;
     }
-    return PyString_FromString(SSL_COMP_get_name(compMethod));
+    return PyUnicode_FromString(SSL_COMP_get_name(compMethod));
 }
 
 
@@ -397,7 +400,7 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
         PyObject *cipherPyString = NULL;
         const char *cipherName = SSL_get_cipher_list(self->ssl, priority);
 
-        cipherPyString = PyString_FromString(cipherName);
+        cipherPyString = PyUnicode_FromString(cipherName);
         if (cipherPyString == NULL)
         {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
@@ -425,7 +428,7 @@ static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *arg
 static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *args)
 {
     const char *cipherName = SSL_get_cipher_name(self->ssl);
-    return PyString_FromString(cipherName);
+    return PyUnicode_FromString(cipherName);
 }
 
 
@@ -462,7 +465,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
         // The use of X509_NAME_oneline is "is strongly discouraged in new applications"
         // But that's all we need for now
         nameStr = X509_NAME_oneline(name, NULL, 0);
-        namePyString = PyString_FromString(nameStr);
+        namePyString = PyUnicode_FromString(nameStr);
         if (namePyString == NULL)
         {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
@@ -620,7 +623,7 @@ static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *a
     // This is only used for fixing SSLv2 connections when connecting to IIS7 (like in the 90s)
     // See SslClient.py for more information
     const char *stateString = SSL_state_string_long(self->ssl);
-    return PyString_FromString(stateString);
+    return PyUnicode_FromString(stateString);
 }
 
 

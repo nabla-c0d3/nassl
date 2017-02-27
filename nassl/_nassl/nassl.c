@@ -20,11 +20,59 @@
 #include "nassl_OCSP_RESPONSE.h"
 
 
-
-
-static PyMethodDef nassl_methods[] = {
+static PyMethodDef nassl_methods[] =
+{
     {NULL}  /* Sentinel */
 };
+
+struct module_state
+{
+    PyObject *error;
+};
+
+#if PY_MAJOR_VERSION >= 3
+#define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
+#else
+#define GETSTATE(m) (&_state)
+static struct module_state _state;
+#endif
+
+
+#if PY_MAJOR_VERSION >= 3
+
+static int nassl_traverse(PyObject *m, visitproc visit, void *arg)
+{
+    Py_VISIT(GETSTATE(m)->error);
+    return 0;
+}
+
+static int nassl_clear(PyObject *m)
+{
+    Py_CLEAR(GETSTATE(m)->error);
+    return 0;
+}
+
+
+static struct PyModuleDef moduledef =
+{
+        PyModuleDef_HEAD_INIT,
+        "_nassl",
+        NULL,
+        sizeof(struct module_state),
+        nassl_methods,
+        NULL,
+        nassl_traverse,
+        nassl_clear,
+        NULL
+};
+
+#define INITERROR return NULL
+
+#else
+
+#define INITERROR return
+
+#endif
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
@@ -32,8 +80,14 @@ static PyMethodDef nassl_methods[] = {
 
 
 
-PyMODINIT_FUNC init_nassl(void) {
-    PyObject* m;
+#if PY_MAJOR_VERSION >= 3
+PyMODINIT_FUNC PyInit__nassl(void)
+#else
+PyMODINIT_FUNC init_nassl(void)
+#endif
+{
+    PyObject* module;
+    struct module_state *state;
 
     // Initialize OpenSSL
     SSL_library_init();
@@ -42,26 +96,39 @@ PyMODINIT_FUNC init_nassl(void) {
     // Check OpenSSL PRNG
     if(RAND_status() != 1) {
         PyErr_SetString(PyExc_EnvironmentError, "OpenSSL PRNG not seeded with enough data");
-        return;
+        INITERROR;
     }
-
 
     // Initalize the module
-    m = Py_InitModule3("_nassl", nassl_methods, "Nassl internal module.");
-
-    module_add_errors(m);
-    module_add_SSL_CTX(m);
-    module_add_SSL(m);
-    module_add_BIO(m);
-    module_add_X509(m);
-    module_add_X509_EXTENSION(m);
-    module_add_X509_NAME_ENTRY(m);
-    module_add_SSL_SESSION(m);
-    module_add_OCSP_RESPONSE(m);
-
-    if (PyErr_Occurred())
+#if PY_MAJOR_VERSION >= 3
+    module = PyModule_Create(&moduledef);
+#else
+    module = Py_InitModule3("_nassl", nassl_methods, "Nassl internal module.");
+#endif
+    if (module == NULL)
     {
-        PyErr_SetString(PyExc_ImportError, "_nassl init failed");
+        INITERROR;
     }
 
+    module_add_errors(module);
+    module_add_SSL_CTX(module);
+    module_add_SSL(module);
+    module_add_BIO(module);
+    module_add_X509(module);
+    module_add_X509_EXTENSION(module);
+    module_add_X509_NAME_ENTRY(module);
+    module_add_SSL_SESSION(module);
+    module_add_OCSP_RESPONSE(module);
+
+    state = GETSTATE(module);
+    state->error = PyErr_NewException("_nassl.Error", NULL, NULL);
+    if (state->error == NULL)
+    {
+        Py_DECREF(module);
+        INITERROR;
+    }
+
+#if PY_MAJOR_VERSION >= 3
+    return module;
+#endif
 }

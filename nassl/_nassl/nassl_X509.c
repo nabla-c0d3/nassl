@@ -60,7 +60,7 @@ static void nassl_X509_dealloc(nassl_X509_Object *self)
   		X509_free(self->x509);
   		self->x509 = NULL;
   	}
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -113,7 +113,7 @@ static PyObject* nassl_X509_digest(nassl_X509_Object *self, PyObject *args)
     if (X509_digest(self->x509, EVP_sha1(), readBuffer, &digestLen) == 1)
     {
         // Read OK
-        res = PyString_FromStringAndSize((char *)readBuffer, digestLen);
+        res = PyBytes_FromStringAndSize((char *)readBuffer, digestLen);
     }
     else
     {
@@ -247,7 +247,7 @@ static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject
     }
 
     errorString = X509_verify_cert_error_string(verifyError);
-    return PyString_FromString(errorString);
+    return PyUnicode_FromString(errorString);
 }
 
 static PyObject* nassl_X509_get_spki_bytes(nassl_X509_Object *self, PyObject *args)
@@ -280,7 +280,7 @@ static PyObject* nassl_X509_get_spki_bytes(nassl_X509_Object *self, PyObject *ar
     }
     else
     {
-        spkiBytes = PyString_FromStringAndSize((char *)spkiBufferStart, spkiLen);
+        spkiBytes = PyBytes_FromStringAndSize((char *)spkiBufferStart, spkiLen);
     }
     PyMem_Free(spkiBufferStart);
     return spkiBytes;

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 import socket
 
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
@@ -8,8 +11,8 @@ from typing import List
 from typing import Optional
 from typing import Text
 from typing import Tuple
-from x509_certificate import X509Certificate
-from ocsp_response import OcspResponse
+from nassl.x509_certificate import X509Certificate
+from nassl.ocsp_response import OcspResponse
 
 
 class OpenSslVerifyEnum(Enum):
@@ -72,7 +75,7 @@ class SslClient(object):
             client_certchain_file=None,                     # type: Optional[Text]
             client_key_file=None,                           # type: Optional[Text]
             client_key_type=OpenSslFileTypeEnum.PEM,        # type: OpenSslFileTypeEnum
-            client_key_password=u'',                        # type: Text
+            client_key_password='',                        # type: Text
             ignore_client_authentication_requests=False     # type: bool
     ):
         # type: (...) -> None
@@ -97,7 +100,7 @@ class SslClient(object):
 
         if ignore_client_authentication_requests:
             if client_certchain_file:
-                raise ValueError(u'Cannot enable both client_certchain_file and ignore_client_authentication_requests')
+                raise ValueError('Cannot enable both client_certchain_file and ignore_client_authentication_requests')
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
@@ -108,7 +111,7 @@ class SslClient(object):
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
         if ssl_version != OpenSslVersionEnum.SSLV2: # This makes SSLv2 fail
-            self._ssl.set_cipher_list(u'HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
+            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
         else:
             # Handshake workaround for SSL2 + IIS 7
             self.do_handshake = self.do_ssl2_iis_handshake
@@ -126,7 +129,7 @@ class SslClient(object):
         # type: () -> None
         if self._sock is None:
             # TODO: Auto create a socket ?
-            raise IOError(u'Internal socket set to None; cannot perform handshake.')
+            raise IOError('Internal socket set to None; cannot perform handshake.')
 
         while True:
             try:
@@ -143,7 +146,7 @@ class SslClient(object):
                 # Recover the peer's encrypted response
                 handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
-                    raise IOError(u'Nassl SSL handshake failed: peer did not send data back.')
+                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 
@@ -156,7 +159,7 @@ class SslClient(object):
         # type: () -> None
         if self._sock is None:
             # TODO: Auto create a socket ?
-            raise IOError(u'Internal socket set to None; cannot perform handshake.')
+            raise IOError('Internal socket set to None; cannot perform handshake.')
 
         while True:
             try:
@@ -193,7 +196,7 @@ class SslClient(object):
                             handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                             # print repr(handshake_data_in)
                             if len(handshake_data_in) == 0:
-                                raise IOError(u'Nassl SSL handshake failed: peer did not send data back.')
+                                raise IOError('Nassl SSL handshake failed: peer did not send data back.')
                             # Pass the data to the SSL engine
                             self._network_bio.write(handshake_data_in)
                             handshake_data_out = data_packet
@@ -204,7 +207,7 @@ class SslClient(object):
 
                 handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
-                    raise IOError(u'Nassl SSL handshake failed: peer did not send data back.')
+                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 
@@ -217,14 +220,14 @@ class SslClient(object):
     def read(self, size):
         # type: (int) -> bytes
         if not self._is_handshake_completed:
-            raise IOError(u'SSL Handshake was not completed; cannot receive data.')
+            raise IOError('SSL Handshake was not completed; cannot receive data.')
 
         while True:
             # Receive available encrypted data from the peer
             encrypted_data = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
 
             if len(encrypted_data) == 0:
-                raise IOError(u'Could not read() - peer closed the connection.')
+                raise IOError('Could not read() - peer closed the connection.')
 
             # Pass it to the SSL engine
             self._network_bio.write(encrypted_data)
@@ -245,7 +248,7 @@ class SslClient(object):
         """Returns the number of (encrypted) bytes sent.
         """
         if not self._is_handshake_completed:
-            raise IOError(u'SSL Handshake was not completed; cannot send data.')
+            raise IOError('SSL Handshake was not completed; cannot send data.')
 
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
@@ -346,8 +349,8 @@ class SslClient(object):
         try:
             self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type.value)
         except OpenSSLError as e:
-            if u'bad password read' in str(e) or u'bad decrypt' in str(e):
-                raise ValueError(u'Invalid Private Key')
+            if 'bad password read' in str(e) or 'bad decrypt' in str(e):
+                raise ValueError('Invalid Private Key')
             else:
                 raise
 

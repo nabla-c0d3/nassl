@@ -42,10 +42,12 @@ static void nassl_BIO_dealloc(nassl_BIO_Object *self)
 {
     if (self->bio != NULL)
     {
-        BIO_free(self->bio);
+        // This might be a small memory leak, but the BIOs should implicitly freed by SSL_free() called from
+        // nassl_SSL_dealloc(); enabling BIO_free here leads to a double free crash
+        //BIO_free(self->bio);
         self->bio = NULL;
     }
-    self->ob_type->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject*)self);
 }
 
 
@@ -80,7 +82,7 @@ static PyObject* nassl_BIO_read(nassl_BIO_Object *self, PyObject *args)
 
     if (BIO_read(self->bio, readBuffer, readSize) > 0)
     {
-        res = PyString_FromStringAndSize(readBuffer, readSize);
+        res = PyBytes_FromStringAndSize(readBuffer, readSize);
     }
     else
     {
@@ -106,7 +108,7 @@ static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args)
     unsigned int writeSize;
     int returnValue;
     char *writeBuffer;
-    if (!PyArg_ParseTuple(args, "t#", &writeBuffer, &writeSize))
+    if (!PyArg_ParseTuple(args, "s#", &writeBuffer, &writeSize))
     {
         return NULL;
     }

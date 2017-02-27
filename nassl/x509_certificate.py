@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import hashlib
 from binascii import hexlify
@@ -6,6 +8,7 @@ import re
 from nassl._nassl import X509
 
 from enum import Enum
+from typing import Any
 from typing import Dict
 from typing import Text
 
@@ -66,22 +69,22 @@ class X509Certificate(object):
 
 
     def as_dict(self):
-        # type: () -> Dict
+        # type: () -> Dict[Any]
         if self._cert_dict:
             return self._cert_dict
 
-        cert_dict = {u'version': self._x509.get_version(),
-                     u'serialNumber': self._x509.get_serialNumber(),
-                     u'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()),
-                     u'validity': {
-                         u'notBefore': self._x509.get_notBefore(),
-                         u'notAfter': self._x509.get_notAfter()
+        cert_dict = {'version': self._x509.get_version(),
+                     'serialNumber': self._x509.get_serialNumber(),
+                     'issuer': self._parse_x509_name(self._x509.get_issuer_name_entries()),
+                     'validity': {
+                         'notBefore': self._x509.get_notBefore(),
+                         'notAfter': self._x509.get_notAfter()
                      },
-                     u'subject': self._parse_x509_name(self._x509.get_subject_name_entries()),
-                     u'subjectPublicKeyInfo': self._parse_pubkey(),
-                     u'extensions': self._parse_x509_extensions(),
-                     u'signatureAlgorithm': self._parse_signature_algorithm(),
-                     u'signatureValue': self._parse_signature()}
+                     'subject': self._parse_x509_name(self._x509.get_subject_name_entries()),
+                     'subjectPublicKeyInfo': self._parse_pubkey(),
+                     'extensions': self._parse_x509_extensions(),
+                     'signatureAlgorithm': self._parse_signature_algorithm(),
+                     'signatureValue': self._parse_signature()}
         self._cert_dict = cert_dict
         return cert_dict
 
@@ -97,7 +100,7 @@ class X509Certificate(object):
 
         # First look at Subject Alternative Names
         try:
-            subject_alt_names = cert_dict[u'extensions'][u'X509v3 Subject Alternative Name'][u'DNS']
+            subject_alt_names = cert_dict['extensions']['X509v3 Subject Alternative Name']['DNS']
             for altname in subject_alt_names:
                 if self._dnsname_match(altname, hostname):
                     return HostnameValidationResultEnum.NAME_MATCHES_SAN
@@ -107,12 +110,12 @@ class X509Certificate(object):
             pass
 
         try:
-            common_name = cert_dict[u'subject'][u'commonName']
+            common_name = cert_dict['subject']['commonName']
             if self._dnsname_match(common_name, hostname):
                 return HostnameValidationResultEnum.NAME_MATCHES_CN
         except KeyError: # No CN either ? This certificate is malformed
-            raise X509HostnameValidationError(u'Certificate has no subjectAltName and no Common Name; '
-                                              u'malformed certificate ?')
+            raise X509HostnameValidationError('Certificate has no subjectAltName and no Common Name; '
+                                              'malformed certificate ?')
 
         return HostnameValidationResultEnum.NAME_DOES_NOT_MATCH
 
@@ -142,7 +145,7 @@ class X509Certificate(object):
             # than one wildcard per fragment.  A survey of established
             # policy among SSL implementations showed it to be a
             # reasonable choice.
-            raise X509HostnameValidationError(u'too many wildcards in certificate DNS name: {}'.format(repr(dn)))
+            raise X509HostnameValidationError('too many wildcards in certificate DNS name: {}'.format(repr(dn)))
 
         # speed up common case w/o wildcards
         if not wildcards:
@@ -209,17 +212,17 @@ class X509Certificate(object):
 
     def _parse_pubkey(self):
         algo = self._parse_pubkey_algorithm()
-        if algo in [u'id-ecPublicKey', u'id-ecDH', u'id-ecMQV']:
-            paramDict = {u'pub': self._parse_ec_pubkey(),
-                         u'curve': self._parse_ec_pubkey_curve() }
+        if algo in ['id-ecPublicKey', 'id-ecDH', 'id-ecMQV']:
+            paramDict = {'pub': self._parse_ec_pubkey(),
+                         'curve': self._parse_ec_pubkey_curve() }
         else: # RSA, DSA
-            paramDict = {u'modulus': self._parse_pubkey_modulus(),
-                         u'exponent': self._parse_pubkey_exponent() }
+            paramDict = {'modulus': self._parse_pubkey_modulus(),
+                         'exponent': self._parse_pubkey_exponent() }
 
         pubkeyDict = {
-            u'publicKeyAlgorithm': algo ,
-            u'publicKeySize': str( self._parse_pubkey_size()) ,
-            u'publicKey': paramDict }
+            'publicKeyAlgorithm': algo ,
+            'publicKeySize': str( self._parse_pubkey_size()) ,
+            'publicKey': paramDict }
         return pubkeyDict
 
 
@@ -266,14 +269,14 @@ class X509Certificate(object):
 # Extension Parsing Functions
     def _parse_x509_extensions(self):
         x509_ext_parsing_methods = {
-            u'X509v3 Subject Alternative Name': self._parse_san,
-            u'X509v3 CRL Distribution Points': self._parse_crl_distribution_points,
-            u'Authority Information Access': self._parse_authority_information_access,
-            u'X509v3 Key Usage': self._parse_multi_valued_extension,
-            u'X509v3 Extended Key Usage': self._parse_multi_valued_extension,
-            u'X509v3 Certificate Policies': self._parse_crl_distribution_points,
-            u'X509v3 Issuer Alternative Name': self._parse_crl_distribution_points,
-            u'X509v3 Basic Constraints': self._parse_multi_valued_extension
+            'X509v3 Subject Alternative Name': self._parse_san,
+            'X509v3 CRL Distribution Points': self._parse_crl_distribution_points,
+            'Authority Information Access': self._parse_authority_information_access,
+            'X509v3 Key Usage': self._parse_multi_valued_extension,
+            'X509v3 Extended Key Usage': self._parse_multi_valued_extension,
+            'X509v3 Certificate Policies': self._parse_crl_distribution_points,
+            'X509v3 Issuer Alternative Name': self._parse_crl_distribution_points,
+            'X509v3 Basic Constraints': self._parse_multi_valued_extension
         }
 
         ext_dict = {}
@@ -306,7 +309,7 @@ class X509Certificate(object):
             if len(value) == 1:
                 parsed_ext[value[0]] = ''
             else:
-                if parsed_ext.has_key(value[0]):
+                if value[0] in parsed_ext:
                     parsed_ext[value[0]].append(value[1])
                 else:
                     parsed_ext[value[0]] = [value[1]]
@@ -324,11 +327,11 @@ class X509Certificate(object):
             auth_entry = auth_entry.split(' - ')
             entry_name = auth_entry[0].replace(' ', '')
 
-            if not auth_ext_list.has_key(entry_name):
+            if entry_name not in auth_ext_list:
                 auth_ext_list[entry_name] = {}
 
             entry_data = auth_entry[1].split(':', 1)
-            if auth_ext_list[entry_name].has_key(entry_data[0]):
+            if entry_data[0] in auth_ext_list[entry_name]:
                 auth_ext_list[entry_name][entry_data[0]].append(entry_data[1])
             else:
                 auth_ext_list[entry_name] = {entry_data[0]: [entry_data[1]]}
@@ -346,7 +349,7 @@ class X509Certificate(object):
             distrib_point = distrib_point.strip()
             distrib_point = distrib_point.split(':', 1)
             if len(distrib_point) >= 2:
-                if subcrl.has_key(distrib_point[0].strip()):
+                if distrib_point[0].strip() in subcrl:
                     subcrl[distrib_point[0].strip()].append(distrib_point[1].strip())
                 else:
                     subcrl[distrib_point[0].strip()] = [(distrib_point[1].strip())]
