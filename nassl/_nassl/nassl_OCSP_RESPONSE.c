@@ -10,6 +10,7 @@
 #include <openssl/x509.h>
 #include <openssl/ocsp.h>
 
+#include "python_utils.h"
 #include "nassl_errors.h"
 #include "nassl_OCSP_RESPONSE.h"
 
@@ -79,9 +80,8 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
     X509_STORE *trustedCAs = NULL;
     int certNum = 0, verifyRes = 0, i = 0;
     OCSP_BASICRESP *basicResp = NULL;
-
-    char *caFile = NULL;
-    if (!PyArg_ParseTuple(args, "s", &caFile))
+    char *caFilePath = NULL;
+    if (PyArg_ParseFilePath(args, &caFilePath) == NULL)
     {
         return NULL;
     }
@@ -93,7 +93,7 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
         return raise_OpenSSL_error();
     }
 
-    X509_STORE_load_locations(trustedCAs, caFile, NULL);
+    X509_STORE_load_locations(trustedCAs, caFilePath, NULL);
 
     // Verify the OCSP response
     basicResp = OCSP_response_get1_basic(self->ocspResp);
