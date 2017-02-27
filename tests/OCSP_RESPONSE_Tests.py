@@ -18,7 +18,7 @@ class OCSP_RESPONSE_Tests(unittest.TestCase):
 
 class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
 
-    def setUp(self):
+    def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(('login.live.com', 443))
@@ -26,15 +26,12 @@ class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
         ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
-        self.ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()._ocsp_response
+        ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()._ocsp_response
 
+        # Test as_text()
+        self.assertIsNotNone(ocsp_response.as_text())
 
-    def test_as_text(self):
-        self.assertIsNotNone(self.ocsp_response.as_text())
-
-
-    def test_basic_verify_bad(self):
-        # Wrong certificate
+        # Test verify with a wrong certificate
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
         test_file.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
@@ -56,7 +53,7 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----""")
         test_file.close()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', self.ocsp_response.basic_verify,
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', ocsp_response.basic_verify,
                                 test_file.name)
 
 
