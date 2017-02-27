@@ -53,8 +53,7 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
     memBio = BIO_new(BIO_s_mem());
     if (memBio == NULL)
     {
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
 
     OCSP_RESPONSE_print(memBio, self->ocspResp, 0);
@@ -112,10 +111,8 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
     OCSP_BASICRESP_free(basicResp);
     if (verifyRes <= 0)
     {
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
-
     Py_RETURN_NONE;
 }
 

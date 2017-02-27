@@ -60,8 +60,7 @@ static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self
     BIO *memBio = BIO_new(BIO_s_mem());
     if (memBio == NULL)
     {
-        raise_OpenSSL_error();
-        return NULL;
+        return raise_OpenSSL_error();
     }
 
     X509V3_EXT_print(memBio, self->x509ext, X509V3_EXT_ERROR_UNKNOWN, 0);
@@ -140,8 +139,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                     if (bio == NULL)
                     {
                         sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                        raise_OpenSSL_error();
-                        return NULL;
+                        return raise_OpenSSL_error();
                     }
 
                     X509_NAME_print_ex(bio, gen->d.dirn, 0, XN_FLAG_ONELINE);
@@ -165,8 +163,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                         if (bio == NULL)
                         {
                             sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                            raise_OpenSSL_error();
-                            return NULL;
+                            return raise_OpenSSL_error();
                         }
 
                         for (j=0; j<8; j++)
@@ -191,8 +188,7 @@ static PyObject* nassl_X509_EXTENSION_parse_subject_alt_name(nassl_X509_EXTENSIO
                     if (bio == NULL)
                     {
                         sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
-                        raise_OpenSSL_error();
-                        return NULL;
+                        return raise_OpenSSL_error();
                     }
                     i2a_ASN1_OBJECT(bio, gen->d.rid);
                     nameDataPyStr = bioToPyString(bio);
