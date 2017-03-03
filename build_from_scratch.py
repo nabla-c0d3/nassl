@@ -27,7 +27,7 @@ OPENSSL_CONF_CMD = (
 
 
 def perform_build_task(title, commands_dict, cwd=None):
-    print '===BUILDING {0}==='.format(title)
+    print ('===BUILDING {0}==='.format(title))
     for command in commands_dict:
         subprocess.check_call(command, shell=True, cwd=cwd)
 
@@ -151,7 +151,7 @@ def main():
     perform_build_task('NASSL Tests', NASSL_TEST_TASKS)
 
 
-    print '=== All Done! ==='
+    print ('=== All Done! ===')
 
 
 if __name__ == "__main__":
