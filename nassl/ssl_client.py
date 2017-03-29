@@ -11,7 +11,6 @@ from typing import List
 from typing import Optional
 from typing import Text
 from typing import Tuple
-from nassl.x509_certificate import X509Certificate
 from nassl.ocsp_response import OcspResponse
 
 
@@ -62,6 +61,9 @@ class ClientCertificateRequested(IOError):
 
 class SslClient(object):
     """High level API implementing an SSL client.
+    
+    Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the
+    server's certificate, available via get_peer_certificate().
     """
 
     _DEFAULT_BUFFER_SIZE = 4096
@@ -124,7 +126,6 @@ class SslClient(object):
         BIO.make_bio_pair(self._internal_bio, self._network_bio)
         self._ssl.set_bio(self._internal_bio)
 
-
     def do_handshake(self):
         # type: () -> None
         if self._sock is None:
@@ -153,8 +154,8 @@ class SslClient(object):
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
-                
 
+    # TODO(AD): Allow the handshake method to be overridden instead of this
     def do_ssl2_iis_handshake(self):
         # type: () -> None
         if self._sock is None:
@@ -215,8 +216,6 @@ class SslClient(object):
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
-
-
     def read(self, size):
         # type: (int) -> bytes
         if not self._is_handshake_completed:
@@ -241,7 +240,6 @@ class SslClient(object):
                 # The SSL engine needs more data
                 # before it can decrypt the whole message
                 pass
-
 
     def write(self, data):
         # type: (bytes) -> int
@@ -271,7 +269,6 @@ class SslClient(object):
 
         return final_length
 
-
     def shutdown(self):
         # type: () -> None
         self._is_handshake_completed = False
@@ -283,55 +280,38 @@ class SslClient(object):
             if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
                 raise
 
-
     def set_tlsext_host_name(self, name_indication):
         # type: (Text) -> None
         """Set the hostname within the Server Name Indication extension in the client SSL Hello.
         """
         self._ssl.set_tlsext_host_name(name_indication)
 
-
     def get_peer_certificate(self):
-        # type: () -> Optional[X509Certificate]
-        _x509 = self._ssl.get_peer_certificate()
-        if _x509:
-            return X509Certificate(_x509)
-        else:
-            return None
-
+        # type: () -> Optional[X509]
+        return self._ssl.get_peer_certificate()
 
     def get_peer_cert_chain(self):
-        # type: () -> List[X509Certificate]
+        # type: () -> List[X509]
         """See the OpenSSL documentation for differences between get_peer_cert_chain() and get_peer_certificate().
         https://www.openssl.org/docs/ssl/SSL_get_peer_cert_chain.html
         """
-        x509_list = self._ssl.get_peer_cert_chain()
-        final_list = []
-        if x509_list:
-            for x509_cert in x509_list:
-                final_list.append(X509Certificate(x509_cert))
-        return final_list
-
+        return self._ssl.get_peer_cert_chain()
 
     def set_cipher_list(self, cipher_list):
         # type: (Text) -> None
         self._ssl.set_cipher_list(cipher_list)
 
-
     def get_cipher_list(self):
         # type: () -> List[Text]
         return self._ssl.get_cipher_list()
-
 
     def get_current_cipher_name(self):
         # type: () -> Text
         return self._ssl.get_cipher_name()
 
-
     def get_current_cipher_bits(self):
         # type: () -> int
         return self._ssl.get_cipher_bits()
-
 
     def _use_private_key(self, client_certchain_file, client_key_file, client_key_type, client_key_password):
         # type: (Text, Text, OpenSslFileTypeEnum, Text) -> None
@@ -356,13 +336,11 @@ class SslClient(object):
 
         self._ssl_ctx.check_private_key()
 
-
     def get_certificate_chain_verify_result(self):
         # type: () -> Tuple[int, Text]
         verify_result = self._ssl.get_verify_result()
         verify_result_str = X509.verify_cert_error_string(verify_result)
         return verify_result, verify_result_str
-
 
     _TLSEXT_STATUSTYPE_ocsp = 1
 
@@ -371,7 +349,6 @@ class SslClient(object):
         """Enable the OCSP Stapling extension.
         """
         self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
-
 
     def get_tlsext_status_ocsp_resp(self):
         # type: () -> Optional[OcspResponse]
@@ -382,7 +359,6 @@ class SslClient(object):
             return OcspResponse(ocsp_response)
         else:
             return None
-
 
     def get_client_CA_list(self):
         # type: () -> List[Text]

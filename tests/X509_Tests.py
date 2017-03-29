@@ -7,7 +7,6 @@ import unittest
 import socket
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 from nassl import _nassl
-from nassl.x509_certificate import X509Certificate
 
 
 class X509_Tests(unittest.TestCase):
@@ -33,7 +32,7 @@ hm4qxFYxldBniYUr+WymXUadDKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveC
 X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 -----END CERTIFICATE-----"""
 
-        self.cert = X509Certificate.from_pem(pem_cert)._x509
+        self.cert = _nassl.X509(pem_cert)
 
     def test_from_pem(self):
         self.assertIsNotNone(self.cert.as_text())
@@ -41,35 +40,28 @@ X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
     def test_from_pem_bad(self):
         pem_cert = '123123'
         with self.assertRaises(ValueError):
-            cert = X509Certificate.from_pem(pem_cert)
+            cert = _nassl.X509(pem_cert)
 
     def test_get_version(self):
         self.assertIsNotNone(self.cert.get_version())
 
-
     def test_get_notBefore(self):
         self.assertIsNotNone(self.cert.get_notBefore())
-
 
     def test_get_notAfter(self):
         self.assertIsNotNone(self.cert.get_notAfter())
 
-
     def test_digest(self):
         self.assertIsNotNone(self.cert.digest())
-
 
     def test_as_pem(self):
         self.assertIsNotNone(self.cert.as_pem())
 
-
     def test_get_extensions(self):
         self.assertIsNotNone(self.cert.get_extensions())
 
-
     def test_get_issuer_name_entries(self):
         self.assertIsNotNone(self.cert.get_issuer_name_entries())
-
 
     def test_get_subject_name_entries(self):
         self.assertIsNotNone(self.cert.get_subject_name_entries())
@@ -80,21 +72,19 @@ X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 
 class X509_Tests_Online(unittest.TestCase):
 
-    def setUp(self):
+    def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
         ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
-        self.cert = ssl_client.get_peer_certificate()._x509
+        cert = ssl_client.get_peer_certificate()
 
-    def test_as_text(self):
-        self.assertIsNotNone(self.cert.as_text())
+        self.assertIsNotNone(cert.as_text())
 
     def test_verify_cert_error_string(self):
         self.assertEqual('error number 1', _nassl.X509.verify_cert_error_string(1))
-
 
 
 def main():
