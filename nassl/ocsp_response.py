@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from typing import Tuple
 from nassl import _nassl
 from typing import Dict
 from typing import Text
+
 
 class OcspResponseNotTrustedError(IOError):
 
@@ -21,11 +24,9 @@ class OcspResponse(object):
         self._ocsp_response = ocsp_response
         self._ocsp_response_dict = None
 
-
     def as_text(self):
         # type: () -> Text
         return self._ocsp_response.as_text()
-
 
     def verify(self, verify_locations):
         # type: (Text) -> None
@@ -55,89 +56,90 @@ class OcspResponse(object):
             return self._ocsp_response_dict
 
         # For now we just parse OpenSSL's text output and make a lot of assumptions
+        response_text = self.as_text()
         response_dict = {
-            'responseStatus': self._get_value_from_text_output_no_p('OCSP Response Status:'),
-            'version' : self._get_value_from_text_output_no_p('Version:'),
-            'responseType': self._get_value_from_text_output('Response Type:'),
-            'responderID': self._get_value_from_text_output('Responder Id:'),
-            'producedAt': self._get_value_from_text_output('Produced At:'),
-            'ctResponseScts': self._get_scts_from_text_output()
+            'responseStatus': self._get_value_from_text_output_no_p('OCSP Response Status:', response_text),
+            'version' : self._get_value_from_text_output_no_p('Version:', response_text),
+            'responseType': self._get_value_from_text_output('Response Type:', response_text),
+            'responderID': self._get_value_from_text_output('Responder Id:', response_text),
+            'producedAt': self._get_value_from_text_output('Produced At:', response_text),
             }
         if 'successful' not in response_dict['responseStatus']:
             return response_dict
 
+        # TODO(ad): This will not work correctly if there are multiple responses as it assumes just one
         response_dict['responses'] = [
             {
                 'certID': {
-                    'hashAlgorithm': self._get_value_from_text_output('Hash Algorithm:'),
-                    'issuerNameHash': self._get_value_from_text_output('Issuer Name Hash:'),
-                    'issuerKeyHash': self._get_value_from_text_output('Issuer Key Hash:'),
-                    'serialNumber': self._get_value_from_text_output('Serial Number:')
+                    'hashAlgorithm': self._get_value_from_text_output('Hash Algorithm:', response_text),
+                    'issuerNameHash': self._get_value_from_text_output('Issuer Name Hash:', response_text),
+                    'issuerKeyHash': self._get_value_from_text_output('Issuer Key Hash:', response_text),
+                    'serialNumber': self._get_value_from_text_output('Serial Number:', response_text)
                 },
-                'certStatus': self._get_value_from_text_output('Cert Status:'),
-                'thisUpdate': self._get_value_from_text_output('This Update:'),
-                'nextUpdate': self._get_value_from_text_output('Next Update:')
+                'certStatus': self._get_value_from_text_output('Cert Status:', response_text),
+                'thisUpdate': self._get_value_from_text_output('This Update:', response_text),
+                'nextUpdate': self._get_value_from_text_output('Next Update:', response_text),
             }
         ]
+        if self._get_scts_from_text_output(response_text):
+            # SCT extension present
+            response_dict['responses'][0]['singleExtensions'] = {'ctCertificateScts':
+                                                                     self._get_scts_from_text_output(response_text)}
+
         self._ocsp_response_dict = response_dict
         return response_dict
 
-
 # Text parsing
-    def _get_value_from_text_output(self, key):
-        # type: (Text) -> Text
-        value = self._ocsp_response.as_text().split(key)
+    @staticmethod
+    def _get_value_from_text_output(key, text_output):
+        # type: (Text, Text) -> Text
+        value = text_output.split(key)
         return value[1].split('\n')[0].strip()
 
-
-    def _get_value_from_text_output_no_p(self, key):
-        # type: (Text) -> Text
-        value = self._ocsp_response.as_text().split(key)
+    @staticmethod
+    def _get_value_from_text_output_no_p( key, text_output):
+        # type: (Text, Text) -> Text
+        value = text_output.split(key)
         value = value[1].split('\n')[0].strip()
         return value.split('(')[0].strip()
 
-    '''
-    SCTs fields are represented as multitline fields inside the OCSP response 
-    There may be a better way for parsing this, but for the moment this works.
-    One can test it by pointing the sample client to e.g. sslanalyzer.comodoca.com
-    '''
-    def _get_scts_from_text_output(self):
-        value = self._ocsp_response.as_text().split('CT Certificate SCTs:')
-        scts = [] # list of all Signed Certificate Timestamps found
-        current_field = ''
-        sct = {} # a single SCT
-        if len(value) >1:
-            value=value[1].split('Signature Algorithm:')
-            for line in value[0].split('\n'):
-                line = line.strip()
-                if 'Signed Certificate Timestamp:' in line:
-                    if sct:
-                        scts.append(sct)
-                        sct = {}
-                        current_field = ''
-                else:
-                    if 'Version' in line:
-                        current_field = ''
-                        sct['version']=line[12:]
-                    elif 'Log ID' in line:
-                        current_field = 'logId'
-                        sct[current_field]=line[12:]
-                    elif 'Timestamp' in line:
-                        current_field = ''
-                        sct['timestamp'] = line[12:]
-                    elif 'Extensions' in line:
-                        current_field = ''
-                        sct['extensions'] = line[12:]
-                    elif 'Signature' in line:
-                        current_field = 'signature'
-                        sct[current_field] = line[12:]+u' '
-                    elif current_field:
-                        sct[current_field] = sct[current_field]+line
-                    else:
-                        #no known field
-                        continue
+    @staticmethod
+    def _parse_sct_text_line(text_output):
+        # type: (Text, Text) -> Tuple[Text, Text]
+        text_output_split = text_output.split(':', maxsplit=1)
+        key = text_output_split[0].strip()
+        value = text_output_split[1].strip()
+        if value == 'none':
+            value = None
+        return key, value
 
-        else: 
+    @classmethod
+    def _parse_single_sct(cls, sct_text_output):
+        parsed_sct = {}
+        for line in sct_text_output.split('\n'):
+            # One-line fields
+            if any(key in line for key in ['Version', 'Extensions', 'Timestamp']):
+                key, value = cls._parse_sct_text_line(line)
+                parsed_sct[key] = value
+
+            elif 'Log ID' in line:
+                log_id_text = sct_text_output.split('Log ID    :')[1].split('Timestamp')[0]
+                final_log_id = ''
+                for line in log_id_text:
+                    final_log_id += line.strip(' ').replace('\n', '')
+                parsed_sct['logId'] = final_log_id
+
+        return parsed_sct
+
+    @classmethod
+    def _get_scts_from_text_output(cls, response_text):
+        scts_text_list = response_text.split('Signed Certificate Timestamp')
+        if len(scts_text_list) < 1:
             return None
-        scts.append(sct)
-        return scts
+
+        scts_text_list = scts_text_list[1::]
+        parsed_scts = []
+        for sct_text in scts_text_list:
+            parsed_scts.append(cls._parse_single_sct(sct_text))
+        return parsed_scts
+

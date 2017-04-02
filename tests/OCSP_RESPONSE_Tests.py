@@ -55,7 +55,20 @@ Pd2eQ9+DkopOz3UGU7c=
         test_file.close()
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', ocsp_response.basic_verify,
                                 test_file.name)
+        # No SCT extension
+        self.assertFalse('singleExtensions' in ocsp_response.as_dict()['responses'][0].keys())
 
+    def test_sct_parsing(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(('sslanalyzer.comodoca.com', 443))
+
+        ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client.set_tlsext_status_ocsp()
+        ssl_client.do_handshake()
+        ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
+
+        self.assertIsNotNone(ocsp_response.as_dict()['responses'][0]['singleExtensions']['ctCertificateScts'])
 
 def main():
     unittest.main()
