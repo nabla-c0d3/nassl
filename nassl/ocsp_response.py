@@ -107,7 +107,7 @@ class OcspResponse(object):
     @staticmethod
     def _parse_sct_text_line(text_output):
         # type: (Text, Text) -> Tuple[Text, Text]
-        text_output_split = text_output.split(':', maxsplit=1)
+        text_output_split = text_output.split(':', 1)
         key = text_output_split[0].strip()
         value = text_output_split[1].strip()
         if value == 'none':
