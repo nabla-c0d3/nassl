@@ -78,7 +78,7 @@ NASSL_SETUP = {
     'package_dir': {'nassl': 'nassl'},
     'py_modules': ['nassl.__init__', 'nassl.ssl_client', 'nassl.debug_ssl_client', 'nassl.x509_certificate',
                    'nassl.ocsp_response'],
-    'description': 'Experimental OpenSSL wrapper for Python and SSLyze.',
+    'description': 'Experimental OpenSSL wrapper for Python 2.7 / 3.3+ and SSLyze.',
     'extras_require': {':python_version < "3.4"': ['enum34'],
                        ':python_version < "3.5"': ['typing']},
     'author': __author__,
