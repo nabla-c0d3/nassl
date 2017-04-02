@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from typing import Tuple
+from typing import Any
 from nassl import _nassl
 from typing import Dict
 from typing import Text
@@ -45,13 +46,13 @@ class OcspResponse(object):
         try:
             self._ocsp_response.basic_verify(verify_locations)
         except _nassl.OpenSSLError as e:
-            if 'certificate verify error' in e[0]:
+            if 'certificate verify error' in str(e):
                 raise OcspResponseNotTrustedError(verify_locations)
             raise
 
 
     def as_dict(self):
-        # type: () -> Dict[Text, Text]
+        # type: () -> Dict[Text, Any]
         if self._ocsp_response_dict:
             return self._ocsp_response_dict
 

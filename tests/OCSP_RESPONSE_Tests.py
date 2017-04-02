@@ -4,9 +4,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import unittest
+
 from nassl import _nassl
 import socket
 import tempfile
+
+from nassl.ocsp_response import OcspResponseNotTrustedError
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
@@ -26,7 +29,7 @@ class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
         ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
-        ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()._ocsp_response
+        ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
 
         # Test as_text()
         self.assertIsNotNone(ocsp_response.as_text())
@@ -53,8 +56,8 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----""")
         test_file.close()
-        self.assertRaisesRegexp(_nassl.OpenSSLError, 'certificate verify error', ocsp_response.basic_verify,
-                                test_file.name)
+        self.assertRaises(OcspResponseNotTrustedError, ocsp_response.verify, test_file.name)
+
         # No SCT extension
         self.assertFalse('singleExtensions' in ocsp_response.as_dict()['responses'][0].keys())
 
