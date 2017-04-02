@@ -13,13 +13,13 @@ from nassl.ocsp_response import OcspResponseNotTrustedError
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
-class OCSP_RESPONSE_Tests(unittest.TestCase):
+class OcspResponseTests(unittest.TestCase):
 
     def test_new_bad(self):
         self.assertRaises(NotImplementedError, _nassl.OCSP_RESPONSE, (None))
 
 
-class OCSP_RESPONSE_Tests_Online(unittest.TestCase):
+class OcspResponseOnlineTests(unittest.TestCase):
 
     def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

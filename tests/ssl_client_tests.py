@@ -10,7 +10,7 @@ from nassl.debug_ssl_client import DebugSslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 
 
-class SslClient_Tests_PrivateKey(unittest.TestCase):
+class SslClientPrivateKeyTests(unittest.TestCase):
 
     def setUp(self):
         self.ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
@@ -89,7 +89,7 @@ Pd2eQ9+DkopOz3UGU7c=
             self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, OpenSslFileTypeEnum.PEM, 'bad')
 
 
-class SslClient_Tests_Handshake(unittest.TestCase):
+class SslClientHandshakeTests(unittest.TestCase):
 
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -104,7 +104,7 @@ class SslClient_Tests_Handshake(unittest.TestCase):
         self.ssl_client.do_handshake()
 
 
-class SslClient_Tests_Online(unittest.TestCase):
+class SslClientOnlineTests(unittest.TestCase):
 
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
