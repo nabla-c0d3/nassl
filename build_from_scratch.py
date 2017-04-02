@@ -1,9 +1,11 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python
 """ Base script to successively build Zlib, OpenSSL and nassl from scratch.
 
 It will build the _nassl C extension for the python interpreter/platform that was used to run this script (ie. no
 cross-compiling).
 """
+from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import sys
 import shutil
@@ -97,6 +99,9 @@ def main():
 
         elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_32:
             OPENSSL_TARGET = 'linux-elf'
+
+        else:
+            raise ValueError('Unkown platform')
 
         OPENSSL_BUILD_TASKS = [
             OPENSSL_CONF_CMD(target=OPENSSL_TARGET, install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
