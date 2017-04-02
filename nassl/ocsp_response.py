@@ -5,7 +5,6 @@ from nassl import _nassl
 from typing import Dict
 from typing import Text
 
-
 class OcspResponseNotTrustedError(IOError):
 
     def __init__(self, trust_store_path):
@@ -61,8 +60,9 @@ class OcspResponse(object):
             'version' : self._get_value_from_text_output_no_p('Version:'),
             'responseType': self._get_value_from_text_output('Response Type:'),
             'responderID': self._get_value_from_text_output('Responder Id:'),
-            'producedAt': self._get_value_from_text_output('Produced At:')}
-
+            'producedAt': self._get_value_from_text_output('Produced At:'),
+            'ctResponseScts': self._get_scts_from_text_output()
+            }
         if 'successful' not in response_dict['responseStatus']:
             return response_dict
 
@@ -96,4 +96,48 @@ class OcspResponse(object):
         value = value[1].split('\n')[0].strip()
         return value.split('(')[0].strip()
 
+    '''
+    SCTs fields are represented as multitline fields inside the OCSP response 
+    There may be a better way for parsing this, but for the moment this works.
+    One can test it by pointing the sample client to e.g. sslanalyzer.comodoca.com
+    '''
+    def _get_scts_from_text_output(self):
+        value = self._ocsp_response.as_text().split('CT Certificate SCTs:')
+        scts = [] # list of all Signed Certificate Timestamps found
+        current_field = ''
+        sct = {} # a single SCT
+        if len(value) >1:
+            value=value[1].split('Signature Algorithm:')
+            for line in value[0].split('\n'):
+                line = line.strip()
+                if 'Signed Certificate Timestamp:' in line:
+                    if sct:
+                        scts.append(sct)
+                        sct = {}
+                        current_field = ''
+                else:
+                    if 'Version' in line:
+                        current_field = ''
+                        sct['version']=line[12:]
+                    elif 'Log ID' in line:
+                        current_field = 'logId'
+                        sct[current_field]=line[12:]
+                    elif 'Timestamp' in line:
+                        current_field = ''
+                        sct['timestamp'] = line[12:]
+                    elif 'Extensions' in line:
+                        current_field = ''
+                        sct['extensions'] = line[12:]
+                    elif 'Signature' in line:
+                        current_field = 'signature'
+                        sct[current_field] = line[12:]+u' '
+                    elif current_field:
+                        sct[current_field] = sct[current_field]+line
+                    else:
+                        #no known field
+                        continue
 
+        else: 
+            return None
+        scts.append(sct)
+        return scts
