@@ -430,14 +430,18 @@ static const SSL_CIPHER* nassl_SSL_get_new_cipher(nassl_SSL_Object *self)
 
 static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *args)
 {
-    int returnValue = SSL_get_cipher_bits(self->ssl, NULL);
+    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
+    int returnValue = SSL_CIPHER_get_bits(cipher, NULL);
+
     return Py_BuildValue("I", returnValue);
 }
 
 
 static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *args)
 {
-    const char *cipherName = SSL_get_cipher_name(self->ssl);
+    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
+    const char *cipherName = SSL_CIPHER_get_name(cipher);
+
     return PyUnicode_FromString(cipherName);
 }
 
