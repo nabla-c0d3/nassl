@@ -418,6 +418,16 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
 }
 
 
+static const SSL_CIPHER* nassl_SSL_get_new_cipher(nassl_SSL_Object *self)
+{
+    // TODO: Rewrite this without accessing private members (for example, use get_cipher())
+    if (self->ssl == NULL || self->ssl->s3 == NULL)
+        return NULL;
+
+    return self->ssl->s3->tmp.new_cipher;
+}
+
+
 static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *args)
 {
     int returnValue = SSL_get_cipher_bits(self->ssl, NULL);
@@ -631,15 +641,15 @@ static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self)
 {
     DH *dh_srvr;
     SSL_SESSION* session;
+    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
     long alg_k;
 
-    // TODO: Rewrite this without accessing private members (for example, use get_cipher())
-    if ((self->ssl == NULL) || (self->ssl->s3 == NULL) || (self->ssl->s3->tmp.new_cipher == NULL))
+    if (cipher == NULL)
     {
         PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
         return NULL;
     }
-    alg_k = self->ssl->s3->tmp.new_cipher->algorithm_mkey;
+    alg_k = cipher->algorithm_mkey;
     session = SSL_get1_session(self->ssl);
 
     if (!(alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)))
@@ -676,16 +686,16 @@ static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self)
 {
     EC_KEY *ec_key;
     SSL_SESSION* session;
+    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
     long alg_k;
     EVP_PKEY *srvr_pub_pkey = NULL;
 
-    // TODO: Rewrite this without accessing private members (for example, use get_cipher())
-    if ((self->ssl == NULL) || (self->ssl->s3 == NULL) || (self->ssl->s3->tmp.new_cipher == NULL))
+    if (cipher == NULL)
     {
         PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
         return NULL;
     }
-    alg_k = self->ssl->s3->tmp.new_cipher->algorithm_mkey;
+    alg_k = cipher->algorithm_mkey;
     session = SSL_get1_session(self->ssl);
 
     if (!(alg_k & (SSL_kECDHr|SSL_kECDHe|SSL_kEECDH)))
