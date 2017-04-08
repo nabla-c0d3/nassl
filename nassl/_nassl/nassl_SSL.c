@@ -422,8 +422,9 @@ static const SSL_CIPHER* nassl_SSL_get_new_cipher(nassl_SSL_Object *self)
 {
     // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if (self->ssl == NULL || self->ssl->s3 == NULL)
+    {
         return NULL;
-
+    }
     return self->ssl->s3->tmp.new_cipher;
 }
 
@@ -432,7 +433,6 @@ static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *arg
 {
     const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
     int returnValue = SSL_CIPHER_get_bits(cipher, NULL);
-
     return Py_BuildValue("I", returnValue);
 }
 
@@ -441,7 +441,6 @@ static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *arg
 {
     const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
     const char *cipherName = SSL_CIPHER_get_name(cipher);
-
     return PyUnicode_FromString(cipherName);
 }
 
