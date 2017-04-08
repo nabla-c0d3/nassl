@@ -228,7 +228,7 @@ static int pem_passwd_cb(char *buf, int size, int rwflag, void *userdata)
 
     // NUL-terminated string as it will come from Python
     passwordSize = strlen(passwordBuf) + 1;
-    if (passwordSize > size)
+    if (passwordSize > (unsigned) size)
     {
         // Not enough space in OpenSSL's buffer
         return 0;
