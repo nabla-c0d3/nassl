@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 import socket
 
+import sys
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
 
 from enum import Enum
@@ -183,12 +184,22 @@ class SslClient(object):
                         # waiting for the server's response, causing IIS 7 to hang on the connection.
                         # This workaround forces our client to send the CMK message, then wait for the server's
                         # response, and then send the data packet
-                        if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
+                        #if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
+                        message_type = handshake_data_out[2]
+                        IS_PYTHON_2 = sys.version_info < (3, 0)
+                        if IS_PYTHON_2:
+                            message_type = ord(message_type)
+
+                        if message_type == 2:  # Make sure we're looking at the CMK message
                             # cmk_size = handshake_data_out[0:2]
-                            test1 =  int(handshake_data_out[0].encode('hex'), base=16)
-                            test2 = int(handshake_data_out[1].encode('hex'), base=16)
-                            test1 = (test1 & 0x7f) << 8
-                            size = test1 + test2
+                            if IS_PYTHON_2:
+                                first_byte = ord(handshake_data_out[0])
+                                second_byte = ord(handshake_data_out[1])
+                            else:
+                                first_byte = int(handshake_data_out[0])
+                                second_byte = int(handshake_data_out[1])
+                            first_byte = (first_byte & 0x7f) << 8
+                            size = first_byte + second_byte
                             # Manually split the two records to force them to be sent separately
                             cmk_packet = handshake_data_out[0:size+2]
                             data_packet = handshake_data_out[size+2::]

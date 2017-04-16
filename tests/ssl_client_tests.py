@@ -99,9 +99,11 @@ class SslClientHandshakeTests(unittest.TestCase):
         ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         self.ssl_client = ssl_client
 
-
     def test_do_handshake(self):
         self.ssl_client.do_handshake()
+
+    def test_do_ssl2_iis_handshake(self):
+        self.ssl_client.do_ssl2_iis_handshake()
 
 
 class SslClientOnlineTests(unittest.TestCase):
