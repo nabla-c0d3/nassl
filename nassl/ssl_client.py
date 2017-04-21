@@ -99,7 +99,7 @@ class SslClient(object):
             self._ssl_ctx.load_verify_locations(ssl_verify_locations)
 
         if client_certchain_file is not None:
-            self._use_private_key(client_certchain_file, client_key_file, client_key_type.value, client_key_password)
+            self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
 
         if ignore_client_authentication_requests:
             if client_certchain_file:
