@@ -12,4 +12,4 @@ install:
   - python build_from_scratch.py
 #  - python setup.py build_ext -i
 # command to run tests
-script: python run_tests.py
+script: python setup.py test
