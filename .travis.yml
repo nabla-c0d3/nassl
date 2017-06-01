@@ -3,15 +3,17 @@ python:
   - "2.7"
   - "3.3"
   - "3.6"
+before_install:
+  - curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.deb.sh | sudo bash
+  - sudo apt-get install git-lfs
+  - git lfs install
 # command to install dependencies
 install:
-  - wget http://zlib.net/zlib-1.2.11.tar.gz
-  - tar xvfz  zlib-1.2.11.tar.gz
-  - git clone https://github.com/PeterMosmans/openssl.git
-  - pip install -r requirements.txt --target ./lib
+  - pip install -U pip setuptools
+  - pip install -r requirements.txt
   - pip install coveralls
-  - python build_from_scratch.py
-#  - python setup.py build_ext -i
+before_script:
+  git lfs pull
 # command to run tests
 script:
   coverage run --source=nassl setup.py test
