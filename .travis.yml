@@ -9,7 +9,11 @@ install:
   - tar xvfz  zlib-1.2.11.tar.gz
   - git clone https://github.com/PeterMosmans/openssl.git
   - pip install -r requirements.txt --target ./lib
+  - pip install coveralls
   - python build_from_scratch.py
 #  - python setup.py build_ext -i
 # command to run tests
-script: python setup.py test
+script:
+  coverage run --source=nassl setup.py test
+after_success:
+  coveralls
