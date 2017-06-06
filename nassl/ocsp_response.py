@@ -95,14 +95,13 @@ class OcspResponse(object):
     def _get_value_from_text_output(key, text_output):
         # type: (Text, Text) -> Text
         value = text_output.split(key)
-        return value[1].split('\n')[0].strip()
+        return None if len(value) < 2 else value[1].split('\n')[0].strip()
 
     @staticmethod
     def _get_value_from_text_output_no_p( key, text_output):
         # type: (Text, Text) -> Text
-        value = text_output.split(key)
-        value = value[1].split('\n')[0].strip()
-        return value.split('(')[0].strip()
+        value = OcspResponse._get_value_from_text_output(key, text_output)
+        return None if value is None else value.split('(')[0].strip()
 
     @staticmethod
     def _parse_sct_text_line(text_output):
