@@ -73,6 +73,20 @@ Pd2eQ9+DkopOz3UGU7c=
 
         self.assertIsNotNone(ocsp_response.as_dict()['responses'][0]['singleExtensions']['ctCertificateScts'])
 
+    def test_optional_fields(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(('www.balasys.hu', 443))
+
+        ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client.set_tlsext_status_ocsp()
+        ssl_client.do_handshake()
+        ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
+
+        self.assertIsNotNone(ocsp_response)
+        self.assertIsNone(ocsp_response.as_dict()['responses'][0]['nextUpdate'])
+
+
 def main():
     unittest.main()
 
