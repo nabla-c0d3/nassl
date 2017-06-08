@@ -7,7 +7,7 @@ import socket
 import sys
 from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
 
-from enum import Enum
+from enum import IntEnum
 from typing import List
 from typing import Optional
 from typing import Text
@@ -15,7 +15,7 @@ from typing import Tuple
 from nassl.ocsp_response import OcspResponse
 
 
-class OpenSslVerifyEnum(Enum):
+class OpenSslVerifyEnum(IntEnum):
     """SSL validation options which map to the SSL_VERIFY_XXX OpenSSL constants.
     """
     NONE = 0
@@ -24,7 +24,7 @@ class OpenSslVerifyEnum(Enum):
     CLIENT_ONCE = 4
 
 
-class OpenSslVersionEnum(Enum):
+class OpenSslVersionEnum(IntEnum):
     """SSL version constants.
     """
     SSLV23 = 0
@@ -35,7 +35,7 @@ class OpenSslVersionEnum(Enum):
     TLSV1_2 = 5
 
 
-class OpenSslFileTypeEnum(Enum):
+class OpenSslFileTypeEnum(IntEnum):
     """Certificate and private key format constants which map to the SSL_FILETYPE_XXX OpenSSL constants.
     """
     PEM = 1
