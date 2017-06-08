@@ -152,7 +152,7 @@ def main():
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 
     # Test nassl
-    NASSL_TEST_TASKS = ['{python} run_tests.py'.format(python=sys.executable)]
+    NASSL_TEST_TASKS = ['{python} setup.py test'.format(python=sys.executable)]
     perform_build_task('NASSL Tests', NASSL_TEST_TASKS)
 
 
