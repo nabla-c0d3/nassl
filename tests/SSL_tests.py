@@ -130,12 +130,12 @@ class SSL_Tests(unittest.TestCase):
 
     def test_get_cipher_name(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertIsNotNone(test_ssl.get_cipher_name())
+        self.assertIsNone(test_ssl.get_cipher_name())
 
 
     def test_get_cipher_bits(self):
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertIsNotNone(test_ssl.get_cipher_bits())
+        self.assertEqual(test_ssl.get_cipher_bits(), 0)
 
 
     def test_get_client_CA_list_bad(self):
