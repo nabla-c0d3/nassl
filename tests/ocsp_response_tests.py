@@ -24,7 +24,7 @@ class OcspResponseOnlineTests(unittest.TestCase):
     def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(('login.live.com', 443))
+        sock.connect(('www.cloudflare.com', 443))
 
         ssl_client = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
