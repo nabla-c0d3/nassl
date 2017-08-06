@@ -418,19 +418,22 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
 }
 
 
-static const SSL_CIPHER* nassl_SSL_get_new_cipher(nassl_SSL_Object *self)
+// Used to retrieve the cipher earlier in the connection
+// https://github.com/nabla-c0d3/nassl/pull/15
+static const SSL_CIPHER* get_tmp_new_cipher(nassl_SSL_Object *self)
 {
     // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if (self->ssl == NULL || self->ssl->s3 == NULL)
+    {
         return NULL;
-
+    }
     return self->ssl->s3->tmp.new_cipher;
 }
 
 
 static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *args)
 {
-    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
+    const SSL_CIPHER *cipher = get_tmp_new_cipher(self);
     int returnValue = cipher ? SSL_CIPHER_get_bits(cipher, NULL) : SSL_get_cipher_bits(self->ssl, NULL);
 
     return Py_BuildValue("I", returnValue);
@@ -439,11 +442,13 @@ static PyObject* nassl_SSL_get_cipher_bits(nassl_SSL_Object *self, PyObject *arg
 
 static PyObject* nassl_SSL_get_cipher_name(nassl_SSL_Object *self, PyObject *args)
 {
-    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
+    const SSL_CIPHER *cipher = get_tmp_new_cipher(self);
     const char *cipherName = cipher ? SSL_CIPHER_get_name(cipher) : SSL_get_cipher_name(self->ssl);
 
     if (strcmp(cipherName, "(NONE)") == 0)
+    {
         Py_RETURN_NONE;
+    }
 
     return PyUnicode_FromString(cipherName);
 }
@@ -648,7 +653,7 @@ static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self)
 {
     DH *dh_srvr;
     SSL_SESSION* session;
-    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
+    const SSL_CIPHER *cipher = get_tmp_new_cipher(self);
     long alg_k;
 
     if (cipher == NULL)
@@ -693,7 +698,7 @@ static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self)
 {
     EC_KEY *ec_key;
     SSL_SESSION* session;
-    const SSL_CIPHER *cipher = nassl_SSL_get_new_cipher(self);
+    const SSL_CIPHER *cipher = get_tmp_new_cipher(self);
     long alg_k;
     EVP_PKEY *srvr_pub_pkey = NULL;
 
