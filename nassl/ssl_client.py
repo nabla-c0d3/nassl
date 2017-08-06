@@ -71,7 +71,7 @@ class SslClient(object):
 
     def __init__(
             self,
-            sock=None,                                      # type: Optional[socket.socket]
+            underlying_socket=None,                         # type: Optional[socket.socket]
             ssl_version=OpenSslVersionEnum.SSLV23,          # type: OpenSslVersionEnum
             ssl_verify=OpenSslVerifyEnum.PEER,              # type: OpenSslVerifyEnum
             ssl_verify_locations=None,                      # type: Optional[Text]
