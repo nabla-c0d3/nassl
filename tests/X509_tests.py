@@ -77,7 +77,7 @@ class X509_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
         cert = ssl_client.get_peer_certificate()
 

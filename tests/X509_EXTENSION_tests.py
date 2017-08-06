@@ -21,7 +21,7 @@ class X509_EXTENSION_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        sslClient = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        sslClient = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         sslClient.do_handshake()
         x509ext = sslClient.get_peer_certificate().get_extensions()[0]
 

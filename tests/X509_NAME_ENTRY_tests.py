@@ -22,7 +22,7 @@ class X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = SslClient(sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
         name_entry = ssl_client.get_peer_certificate().get_subject_name_entries()[0];
 

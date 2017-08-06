@@ -96,7 +96,8 @@ class SslClientHandshakeTests(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                    ssl_verify=OpenSslVerifyEnum.NONE)
         self.ssl_client = ssl_client
 
     def test_do_handshake(self):
@@ -113,7 +114,8 @@ class SslClientOnlineTests(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                    ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
         ssl_client.do_handshake()
         self.ssl_client = ssl_client
@@ -154,7 +156,8 @@ class SslClientOnlineTests(unittest.TestCase):
         sock.settimeout(10)
         sock.connect(('auth.startssl.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                    ssl_verify=OpenSslVerifyEnum.NONE)
 
         self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
                                 ssl_client.do_handshake)
@@ -166,8 +169,8 @@ class SslClientOnlineTests(unittest.TestCase):
         sock.settimeout(10)
         sock.connect(('auth.startssl.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, sock=sock, ssl_verify=OpenSslVerifyEnum.NONE,
-                                    ignore_client_authentication_requests=True)
+        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                    ssl_verify=OpenSslVerifyEnum.NONE, ignore_client_authentication_requests=True)
 
         ssl_client.do_handshake()
         self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
