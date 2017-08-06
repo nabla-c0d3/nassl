@@ -43,7 +43,6 @@ class OpenSslFileTypeEnum(IntEnum):
 
 
 class ClientCertificateRequested(IOError):
-
     ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
     ERROR_MSG = 'Server requested a client certificate.'
 
@@ -62,7 +61,7 @@ class ClientCertificateRequested(IOError):
 
 class SslClient(object):
     """High level API implementing an SSL client.
-    
+
     Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the
     server's certificate, available via get_peer_certificate().
     """
@@ -78,14 +77,15 @@ class SslClient(object):
             client_certchain_file=None,                     # type: Optional[Text]
             client_key_file=None,                           # type: Optional[Text]
             client_key_type=OpenSslFileTypeEnum.PEM,        # type: OpenSslFileTypeEnum
-            client_key_password='',                        # type: Text
+            client_key_password='',                         # type: Text
             ignore_client_authentication_requests=False     # type: bool
     ):
         # type: (...) -> None
 
         # A Python socket handles transmission of the data
-        self._sock = sock
+        self._sock = underlying_socket
         self._is_handshake_completed = False
+        self._ssl_version = ssl_version
         self._client_CA_list = []
 
         # OpenSSL objects
@@ -113,7 +113,7 @@ class SslClient(object):
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        if ssl_version != OpenSslVersionEnum.SSLV2: # This makes SSLv2 fail
+        if ssl_version != OpenSslVersionEnum.SSLV2:  # This makes SSLv2 fail
             self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
         else:
             # Handshake workaround for SSL2 + IIS 7
