@@ -127,6 +127,14 @@ class SslClient(object):
         BIO.make_bio_pair(self._internal_bio, self._network_bio)
         self._ssl.set_bio(self._internal_bio)
 
+    def set_underlying_socket(self, sock):
+        # type: (socket.socket) -> None
+        self._sock = sock
+
+    def get_underlying_socket(self):
+        # type: () -> Optional[socket.socket]
+        return self._sock
+
     def do_handshake(self):
         # type: () -> None
         if self._sock is None:
