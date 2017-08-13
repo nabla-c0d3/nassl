@@ -37,18 +37,18 @@ def perform_build_task(title, commands_dict, cwd=None):
 def main():
     # Build Zlib
     if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-        ZLIB_LIB_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x86\\ZlibStatRelease\\zlibstat.lib'
+        ZLIB_LIB_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc14\\x86\\ZlibStatRelease\\zlibstat.lib'
         ZLIB_BUILD_TASKS = [
             'bld_ml32.bat',
-            'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|Win32"'
+            'msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform=Win32"'
         ]
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx86\\')
 
     elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
-        ZLIB_LIB_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc9\\x64\\ZlibStatRelease\\zlibstat.lib'
+        ZLIB_LIB_PATH = ZLIB_PATH + '\\contrib\\vstudio\\vc14\\x64\\ZlibStatRelease\\zlibstat.lib'
         ZLIB_BUILD_TASKS = [
             'bld_ml64.bat',
-            'vcbuild /rebuild ..\\vstudio\\vc9\\zlibvc.sln "Release|x64"'
+            'msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform=x64"'
         ]
         perform_build_task('ZLIB', ZLIB_BUILD_TASKS, ZLIB_PATH + '\\contrib\\masmx64\\')
 
