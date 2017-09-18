@@ -9,7 +9,8 @@ from __future__ import unicode_literals
 import os
 import sys
 import shutil
-from setup import OPENSSL_LIB_INSTALL_PATH, CURRENT_PLATFORM, SupportedPlatformEnum, OPENSSL_HEADERS_INSTALL_PATH, \
+from setup import MODERN_OPENSSL_LIB_INSTALL_PATH, CURRENT_PLATFORM, SupportedPlatformEnum, \
+    MODERN_OPENSSL_HEADERS_INSTALL_PATH, LEGACY_OPENSSL_LIB_INSTALL_PATH, LEGACY_OPENSSL_HEADERS_INSTALL_PATH, \
     ZLIB_LIB_INSTALL_PATH
 from os import getcwd
 from os.path import join
@@ -19,9 +20,14 @@ import subprocess
 # Warning: use a fresh Zlib src tree on Windows or build will fail ie. do not use the same Zlib src folder for Windows
 # and Unix build
 ZLIB_PATH = join(getcwd(), 'zlib-1.2.11')
-OPENSSL_PATH = join(getcwd(), 'openssl')
+
+MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-1.1.0f')
+LEGACY_OPENSSL_PATH = join(getcwd(), 'openssl-1.0.2e')
+
+
 OPENSSL_CONF_CMD = (
-    'perl Configure {target} --prefix={install_path} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
+    'perl Configure {target} --prefix={install_path} --openssldir={install_path} enable-weak-ssl-ciphers zlib '
+    'no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
     'enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_path} '
     '--with-zlib-lib={zlib_install_path} {extra_args}'
 ).format
@@ -32,6 +38,129 @@ def perform_build_task(title, commands_dict, cwd=None):
     print ('===BUILDING {0}==='.format(title))
     for command in commands_dict:
         subprocess.check_call(command, shell=True, cwd=cwd)
+
+
+def build_legacy_openssl():
+    if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
+            openssl_target = 'VC-WIN32'
+            first_build_step = 'ms\\do_ms'
+        else:
+            openssl_target = 'VC-WIN64A'
+            first_build_step = 'ms\\do_win64a.bat'
+
+        build_tasks = [
+            OPENSSL_CONF_CMD(target=openssl_target, install_path=LEGACY_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
+            first_build_step,
+            #'nmake -f ms\\nt.mak clean',
+            'nmake -f ms\\nt.mak',
+            'nmake -f ms\\nt.mak install',
+        ]
+    else:
+        if CURRENT_PLATFORM == SupportedPlatformEnum.OSX_64:
+            openssl_target = 'darwin64-x86_64-cc'
+        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_64:
+            openssl_target = 'linux-x86_64'
+        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_32:
+            openssl_target = 'linux-elf'
+
+        else:
+            raise ValueError('Unkown platform')
+
+        build_tasks = [
+            OPENSSL_CONF_CMD(target=openssl_target, install_path=LEGACY_OPENSSL_HEADERS_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -fPIC'),
+            'make clean',
+            'make depend',
+            'make',
+            'make test',
+            'make install_sw',  # Don't build documentation, else will fail on Debian
+        ]
+
+    perform_build_task('LEGACY OPENSSL', build_tasks, LEGACY_OPENSSL_PATH)
+
+    # Setup the OpenSSL folder
+    # Move the static libraries to the root folder
+    if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        shutil.copy(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libeay32.lib'), LEGACY_OPENSSL_LIB_INSTALL_PATH)
+        shutil.copy(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'lib', 'ssleay32.lib'), LEGACY_OPENSSL_LIB_INSTALL_PATH)
+    else:
+        shutil.copy(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libcrypto.a'), LEGACY_OPENSSL_LIB_INSTALL_PATH)
+        shutil.copy(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libssl.a'), LEGACY_OPENSSL_LIB_INSTALL_PATH)
+
+    shutil.rmtree(LEGACY_OPENSSL_HEADERS_INSTALL_PATH)
+    shutil.move(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'include'), LEGACY_OPENSSL_HEADERS_INSTALL_PATH)
+
+    # Copy some internal headers for accessing EDH and ECDH parameters
+    INTERNAL_HEADERS_INSTALL_PATH = join(LEGACY_OPENSSL_HEADERS_INSTALL_PATH, 'openssl-internal')
+    if not os.path.isdir(INTERNAL_HEADERS_INSTALL_PATH):
+        os.makedirs(INTERNAL_HEADERS_INSTALL_PATH)
+    shutil.copy(join(LEGACY_OPENSSL_PATH, 'e_os.h'), INTERNAL_HEADERS_INSTALL_PATH)
+    shutil.copy(join(LEGACY_OPENSSL_PATH, 'ssl', 'ssl_locl.h'), INTERNAL_HEADERS_INSTALL_PATH)
+
+    # Erase everything else
+    shutil.rmtree(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'lib'))
+    shutil.rmtree(join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'bin'))
+
+
+def build_modern_openssl():
+    if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
+            openssl_target = 'VC-WIN32'
+        else:
+            openssl_target = 'VC-WIN64A'
+
+        build_tasks = [
+            OPENSSL_CONF_CMD(target=openssl_target, install_path=MODERN_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
+            'nmake',
+            'nmake test',
+            'nmake install',
+        ]
+    else:
+        if CURRENT_PLATFORM == SupportedPlatformEnum.OSX_64:
+            openssl_target = 'darwin64-x86_64-cc'
+        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_64:
+            openssl_target = 'linux-x86_64'
+        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_32:
+            openssl_target = 'linux-elf'
+        else:
+            raise ValueError('Unkown platform')
+
+        build_tasks = [
+            OPENSSL_CONF_CMD(target=openssl_target, install_path=MODERN_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
+                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -fPIC'),
+            'make clean',
+            'make depend',
+            'make',
+            'make test',
+            'make install_sw',  # Don't build documentation, else will fail on Debian
+        ]
+
+    perform_build_task('MODERN OPENSSL', build_tasks, MODREN_OPENSSL_PATH)
+
+    # Setup the OpenSSL folder
+    # Move the static libraries to the root folder
+    if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        # In "modern" OpenSSL, the windows binaries have been renamed to match the Unix names
+        shutil.copy(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libcrypto.lib'), MODERN_OPENSSL_LIB_INSTALL_PATH)
+        shutil.copy(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libssl.lib'), MODERN_OPENSSL_LIB_INSTALL_PATH)
+    else:
+        shutil.copy(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libcrypto.a'), MODERN_OPENSSL_LIB_INSTALL_PATH)
+        shutil.copy(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'lib', 'libssl.a'), MODERN_OPENSSL_LIB_INSTALL_PATH)
+
+    # Move the header to ./bin/openssl
+    shutil.rmtree(MODERN_OPENSSL_HEADERS_INSTALL_PATH)
+    shutil.move(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'include'), MODERN_OPENSSL_HEADERS_INSTALL_PATH)
+
+    # Erase everything else
+    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'lib'))
+    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'bin'))
+    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'certs'))
+    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'html'))
+    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'misc'))
+    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'private'))
 
 
 def main():
@@ -66,78 +195,9 @@ def main():
         os.makedirs(os.path.dirname(ZLIB_LIB_INSTALL_PATH))
     shutil.copy(ZLIB_LIB_PATH, ZLIB_LIB_INSTALL_PATH)
 
-
-    # Build OpenSSL
-    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-        OPENSSL_BUILD_TASKS = [
-            OPENSSL_CONF_CMD(target='VC-WIN32', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' no-asm -DZLIB_WINAPI'), # *hate* zlib
-            'ms\\do_ms',
-            #'nmake -f ms\\nt.mak clean',  # This fails when there is nothing to clean
-            'nmake -f ms\\nt.mak',
-            'nmake -f ms\\nt.mak install',
-        ]
-
-    elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
-        OPENSSL_BUILD_TASKS = [
-            OPENSSL_CONF_CMD(target='VC-WIN64A', install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' no-asm -DZLIB_WINAPI'),
-            'ms\\do_win64a.bat',
-            #'nmake -f ms\\nt.mak clean',
-            # The build script will crash during the next step at the very end of the OpenSSL build but you can still
-            # manage to get a full build of nassl by manually copying the OpenSSL libs from openssl/out32 to
-            # bin/openssl/win64.
-            'nmake -f ms\\nt.mak',
-            'nmake -f ms\\nt.mak install',
-        ]
-    else:
-        if CURRENT_PLATFORM == SupportedPlatformEnum.OSX_64:
-            OPENSSL_TARGET = 'darwin64-x86_64-cc'
-
-        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_64:
-            OPENSSL_TARGET = 'linux-x86_64'
-
-        elif CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_32:
-            OPENSSL_TARGET = 'linux-elf'
-
-        else:
-            raise ValueError('Unkown platform')
-
-        OPENSSL_BUILD_TASKS = [
-            OPENSSL_CONF_CMD(target=OPENSSL_TARGET, install_path=OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
-                             zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -fPIC'),
-            'make clean',
-            'make depend',
-            'make',
-            'make test',
-            'make install_sw',  # Don't build documentation, else will fail on Debian
-        ]
-    perform_build_task('OPENSSL', OPENSSL_BUILD_TASKS, OPENSSL_PATH)
-
-    # Setup the OpenSSL folder
-    # Move the static libraries to the root folder
-    if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
-        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libeay32.lib'), OPENSSL_LIB_INSTALL_PATH)
-        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'ssleay32.lib'), OPENSSL_LIB_INSTALL_PATH)
-    else:
-        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libcrypto.a'), OPENSSL_LIB_INSTALL_PATH)
-        shutil.copy(join(OPENSSL_LIB_INSTALL_PATH, 'lib', 'libssl.a'), OPENSSL_LIB_INSTALL_PATH)
-
-    # Move the header to ./bin/openssl
-    shutil.rmtree(OPENSSL_HEADERS_INSTALL_PATH)
-    shutil.move(join(OPENSSL_LIB_INSTALL_PATH, 'include'), OPENSSL_HEADERS_INSTALL_PATH)
-
-    # Copy some internal headers for accessing EDH and ECDH parameters
-    INTERNAL_HEADERS_INSTALL_PATH = join(OPENSSL_HEADERS_INSTALL_PATH, 'openssl-internal')
-    if not os.path.isdir(INTERNAL_HEADERS_INSTALL_PATH):
-        os.makedirs(INTERNAL_HEADERS_INSTALL_PATH)
-    shutil.copy(join(OPENSSL_PATH, 'e_os.h'), INTERNAL_HEADERS_INSTALL_PATH)
-    shutil.copy(join(OPENSSL_PATH, 'ssl', 'ssl_locl.h'), INTERNAL_HEADERS_INSTALL_PATH)
-
-    # Erase everything else
-    shutil.rmtree(join(OPENSSL_LIB_INSTALL_PATH, 'lib'))
-    shutil.rmtree(join(OPENSSL_LIB_INSTALL_PATH, 'bin'))
-    shutil.rmtree(join(OPENSSL_LIB_INSTALL_PATH, 'ssl'))
+    # Build the two versions of OpenSSL
+    build_legacy_openssl()
+    build_modern_openssl()
 
 
     # Build nassl

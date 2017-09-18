@@ -1,6 +1,7 @@
 
 #include <Python.h>
 
+#ifdef LEGACY_OPENSSL
 // Include internal headers so we can access EDH and ECDH parameter
 // They need to be included before including winsock.h otherwise we get a bunch of errors on Windows
 // http://stackoverflow.com/questions/11726958/cant-include-winsock2-h-in-msvc-2010
@@ -8,7 +9,7 @@
    Plus CERT is defined by ssl_locl so we have to undefine it before including it... */
 #undef CERT
 #include "openssl-internal/ssl_locl.h"
-
+#endif
 
 
 // Fix symbol clashing on Windows
@@ -242,7 +243,6 @@ static PyObject* nassl_SSL_get_secure_renegotiation_support(nassl_SSL_Object *se
     }
 }
 
-
 static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *self, PyObject *args)
 {
     PyObject* compMethodPyList = NULL;
@@ -268,7 +268,11 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
             return NULL;
         }
 
+#ifdef LEGACY_OPENSSL
         methodPyString = PyUnicode_FromString(method->name);
+#else
+        methodPyString = PyUnicode_FromString(SSL_COMP_get0_name(method));
+#endif
         if (methodPyString == NULL)
         {
             return PyErr_NoMemory(); // TODO: Is it really a memory error ?
@@ -422,12 +426,16 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
 // https://github.com/nabla-c0d3/nassl/pull/15
 static const SSL_CIPHER* get_tmp_new_cipher(nassl_SSL_Object *self)
 {
+#ifdef LEGACY_OPENSSL
     // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if (self->ssl == NULL || self->ssl->s3 == NULL)
     {
         return NULL;
     }
     return self->ssl->s3->tmp.new_cipher;
+#else
+    return NULL;
+#endif
 }
 
 
@@ -640,6 +648,7 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
 }
 
 
+#ifdef LEGACY_OPENSSL
 static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args)
 {
     // This is only used for fixing SSLv2 connections when connecting to IIS7 (like in the 90s)
@@ -746,7 +755,7 @@ static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self)
 
     return generic_print_to_string((int (*)(BIO *, const void *)) &ECParameters_print, ec_key);
 }
-
+#endif
 
 static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject *args)
 {
@@ -877,6 +886,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_tlsext_status_ocsp_resp", (PyCFunction)nassl_SSL_get_tlsext_status_ocsp_resp, METH_NOARGS,
      "OpenSSL's SSL_get_tlsext_status_ocsp_resp(). Returns an _nassl.OCSP_RESPONSE object."
     },
+#ifdef LEGACY_OPENSSL
     {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
      "OpenSSL's SSL_state_string_long()."
     },
@@ -886,6 +896,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_ecdh_param", (PyCFunction)nassl_SSL_get_ecdh_param, METH_NOARGS,
      "return elliptic curve Diffie-Hellman parameters as a string."
     },
+#endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,
      "OpenSSL's SSL_get_peer_cert_chain(). Returns an array of _nassl.X509 objects."
     },

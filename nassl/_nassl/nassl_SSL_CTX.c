@@ -56,11 +56,23 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 			sslCtx = SSL_CTX_new(SSLv23_method());
 			break;
 		case sslv2:
+		#ifdef LEGACY_OPENSSL
 			sslCtx = SSL_CTX_new(SSLv2_method());
-			break;
+            break;
+        #else
+            PyErr_SetString(PyExc_NotImplementedError, "SSL 2.0 is disabled; re-compile with -DLEGACY_OPENSSL");
+            Py_DECREF(self);
+            return NULL;
+        #endif
 		case sslv3:
+		#ifdef LEGACY_OPENSSL
 			sslCtx = SSL_CTX_new(SSLv3_method());
-			break;
+            break;
+        #else
+            PyErr_SetString(PyExc_NotImplementedError, "SSL 3.0 is disabled; re-compile with -DLEGACY_OPENSSL");
+            Py_DECREF(self);
+            return NULL;
+        #endif
 		case tlsv1:
 			sslCtx = SSL_CTX_new(TLSv1_method());
 			break;

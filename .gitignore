@@ -1,3 +1,7 @@
+# OpenSSL build artifacts
+*.cnf
+*.cnf.dist
+
 .eggs/*
 
 # Object files
