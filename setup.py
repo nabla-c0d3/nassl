@@ -122,7 +122,7 @@ LEGACY_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
 LEGACY_NASSL_EXT_SETUP['name'] = 'nassl._nassl_legacy'
 
 MODERN_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
-MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl'
+MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl_modern'
 
 
 if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
@@ -130,7 +130,8 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
         'include_dirs': [LEGACY_OPENSSL_HEADERS_INSTALL_PATH],
         'extra_objects': [ZLIB_LIB_INSTALL_PATH,
                           join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib'),
-                          join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib')]
+                          join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib')],
+        'define_macros': [('LEGACY_OPENSSL', '1')]
     })
 
     MODERN_NASSL_EXT_SETUP.update({
@@ -154,8 +155,6 @@ else:
                           join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a'),
                           ZLIB_LIB_INSTALL_PATH]
     })
-
-LEGACY_NASSL_EXT_SETUP['extra_compile_args'].append('-DLEGACY_OPENSSL')
 
 
 NASSL_SETUP.update({'ext_modules': [Extension(**LEGACY_NASSL_EXT_SETUP), Extension(**MODERN_NASSL_EXT_SETUP)]})

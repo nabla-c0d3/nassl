@@ -81,9 +81,21 @@ static struct PyModuleDef moduledef =
 
 
 #if PY_MAJOR_VERSION >= 3
-PyMODINIT_FUNC PyInit__nassl(void)
+
+#ifdef LEGACY_OPENSSL
+PyMODINIT_FUNC PyInit__nassl_legacy(void)
 #else
-PyMODINIT_FUNC init_nassl(void)
+PyMODINIT_FUNC PyInit__nassl_modern(void)
+#endif
+
+#else
+
+#ifdef LEGACY_OPENSSL
+PyMODINIT_FUNC init_nassl_legacy(void)
+#else
+PyMODINIT_FUNC init_nassl_modern(void)
+#endif
+
 #endif
 {
     PyObject* module;
