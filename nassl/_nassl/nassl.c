@@ -85,7 +85,7 @@ static struct PyModuleDef moduledef =
 #ifdef LEGACY_OPENSSL
 PyMODINIT_FUNC PyInit__nassl_legacy(void)
 #else
-PyMODINIT_FUNC PyInit__nassl_modern(void)
+PyMODINIT_FUNC PyInit__nassl(void)
 #endif
 
 #else
@@ -93,7 +93,7 @@ PyMODINIT_FUNC PyInit__nassl_modern(void)
 #ifdef LEGACY_OPENSSL
 PyMODINIT_FUNC init_nassl_legacy(void)
 #else
-PyMODINIT_FUNC init_nassl_modern(void)
+PyMODINIT_FUNC init_nassl(void)
 #endif
 
 #endif

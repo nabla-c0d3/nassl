@@ -122,7 +122,7 @@ LEGACY_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
 LEGACY_NASSL_EXT_SETUP['name'] = 'nassl._nassl_legacy'
 
 MODERN_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
-MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl_modern'
+MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl'
 
 
 if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
