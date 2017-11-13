@@ -19,10 +19,11 @@ import subprocess
 # The build script expects the OpenSSL and Zlib src packages to be in nassl's root folder
 # Warning: use a fresh Zlib src tree on Windows or build will fail ie. do not use the same Zlib src folder for Windows
 # and Unix build
+# TODO(AD): Only enable ZLib for legacy _nassl?
 ZLIB_PATH = join(getcwd(), 'zlib-1.2.11')
 
 #MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-1.1.0f')
-MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-master')
+MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-tls1.3-draft-18')
 LEGACY_OPENSSL_PATH = join(getcwd(), 'openssl-1.0.2e')
 
 

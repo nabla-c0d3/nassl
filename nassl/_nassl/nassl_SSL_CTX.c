@@ -90,7 +90,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 		    sslCtx = SSL_CTX_new(TLS_client_method());
 		    // Force TLS 1.3
 		    SSL_CTX_set_min_proto_version(sslCtx, TLS1_3_VERSION);
-		    SSL_CTX_set_max_proto_version(sslCtx, TLS1_3_VERSION);
+		    SSL_CTX_set_max_proto_version(sslCtx, 0);
 			break;
 		#endif
 		default:

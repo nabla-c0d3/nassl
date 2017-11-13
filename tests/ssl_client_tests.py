@@ -7,7 +7,8 @@ import socket
 import tempfile
 
 from nassl.debug_ssl_client import DebugSslClient
-from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
+from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum, \
+    SslClient
 
 
 class SslClientPrivateKeyTests(unittest.TestCase):
@@ -151,7 +152,6 @@ class SslClientOnlineTests(unittest.TestCase):
 
 
     def test_client_certificate_requested(self):
-
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
         sock.connect(('auth.startssl.com', 443))
@@ -164,7 +164,6 @@ class SslClientOnlineTests(unittest.TestCase):
 
 
     def test_ignore_client_authentication_requests(self):
-
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
         sock.connect(('auth.startssl.com', 443))
@@ -174,6 +173,20 @@ class SslClientOnlineTests(unittest.TestCase):
 
         ssl_client.do_handshake()
         self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
+
+
+class SslClientOnlineTls13Tests(unittest.TestCase):
+
+    def test_tls_1_3(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect(('tls13.crypto.mozilla.org', 443))
+        ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
+                               ssl_verify=OpenSslVerifyEnum.NONE)
+
+        ssl_client.do_handshake()
+        self.assertTrue(ssl_client.get_peer_certificate())
+        sock.close()
 
 
 def main():
