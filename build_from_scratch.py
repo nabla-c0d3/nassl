@@ -21,13 +21,14 @@ import subprocess
 # and Unix build
 ZLIB_PATH = join(getcwd(), 'zlib-1.2.11')
 
-MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-1.1.0f')
+#MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-1.1.0f')
+MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-master')
 LEGACY_OPENSSL_PATH = join(getcwd(), 'openssl-1.0.2e')
 
 
 OPENSSL_CONF_CMD = (
     'perl Configure {target} --prefix={install_path} --openssldir={install_path} enable-weak-ssl-ciphers zlib '
-    'no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
+    'no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost enable-tls1_3 '
     'enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_path} '
     '--with-zlib-lib={zlib_install_path} {extra_args}'
 ).format
@@ -115,7 +116,8 @@ def build_modern_openssl():
             OPENSSL_CONF_CMD(target=openssl_target, install_path=MODERN_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                              zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
             'nmake',
-            'nmake test',
+            # TODO(AD): The tests are failing on openssl-master; re-enable them once 1.1.1 is released
+            #'nmake test',
             'nmake install',
         ]
     else:

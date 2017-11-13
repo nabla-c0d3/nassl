@@ -229,6 +229,10 @@ class Modern_SSL_CTX_Tests(Common_SSL_CTX_Tests):
     # Run the test cases with the modern implementation
     _SSL_CTX_CLS = _nassl.SSL_CTX
 
+    def test_tlsv1_3(self):
+        ssl_ctx = _nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
+        self.assertTrue(ssl_ctx)
+
 
 class Legacy_SSL_CTX_Tests(Common_SSL_CTX_Tests):
 
