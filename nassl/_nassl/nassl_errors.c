@@ -142,25 +142,73 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue)
 }
 
 
-void module_add_errors(PyObject* m)
+int module_add_errors(PyObject* m)
 {
-    nassl_OpenSSLError_Exception = PyErr_NewException("_nassl.OpenSSLError", NULL, NULL);
+// We want both the modern and legacy nassl to use the same exceptions
+#ifdef LEGACY_OPENSSL
+    // In the legacy _nassl, we import these exceptions from the modern _nassl module
+    PyObject* modern_nassl_module = PyImport_ImportModule("nassl._nassl");
+    if (!modern_nassl_module)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Could not import _nassl");
+        return 0;
+    }
+
+    nassl_OpenSSLError_Exception = PyDict_GetItemString(PyModule_GetDict(modern_nassl_module), "OpenSSLError");
+    if (!nassl_OpenSSLError_Exception)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Could not import OpenSSLError from _nassl");
+        return 0;
+    }
+
+    nassl_SslError_Exception = PyDict_GetItemString(PyModule_GetDict(modern_nassl_module), "SslError");
+    if (!nassl_SslError_Exception)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Could not import SslError from _nassl");
+        return 0;
+    }
+
+    nassl_WantWriteError_Exception = PyDict_GetItemString(PyModule_GetDict(modern_nassl_module), "WantWriteError");
+    if (!nassl_WantWriteError_Exception)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Could not import WantWriteError from _nassl");
+        return 0;
+    }
+
+    nassl_WantReadError_Exception = PyDict_GetItemString(PyModule_GetDict(modern_nassl_module), "WantReadError");
+    if (!nassl_WantReadError_Exception)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Could not import WantReadError from _nassl");
+        return 0;
+    }
+
+    nassl_WantX509LookupError_Exception = PyDict_GetItemString(PyModule_GetDict(modern_nassl_module), "WantX509LookupError");
+    if (!nassl_WantX509LookupError_Exception)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "Could not import WantX509LookupError from _nassl");
+        return 0;
+    }
+#else
+    // In the modern _nassl, we define these exceptions
+    nassl_OpenSSLError_Exception = PyErr_NewException("nassl._nassl.OpenSSLError", NULL, NULL);
     Py_INCREF(nassl_OpenSSLError_Exception);
     PyModule_AddObject(m, "OpenSSLError", nassl_OpenSSLError_Exception);
 
-    nassl_SslError_Exception = PyErr_NewException("_nassl.SslError", nassl_OpenSSLError_Exception, NULL);
+    nassl_SslError_Exception = PyErr_NewException("nassl._nassl.SslError", nassl_OpenSSLError_Exception, NULL);
     Py_INCREF(nassl_SslError_Exception);
     PyModule_AddObject(m, "SslError", nassl_SslError_Exception);
 
-    nassl_WantWriteError_Exception = PyErr_NewException("_nassl.WantWriteError", nassl_SslError_Exception, NULL);
+    nassl_WantWriteError_Exception = PyErr_NewException("nassl._nassl.WantWriteError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantWriteError_Exception);
     PyModule_AddObject(m, "WantWriteError", nassl_WantWriteError_Exception);
 
-    nassl_WantReadError_Exception = PyErr_NewException("_nassl.WantReadError", nassl_SslError_Exception, NULL);
+    nassl_WantReadError_Exception = PyErr_NewException("nassl._nassl.WantReadError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantReadError_Exception);
     PyModule_AddObject(m, "WantReadError", nassl_WantReadError_Exception);
 
-    nassl_WantX509LookupError_Exception = PyErr_NewException("_nassl.WantX509LookupError", nassl_SslError_Exception, NULL);
+    nassl_WantX509LookupError_Exception = PyErr_NewException("nassl._nassl.WantX509LookupError", nassl_SslError_Exception, NULL);
     Py_INCREF(nassl_WantX509LookupError_Exception);
     PyModule_AddObject(m, "WantX509LookupError", nassl_WantX509LookupError_Exception);
+#endif
+    return 1;
 }

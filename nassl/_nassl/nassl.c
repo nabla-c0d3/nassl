@@ -122,7 +122,10 @@ PyMODINIT_FUNC init_nassl(void)
         INITERROR;
     }
 
-    module_add_errors(module);
+    if (!module_add_errors(module))
+    {
+        INITERROR;
+    }
     module_add_SSL_CTX(module);
     module_add_SSL(module);
     module_add_BIO(module);
@@ -133,7 +136,7 @@ PyMODINIT_FUNC init_nassl(void)
     module_add_OCSP_RESPONSE(module);
 
     state = GETSTATE(module);
-    state->error = PyErr_NewException("_nassl.Error", NULL, NULL);
+    state->error = PyErr_NewException("nassl._nassl.Error", NULL, NULL);
     if (state->error == NULL)
     {
         Py_DECREF(module);
