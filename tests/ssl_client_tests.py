@@ -6,7 +6,7 @@ import unittest
 import socket
 import tempfile
 
-from nassl.debug_ssl_client import DebugSslClient
+from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum, \
     SslClient
 
@@ -14,7 +14,7 @@ from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, Ope
 class SslClientPrivateKeyTests(unittest.TestCase):
 
     def setUp(self):
-        self.ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
+        self.ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
 
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
         test_file.write("""-----BEGIN RSA PRIVATE KEY-----
@@ -97,8 +97,8 @@ class SslClientHandshakeTests(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                    ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                     ssl_verify=OpenSslVerifyEnum.NONE)
         self.ssl_client = ssl_client
 
     def test_do_handshake(self):
@@ -115,8 +115,8 @@ class SslClientOnlineTests(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                    ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                     ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
         ssl_client.do_handshake()
         self.ssl_client = ssl_client
@@ -156,8 +156,8 @@ class SslClientOnlineTests(unittest.TestCase):
         sock.settimeout(10)
         sock.connect(('auth.startssl.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                    ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                     ssl_verify=OpenSslVerifyEnum.NONE)
 
         self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
                                 ssl_client.do_handshake)
@@ -168,8 +168,8 @@ class SslClientOnlineTests(unittest.TestCase):
         sock.settimeout(10)
         sock.connect(('auth.startssl.com', 443))
 
-        ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                    ssl_verify=OpenSslVerifyEnum.NONE, ignore_client_authentication_requests=True)
+        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                     ssl_verify=OpenSslVerifyEnum.NONE, ignore_client_authentication_requests=True)
 
         ssl_client.do_handshake()
         self.assertGreater(len(ssl_client.get_client_CA_list()), 2)

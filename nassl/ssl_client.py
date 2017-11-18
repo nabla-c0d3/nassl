@@ -4,11 +4,12 @@ from __future__ import unicode_literals
 
 import socket
 
-import sys
-from nassl._nassl import SSL_CTX, SSL, BIO, WantReadError, OpenSSLError, X509, WantX509LookupError
+from nassl import _nassl
+from nassl import _nassl_legacy
+from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
 
 from enum import IntEnum
-from typing import List
+from typing import List, Union
 from typing import Optional
 from typing import Text
 from typing import Tuple
@@ -82,16 +83,15 @@ class SslClient(object):
             ignore_client_authentication_requests=False     # type: bool
     ):
         # type: (...) -> None
+        self._init_openssl_objects(underlying_socket, ssl_version, _nassl)
+        self._init_server_authentication(ssl_verify, ssl_verify_locations)
+        self._init_client_authentication(client_certchain_file, client_key_file, client_key_type,
+                                         client_key_password,ignore_client_authentication_requests)
 
-        # A Python socket handles transmission of the data
-        self._sock = underlying_socket
-        self._is_handshake_completed = False
-        self._ssl_version = ssl_version
-        self._client_CA_list = []
-
-        # OpenSSL objects
-        # SSL_CTX
-        self._ssl_ctx = SSL_CTX(ssl_version.value)
+    def _init_server_authentication(self, ssl_verify, ssl_verify_locations):
+        # type: (OpenSslVerifyEnum, Optional[Text]) -> None
+        """Setup the certificate validation logic for authenticating the server.
+        """
         self._ssl_ctx.set_verify(ssl_verify.value)
         if ssl_verify_locations:
             # Ensure the file exists
@@ -99,6 +99,17 @@ class SslClient(object):
                 pass
             self._ssl_ctx.load_verify_locations(ssl_verify_locations)
 
+    def _init_client_authentication(
+            self,
+            client_certchain_file,                  # type: Optional[Text]
+            client_key_file,                        # type: Optional[Text]
+            client_key_type,                        # type: OpenSslFileTypeEnum
+            client_key_password,                    # type: Text
+            ignore_client_authentication_requests   # type: bool
+    ):
+        """Setup client authentication using the supplied certificate and key.
+        """
+        # type: (...) -> None
         if client_certchain_file is not None:
             self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
 
@@ -108,24 +119,28 @@ class SslClient(object):
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
+    def _init_openssl_objects(self, underlying_socket, ssl_version, nassl_module):
+        # type: (socket.socket, OpenSslVersionEnum, Union[_nassl_legacy, _nassl]) -> None
+        # A Python socket handles transmission of the data
+        self._sock = underlying_socket
+        self._is_handshake_completed = False
+        self._ssl_version = ssl_version
+        self._client_CA_list = []
+
+        # OpenSSL objects
+        # SSL_CTX
+        self._ssl_ctx = nassl_module.SSL_CTX(ssl_version.value)
+
         # SSL
-        self._ssl = SSL(self._ssl_ctx)
+        self._ssl = nassl_module.SSL(self._ssl_ctx)
         self._ssl.set_connect_state()
-        # Specific servers do not reply to a client hello that is bigger than 255 bytes
-        # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
-        # So we make the default cipher list smaller (to make the client hello smaller)
-        if ssl_version != OpenSslVersionEnum.SSLV2:  # This makes SSLv2 fail
-            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
-        else:
-            # Handshake workaround for SSL2 + IIS 7
-            self.do_handshake = self.do_ssl2_iis_handshake
 
         # BIOs
-        self._internal_bio = BIO()
-        self._network_bio = BIO()
+        self._internal_bio = nassl_module.BIO()
+        self._network_bio = nassl_module.BIO()
 
         # http://www.openssl.org/docs/crypto/BIO_s_bio.html
-        BIO.make_bio_pair(self._internal_bio, self._network_bio)
+        nassl_module.BIO.make_bio_pair(self._internal_bio, self._network_bio)
         self._ssl.set_bio(self._internal_bio)
 
     def set_underlying_socket(self, sock):
@@ -155,77 +170,6 @@ class SslClient(object):
                 self._flush_ssl_engine()
 
                 # Recover the peer's encrypted response
-                handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
-                if len(handshake_data_in) == 0:
-                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
-                # Pass the data to the SSL engine
-                self._network_bio.write(handshake_data_in)
-
-            except WantX509LookupError:
-                # Server asked for a client certificate and we didn't provide one
-                raise ClientCertificateRequested(self.get_client_CA_list())
-
-    # TODO(AD): Allow the handshake method to be overridden instead of this
-    def do_ssl2_iis_handshake(self):
-        # type: () -> None
-        if self._sock is None:
-            # TODO: Auto create a socket ?
-            raise IOError('Internal socket set to None; cannot perform handshake.')
-
-        while True:
-            try:
-                self._ssl.do_handshake()
-                self._is_handshake_completed = True
-                # Handshake was successful
-                return
-
-            except WantReadError:
-                # OpenSSL is expecting more data from the peer
-                # Send available handshake data to the peer
-                lengh_to_read = self._network_bio.pending()
-                while lengh_to_read:
-                    # Get the data from the SSL engine
-                    handshake_data_out = self._network_bio.read(lengh_to_read)
-
-                    if 'SSLv2 read server verify A' in self._ssl.state_string_long():
-                        # Awful h4ck for SSLv2 when connecting to IIS7 (like in the 90s)
-                        # OpenSSL sends the client's CMK and data message in the same packet without
-                        # waiting for the server's response, causing IIS 7 to hang on the connection.
-                        # This workaround forces our client to send the CMK message, then wait for the server's
-                        # response, and then send the data packet
-                        #if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
-                        message_type = handshake_data_out[2]
-                        IS_PYTHON_2 = sys.version_info < (3, 0)
-                        if IS_PYTHON_2:
-                            message_type = ord(message_type)
-
-                        if message_type == 2:  # Make sure we're looking at the CMK message
-                            # cmk_size = handshake_data_out[0:2]
-                            if IS_PYTHON_2:
-                                first_byte = ord(handshake_data_out[0])
-                                second_byte = ord(handshake_data_out[1])
-                            else:
-                                first_byte = int(handshake_data_out[0])
-                                second_byte = int(handshake_data_out[1])
-                            first_byte = (first_byte & 0x7f) << 8
-                            size = first_byte + second_byte
-                            # Manually split the two records to force them to be sent separately
-                            cmk_packet = handshake_data_out[0:size+2]
-                            data_packet = handshake_data_out[size+2::]
-                            self._sock.send(cmk_packet)
-
-                            handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
-                            # print repr(handshake_data_in)
-                            if len(handshake_data_in) == 0:
-                                raise IOError('Nassl SSL handshake failed: peer did not send data back.')
-                            # Pass the data to the SSL engine
-                            self._network_bio.write(handshake_data_in)
-                            handshake_data_out = data_packet
-
-                    # Send it to the peer
-                    self._sock.send(handshake_data_out)
-                    lengh_to_read = self._network_bio.pending()
-
                 handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
                     raise IOError('Nassl SSL handshake failed: peer did not send data back.')
@@ -385,3 +329,21 @@ class SslClient(object):
         if not self._client_CA_list:
             self._client_CA_list = self._ssl.get_client_CA_list()
         return self._client_CA_list
+
+    def get_session(self):
+        # type: () -> _nassl.SSL_SESSION
+        """Get the SSL connection's Session object.
+        """
+        return self._ssl.get_session()
+
+    def set_session(self, ssl_session):
+        # type: (_nassl.SSL_SESSION) -> None
+        """Set the SSL connection's Session object.
+        """
+        self._ssl.set_session(ssl_session)
+
+    _SSL_OP_NO_TICKET = 0x00004000  # No TLS Session tickets
+
+    def disable_stateless_session_resumption(self):
+        # type: () -> None
+        self._ssl.set_options(self._SSL_OP_NO_TICKET)
