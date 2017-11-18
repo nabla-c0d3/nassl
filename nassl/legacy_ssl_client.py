@@ -9,8 +9,8 @@ from typing import Optional
 from typing import Text
 
 
-class DebugSslClient(SslClient):
-    """An SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
+class LegacySslClient(SslClient):
+    """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
     """
 
     def get_secure_renegotiation_support(self):
