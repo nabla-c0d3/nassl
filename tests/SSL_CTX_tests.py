@@ -11,7 +11,7 @@ from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileT
 class Common_SSL_CTX_Tests(unittest.TestCase):
 
     # To be set in subclasses
-    _SSL_CTX_CLS = None
+    _NASSL_MODULE = None
 
     @classmethod
     def setUpClass(cls):
@@ -20,23 +20,23 @@ class Common_SSL_CTX_Tests(unittest.TestCase):
         super(Common_SSL_CTX_Tests, cls).setUpClass()
 
     def test_new(self):
-        self.assertTrue(self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value))
+        self.assertTrue(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
 
     def test_new_bad(self):
         # Invalid protocol constant
-        self.assertRaises(ValueError, self._SSL_CTX_CLS, (1234))
+        self.assertRaises(ValueError, self._NASSL_MODULE.SSL_CTX, (1234))
 
     def test_set_verify(self):
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         self.assertIsNone(test_ssl_ctx.set_verify(OpenSslVerifyEnum.PEER.value))
 
     def test_set_verify_bad(self):
         # Invalid verify constant
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         self.assertRaises(ValueError, test_ssl_ctx.set_verify, (1235))
 
     def test_load_verify_locations(self):
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
         test_file.write("""-----BEGIN CERTIFICATE-----
 MIIDIDCCAomgAwIBAgIENd70zzANBgkqhkiG9w0BAQUFADBOMQswCQYDVQQGEwJV
@@ -62,18 +62,18 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
 
     def test_load_verify_locations_bad(self):
         # Certificate file doesn't exist
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         self.assertRaises(_nassl.OpenSSLError, test_ssl_ctx.load_verify_locations, 'tests')
 
     def test_set_private_key_password_null_byte(self):
         # NULL byte embedded in the password
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         # It raises a TypeError on Python 2.7 and 3.4, and a ValueError on 3.5
         self.assertRaisesRegexp(Exception, ' null', test_ssl_ctx.set_private_key_password, ('AAA\x00AAAA'))
 
 
     def test_use_certificate_file(self):
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
         test_file.write("""-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
@@ -118,13 +118,13 @@ Pd2eQ9+DkopOz3UGU7c=
 
     def test_use_certificate_file_bad(self):
         # Bad filename
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'system lib', test_ssl_ctx.use_certificate_chain_file,
                                 'invalidPath')
 
 
     def test_use_PrivateKey_file(self):
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
         test_file.write("""-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOWe8/WW1U7wkM1P
@@ -147,13 +147,13 @@ jsXbhxAIkrdmpg==
 
     def test_use_PrivateKey_file_bad(self):
         # Bad filename
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'No such file', test_ssl_ctx.use_PrivateKey_file, 'invalidPath',
                                 OpenSslFileTypeEnum.PEM.value)
 
 
     def test_check_private_key(self):
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
         test_file.write("""-----BEGIN PRIVATE KEY-----
 MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOWe8/WW1U7wkM1P
@@ -218,16 +218,14 @@ Pd2eQ9+DkopOz3UGU7c=
 
 
     def test_check_private_key_bad(self):
-        test_ssl_ctx = self._SSL_CTX_CLS(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'no certificate assigned', test_ssl_ctx.check_private_key)
 
     # TODO: add get_ca_list tests
 
 
 class Modern_SSL_CTX_Tests(Common_SSL_CTX_Tests):
-
-    # Run the test cases with the modern implementation
-    _SSL_CTX_CLS = _nassl.SSL_CTX
+    _NASSL_MODULE = _nassl
 
     def test_tlsv1_3(self):
         ssl_ctx = _nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
@@ -235,9 +233,7 @@ class Modern_SSL_CTX_Tests(Common_SSL_CTX_Tests):
 
 
 class Legacy_SSL_CTX_Tests(Common_SSL_CTX_Tests):
-
-    # Run the test cases with the legacy implementation
-    _SSL_CTX_CLS = _nassl_legacy.SSL_CTX
+    _NASSL_MODULE = _nassl_legacy
 
 
 def main():

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import unittest
 from nassl import _nassl_legacy
 from nassl import _nassl
+from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 import socket
 
@@ -23,6 +24,7 @@ class Common_X509_EXTENSION_Tests(unittest.TestCase):
     def test_new_bad(self):
         self.assertRaises(NotImplementedError, self._NASSL_MODULE.X509_EXTENSION, (None))
 
+
 class Modern_X509_EXTENSION_Tests(Common_X509_EXTENSION_Tests):
     _NASSL_MODULE = _nassl_legacy
 
@@ -34,7 +36,7 @@ class Legacy_X509_EXTENSION_Tests(Common_X509_EXTENSION_Tests):
 class Common_X509_EXTENSION_Tests_Online(unittest.TestCase):
 
     # To be set in subclasses
-    _NASSL_MODULE = None
+    _SSL_CLIENT_CLS = None
 
     @classmethod
     def setUpClass(cls):
@@ -47,7 +49,7 @@ class Common_X509_EXTENSION_Tests_Online(unittest.TestCase):
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        sslClient = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        sslClient = self._SSL_CLIENT_CLS(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         sslClient.do_handshake()
         x509ext = sslClient.get_peer_certificate().get_extensions()[0]
 
@@ -57,11 +59,11 @@ class Common_X509_EXTENSION_Tests_Online(unittest.TestCase):
 
 
 class Legacy_X509_EXTENSION_Tests_Online(Common_X509_EXTENSION_Tests_Online):
-    _NASSL_MODULE = _nassl_legacy
+    _SSL_CLIENT_CLS = LegacySslClient
 
 
 class Modern_X509_EXTENSION_Tests_Online(Common_X509_EXTENSION_Tests_Online):
-    _NASSL_MODULE = _nassl
+    _SSL_CLIENT_CLS = SslClient
 
 
 def main():
