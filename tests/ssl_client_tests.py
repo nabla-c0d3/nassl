@@ -11,7 +11,16 @@ from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, Ope
     SslClient
 
 
-class SslClientPrivateKeyTests(unittest.TestCase):
+class CommonSslClientPrivateKeyTests(unittest.TestCase):
+
+    # To be defined in subclasses
+    _SSL_CLIENT_CLS = None
+
+    @classmethod
+    def setUpClass(cls):
+        if cls is CommonSslClientPrivateKeyTests:
+            raise unittest.SkipTest("Skip tests, it's a base class")
+        super(CommonSslClientPrivateKeyTests, cls).setUpClass()
 
     def setUp(self):
         self.ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
@@ -79,36 +88,33 @@ Pd2eQ9+DkopOz3UGU7c=
         test_file2.close()
         self.testFile2 = test_file2
 
-
     def test_use_private_key(self):
         self.assertIsNone(self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name,
                                                            OpenSslFileTypeEnum.PEM, 'testPW'))
-
 
     def test_use_private_key_bad(self):
         with self.assertRaises(ValueError):
             self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, OpenSslFileTypeEnum.PEM, 'bad')
 
 
-class SslClientHandshakeTests(unittest.TestCase):
-
-    def setUp(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect(('www.google.com', 443))
-
-        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                     ssl_verify=OpenSslVerifyEnum.NONE)
-        self.ssl_client = ssl_client
-
-    def test_do_handshake(self):
-        self.ssl_client.do_handshake()
-
-    def test_do_ssl2_iis_handshake(self):
-        self.ssl_client.do_ssl2_iis_handshake()
+class ModernSslClientPrivateKeyTests(CommonSslClientPrivateKeyTests):
+    _SSL_CLIENT_CLS = SslClient
 
 
-class SslClientOnlineTests(unittest.TestCase):
+class LegacySslClientPrivateKeyTests(CommonSslClientPrivateKeyTests):
+    _SSL_CLIENT_CLS = LegacySslClient
+
+
+class CommonSslClientOnlineTests(unittest.TestCase):
+
+    # To be defined in subclasses
+    _SSL_CLIENT_CLS = None
+
+    @classmethod
+    def setUpClass(cls):
+        if cls is CommonSslClientPrivateKeyTests:
+            raise unittest.SkipTest("Skip tests, it's a base class")
+        super(CommonSslClientOnlineTests, cls).setUpClass()
 
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -175,7 +181,20 @@ class SslClientOnlineTests(unittest.TestCase):
         self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
 
 
-class SslClientOnlineTls13Tests(unittest.TestCase):
+class ModernSslClientOnlineTests(CommonSslClientOnlineTests):
+
+    _SSL_CLIENT_CLS = SslClient
+
+
+class LegacySslClientOnlineTests(CommonSslClientOnlineTests):
+
+    _SSL_CLIENT_CLS = LegacySslClient
+
+    def test_do_ssl2_iis_handshake(self):
+        self.ssl_client.do_ssl2_iis_handshake()
+
+
+class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
     def test_tls_1_3(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -183,10 +202,7 @@ class SslClientOnlineTls13Tests(unittest.TestCase):
         sock.connect(('tls13.crypto.mozilla.org', 443))
         ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
                                ssl_verify=OpenSslVerifyEnum.NONE)
-
-        ssl_client.do_handshake()
-        self.assertTrue(ssl_client.get_peer_certificate())
-        sock.close()
+        self.assertTrue(ssl_client)
 
 
 def main():
