@@ -9,7 +9,7 @@ from nassl import _nassl
 import socket
 import tempfile
 
-from nassl.ocsp_response import OcspResponseNotTrustedError
+from nassl.ocsp_response import OcspResponseNotTrustedError, OcspResponseStatusEnum
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
@@ -30,6 +30,7 @@ class OcspResponseOnlineTests(unittest.TestCase):
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
+        self.assertEqual(ocsp_response.status, OcspResponseStatusEnum.SUCCESSFUL)
 
         # Test as_text()
         self.assertIsNotNone(ocsp_response.as_text())
