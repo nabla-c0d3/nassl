@@ -177,7 +177,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
 
 // Generic function to extract the list of X509_NAME_ENTRY from an X509_NAME.
 // Used to get the subject name entries and the issuer name entries. Returns a Python list
-static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a), nassl_X509_Object *self)
+static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(const X509 *a), nassl_X509_Object *self)
 {
     unsigned int i=0;
     X509_NAME * x509Name = NULL;
@@ -227,13 +227,13 @@ static PyObject* generic_get_name_entries(X509_NAME * (*X509GetNameFunc)(X509 *a
 
 static PyObject* nassl_X509_get_issuer_name_entries(nassl_X509_Object *self, PyObject *args)
 {
-    return generic_get_name_entries(&X509_get_issuer_name, self);
+    return generic_get_name_entries((X509_NAME * (*)(const X509 *))&X509_get_issuer_name, self);
 }
 
 
 static PyObject* nassl_X509_get_subject_name_entries(nassl_X509_Object *self, PyObject *args)
 {
-    return generic_get_name_entries(&X509_get_subject_name, self);
+    return generic_get_name_entries((X509_NAME * (*)(const X509 *))&X509_get_subject_name, self);
 }
 
 

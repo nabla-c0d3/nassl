@@ -56,7 +56,13 @@ static int nassl_clear(PyObject *m)
 static struct PyModuleDef moduledef =
 {
         PyModuleDef_HEAD_INIT,
+
+#ifdef LEGACY_OPENSSL
+        "_nassl_legacy",
+#else
         "_nassl",
+#endif
+
         NULL,
         sizeof(struct module_state),
         nassl_methods,
@@ -115,7 +121,13 @@ PyMODINIT_FUNC init_nassl(void)
 #if PY_MAJOR_VERSION >= 3
     module = PyModule_Create(&moduledef);
 #else
-    module = Py_InitModule3("_nassl", nassl_methods, "Nassl internal module.");
+
+#ifdef LEGACY_OPENSSL
+    module = Py_InitModule3("_nassl_legacy", nassl_methods, "Nassl legacy implementation");
+#else
+    module = Py_InitModule3("_nassl", nassl_methods, "Nassl modern implementation");
+#endif
+
 #endif
     if (module == NULL)
     {
