@@ -41,18 +41,23 @@ On Windows, a "Platform Wheel" can be built using:
 If you do not want to use the pre-compiled binaries, compiling the C extension requires successively building:
 
 * [Zlib 1.2.11](http://zlib.net/zlib-1.2.11.tar.gz)
-* A [special fork of OpenSSL 1.0.2](https://github.com/PeterMosmans/openssl) which enables additional features (such as
-the ChaCha20 cipher suites), or the official OpenSSL 1.0.2e.
-* The `_nassl` C extension itself
+* [OpenSSL 1.0.2e](https://ftp.openssl.org/source/old/1.0.2/openssl-1.0.2e.tar.gz)
+* [OpenSSL tls1.3-draft-18](https://github.com/openssl/openssl/tree/tls1.3-draft-18)
+* The `_nassl` and `_nassl_legacy` C extensions
 
 The whole build process is all taken care of by the _build\_from\_scratch.py_ script:
 
     git clone https://github.com/nabla-c0d3/nassl.git
     cd nassl
-    pip install -r requirements.txt --target ./lib
+    pip install -r requirements.txt
     wget http://zlib.net/zlib-1.2.11.tar.gz
     tar xvfz  zlib-1.2.11.tar.gz
-    git clone https://github.com/PeterMosmans/openssl
+    wget https://ftp.openssl.org/source/old/1.0.2/openssl-1.0.2e.tar.gz
+    tar xvfz openssl-1.0.2e.tar.gz
+    git clone https://github.com/openssl/openssl.git ./openssl-tls1.3-draft-18
+    cd openssl-tls1.3-draft-18
+    git checkout tls1.3-draft-18
+    cd ..
     python build_from_scratch.py
 
 For Windows builds, Visual Studio is expected to be installed at the default location.
