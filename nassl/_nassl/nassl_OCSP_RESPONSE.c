@@ -125,7 +125,7 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
 }
 
 
-static void nassl_OCSP_RESPONSE_status(nassl_OCSP_RESPONSE_Object *self)
+static PyObject* nassl_OCSP_RESPONSE_status(nassl_OCSP_RESPONSE_Object *self)
 {
     int status = OCSP_response_status(self->ocspResp);
     return Py_BuildValue("I", status);
