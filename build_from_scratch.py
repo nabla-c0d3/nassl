@@ -71,7 +71,7 @@ def build_legacy_openssl():
             raise ValueError('Unkown platform')
 
         build_tasks = [
-            OPENSSL_CONF_CMD(target=openssl_target, install_path=LEGACY_OPENSSL_HEADERS_INSTALL_PATH, zlib_path=ZLIB_PATH,
+            OPENSSL_CONF_CMD(target=openssl_target, install_path=LEGACY_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                              zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -fPIC'),
             'make clean',
             'make depend',
@@ -117,9 +117,9 @@ def build_modern_openssl():
             OPENSSL_CONF_CMD(target=openssl_target, install_path=MODERN_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                              zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
             'nmake',
-            # TODO(AD): The tests are failing on openssl-master; re-enable them once 1.1.1 is released
+            # TODO(AD): The tests are failing on openssl-tls1.3-draft-18; re-enable them once 1.1.1 is released
             #'nmake test',
-            'nmake install',
+            'nmake install_sw',  # Don't build documentation and all the other stuff
         ]
     else:
         if CURRENT_PLATFORM == SupportedPlatformEnum.OSX_64:
@@ -137,7 +137,8 @@ def build_modern_openssl():
             'make clean',
             'make depend',
             'make',
-            'make test',
+            # TODO(AD): The tests are failing on openssl-tls1.3-draft-18; re-enable them once 1.1.1 is released
+            # 'make test',
             'make install_sw',  # Don't build documentation, else will fail on Debian
         ]
 
@@ -160,10 +161,6 @@ def build_modern_openssl():
     # Erase everything else
     shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'lib'))
     shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'bin'))
-    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'certs'))
-    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'html'))
-    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'misc'))
-    shutil.rmtree(join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'private'))
 
 
 def main():

@@ -4,13 +4,14 @@ from __future__ import absolute_import
 
 import os
 import sys
-from os import getcwd
 from os.path import join
 from platform import architecture
 from sys import platform
 from nassl import __author__, __version__
 from setuptools import setup, Extension
 
+
+_ROOT_BUILD_PATH = os.path.join(os.path.dirname(__file__), 'bin')
 
 # TODO(AD): Switch to an enum after dropping support for Python 2
 class SupportedPlatformEnum(object):
@@ -42,38 +43,38 @@ elif architecture()[0] == '32bit':
 
 LEGACY_OPENSSL_INSTALL_PATH_DICT = {
     # Need full paths (hence the getcwd()) as they get passed to OpenSSL in build_from_scratch.py
-    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'openssl-legacy', 'darwin64'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'openssl-legacy', 'linux64'),
-    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl-legacy', 'linux32'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl-legacy', 'win32'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl-legacy', 'win64'),
-    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'openssl-legacy', 'openbsd64'),
+    SupportedPlatformEnum.OSX_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'darwin64'),
+    SupportedPlatformEnum.LINUX_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'linux64'),
+    SupportedPlatformEnum.LINUX_32: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'linux32'),
+    SupportedPlatformEnum.WINDOWS_32: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'win32'),
+    SupportedPlatformEnum.WINDOWS_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'win64'),
+    SupportedPlatformEnum.OPENBSD_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'openbsd64'),
 }
 
 MODERN_OPENSSL_INSTALL_PATH_DICT = {
-    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'openssl-modern', 'darwin64'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'openssl-modern', 'linux64'),
-    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl-modern', 'linux32'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl-modern', 'win32'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl-modern', 'win64'),
-    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'openssl-modern', 'openbsd64'),
+    SupportedPlatformEnum.OSX_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'darwin64'),
+    SupportedPlatformEnum.LINUX_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'linux64'),
+    SupportedPlatformEnum.LINUX_32: join(_ROOT_BUILD_PATH, 'openssl-modern', 'linux32'),
+    SupportedPlatformEnum.WINDOWS_32: join(_ROOT_BUILD_PATH, 'openssl-modern', 'win32'),
+    SupportedPlatformEnum.WINDOWS_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'win64'),
+    SupportedPlatformEnum.OPENBSD_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'openbsd64'),
 }
 
 ZLIB_INSTALL_PATH_DICT = {
-    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'zlib', 'darwin64', 'libz.a'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'zlib', 'linux64', 'libz.a'),
-    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'zlib', 'linux32', 'libz.a'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'zlib', 'win32', 'zlibstat.lib'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'zlib', 'win64', 'zlibstat.lib'),
-    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'zlib', 'openbsd64', 'libz.a'),
+    SupportedPlatformEnum.OSX_64: join(_ROOT_BUILD_PATH, 'zlib', 'darwin64', 'libz.a'),
+    SupportedPlatformEnum.LINUX_64: join(_ROOT_BUILD_PATH, 'zlib', 'linux64', 'libz.a'),
+    SupportedPlatformEnum.LINUX_32: join(_ROOT_BUILD_PATH, 'zlib', 'linux32', 'libz.a'),
+    SupportedPlatformEnum.WINDOWS_32: join(_ROOT_BUILD_PATH, 'zlib', 'win32', 'zlibstat.lib'),
+    SupportedPlatformEnum.WINDOWS_64: join(_ROOT_BUILD_PATH, 'zlib', 'win64', 'zlibstat.lib'),
+    SupportedPlatformEnum.OPENBSD_64: join(_ROOT_BUILD_PATH, 'zlib', 'openbsd64', 'libz.a'),
 }
 
 
 LEGACY_OPENSSL_LIB_INSTALL_PATH = LEGACY_OPENSSL_INSTALL_PATH_DICT[CURRENT_PLATFORM]
-LEGACY_OPENSSL_HEADERS_INSTALL_PATH = join('bin', 'openssl-legacy', 'include')
+LEGACY_OPENSSL_HEADERS_INSTALL_PATH = join(_ROOT_BUILD_PATH, 'openssl-legacy', 'include')
 
 MODERN_OPENSSL_LIB_INSTALL_PATH = MODERN_OPENSSL_INSTALL_PATH_DICT[CURRENT_PLATFORM]
-MODERN_OPENSSL_HEADERS_INSTALL_PATH = join('bin', 'openssl-modern', 'include')
+MODERN_OPENSSL_HEADERS_INSTALL_PATH = join(_ROOT_BUILD_PATH, 'openssl-modern', 'include')
 
 ZLIB_LIB_INSTALL_PATH = ZLIB_INSTALL_PATH_DICT[CURRENT_PLATFORM]
 
@@ -120,6 +121,7 @@ else:
 
 LEGACY_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
 LEGACY_NASSL_EXT_SETUP['name'] = 'nassl._nassl_legacy'
+LEGACY_NASSL_EXT_SETUP['define_macros'] = [('LEGACY_OPENSSL', '1')]
 
 MODERN_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
 MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl'
@@ -131,7 +133,6 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
         'extra_objects': [ZLIB_LIB_INSTALL_PATH,
                           join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib'),
                           join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib')],
-        'define_macros': [('LEGACY_OPENSSL', '1')]
     })
 
     MODERN_NASSL_EXT_SETUP.update({
