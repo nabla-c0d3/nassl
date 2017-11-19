@@ -54,10 +54,7 @@ The whole build process is all taken care of by the _build\_from\_scratch.py_ sc
     tar xvfz  zlib-1.2.11.tar.gz
     wget https://ftp.openssl.org/source/old/1.0.2/openssl-1.0.2e.tar.gz
     tar xvfz openssl-1.0.2e.tar.gz
-    git clone https://github.com/openssl/openssl.git ./openssl-tls1.3-draft-18
-    cd openssl-tls1.3-draft-18
-    git checkout tls1.3-draft-18
-    cd ..
+    git clone -b tls1.3-draft-18 https://github.com/openssl/openssl.git ./openssl-tls1.3-draft-18
     python build_from_scratch.py
 
 For Windows builds, Visual Studio is expected to be installed at the default location.
