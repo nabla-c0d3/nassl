@@ -56,7 +56,13 @@ static int nassl_clear(PyObject *m)
 static struct PyModuleDef moduledef =
 {
         PyModuleDef_HEAD_INIT,
+
+#ifdef LEGACY_OPENSSL
+        "_nassl_legacy",
+#else
         "_nassl",
+#endif
+
         NULL,
         sizeof(struct module_state),
         nassl_methods,
@@ -81,9 +87,21 @@ static struct PyModuleDef moduledef =
 
 
 #if PY_MAJOR_VERSION >= 3
+
+#ifdef LEGACY_OPENSSL
+PyMODINIT_FUNC PyInit__nassl_legacy(void)
+#else
 PyMODINIT_FUNC PyInit__nassl(void)
+#endif
+
+#else
+
+#ifdef LEGACY_OPENSSL
+PyMODINIT_FUNC init_nassl_legacy(void)
 #else
 PyMODINIT_FUNC init_nassl(void)
+#endif
+
 #endif
 {
     PyObject* module;
@@ -103,14 +121,23 @@ PyMODINIT_FUNC init_nassl(void)
 #if PY_MAJOR_VERSION >= 3
     module = PyModule_Create(&moduledef);
 #else
-    module = Py_InitModule3("_nassl", nassl_methods, "Nassl internal module.");
+
+#ifdef LEGACY_OPENSSL
+    module = Py_InitModule3("_nassl_legacy", nassl_methods, "Nassl legacy implementation");
+#else
+    module = Py_InitModule3("_nassl", nassl_methods, "Nassl modern implementation");
+#endif
+
 #endif
     if (module == NULL)
     {
         INITERROR;
     }
 
-    module_add_errors(module);
+    if (!module_add_errors(module))
+    {
+        INITERROR;
+    }
     module_add_SSL_CTX(module);
     module_add_SSL(module);
     module_add_BIO(module);
@@ -121,7 +148,7 @@ PyMODINIT_FUNC init_nassl(void)
     module_add_OCSP_RESPONSE(module);
 
     state = GETSTATE(module);
-    state->error = PyErr_NewException("_nassl.Error", NULL, NULL);
+    state->error = PyErr_NewException("nassl._nassl.Error", NULL, NULL);
     if (state->error == NULL)
     {
         Py_DECREF(module);

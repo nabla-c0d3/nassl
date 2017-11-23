@@ -4,7 +4,6 @@ from __future__ import absolute_import
 
 import os
 import sys
-from os import getcwd
 from os.path import join
 from platform import architecture
 from sys import platform
@@ -12,6 +11,9 @@ from nassl import __author__, __version__
 from setuptools import setup, Extension
 
 
+_ROOT_BUILD_PATH = os.path.join(os.path.dirname(__file__), 'bin')
+
+# TODO(AD): Switch to an enum after dropping support for Python 2
 class SupportedPlatformEnum(object):
     """Platforms supported by nassl.
     """
@@ -39,29 +41,41 @@ elif architecture()[0] == '32bit':
     elif platform == 'win32':
         CURRENT_PLATFORM = SupportedPlatformEnum.WINDOWS_32
 
-
-OPENSSL_INSTALL_PATH_DICT = {
+LEGACY_OPENSSL_INSTALL_PATH_DICT = {
     # Need full paths (hence the getcwd()) as they get passed to OpenSSL in build_from_scratch.py
-    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'openssl', 'darwin64'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'openssl', 'linux64'),
-    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'openssl', 'linux32'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'openssl', 'win32'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'openssl', 'win64'),
-    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'openssl', 'openbsd64'),
+    SupportedPlatformEnum.OSX_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'darwin64'),
+    SupportedPlatformEnum.LINUX_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'linux64'),
+    SupportedPlatformEnum.LINUX_32: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'linux32'),
+    SupportedPlatformEnum.WINDOWS_32: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'win32'),
+    SupportedPlatformEnum.WINDOWS_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'win64'),
+    SupportedPlatformEnum.OPENBSD_64: join(_ROOT_BUILD_PATH, 'openssl-legacy', 'openbsd64'),
+}
+
+MODERN_OPENSSL_INSTALL_PATH_DICT = {
+    SupportedPlatformEnum.OSX_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'darwin64'),
+    SupportedPlatformEnum.LINUX_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'linux64'),
+    SupportedPlatformEnum.LINUX_32: join(_ROOT_BUILD_PATH, 'openssl-modern', 'linux32'),
+    SupportedPlatformEnum.WINDOWS_32: join(_ROOT_BUILD_PATH, 'openssl-modern', 'win32'),
+    SupportedPlatformEnum.WINDOWS_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'win64'),
+    SupportedPlatformEnum.OPENBSD_64: join(_ROOT_BUILD_PATH, 'openssl-modern', 'openbsd64'),
 }
 
 ZLIB_INSTALL_PATH_DICT = {
-    SupportedPlatformEnum.OSX_64: join(getcwd(), 'bin', 'zlib', 'darwin64', 'libz.a'),
-    SupportedPlatformEnum.LINUX_64: join(getcwd(), 'bin', 'zlib', 'linux64', 'libz.a'),
-    SupportedPlatformEnum.LINUX_32: join(getcwd(), 'bin', 'zlib', 'linux32', 'libz.a'),
-    SupportedPlatformEnum.WINDOWS_32: join(getcwd(), 'bin', 'zlib', 'win32', 'zlibstat.lib'),
-    SupportedPlatformEnum.WINDOWS_64: join(getcwd(), 'bin', 'zlib', 'win64', 'zlibstat.lib'),
-    SupportedPlatformEnum.OPENBSD_64: join(getcwd(), 'bin', 'zlib', 'openbsd64', 'libz.a'),
+    SupportedPlatformEnum.OSX_64: join(_ROOT_BUILD_PATH, 'zlib', 'darwin64', 'libz.a'),
+    SupportedPlatformEnum.LINUX_64: join(_ROOT_BUILD_PATH, 'zlib', 'linux64', 'libz.a'),
+    SupportedPlatformEnum.LINUX_32: join(_ROOT_BUILD_PATH, 'zlib', 'linux32', 'libz.a'),
+    SupportedPlatformEnum.WINDOWS_32: join(_ROOT_BUILD_PATH, 'zlib', 'win32', 'zlibstat.lib'),
+    SupportedPlatformEnum.WINDOWS_64: join(_ROOT_BUILD_PATH, 'zlib', 'win64', 'zlibstat.lib'),
+    SupportedPlatformEnum.OPENBSD_64: join(_ROOT_BUILD_PATH, 'zlib', 'openbsd64', 'libz.a'),
 }
 
 
-OPENSSL_LIB_INSTALL_PATH = OPENSSL_INSTALL_PATH_DICT[CURRENT_PLATFORM]
-OPENSSL_HEADERS_INSTALL_PATH = join('bin', 'openssl', 'include')
+LEGACY_OPENSSL_LIB_INSTALL_PATH = LEGACY_OPENSSL_INSTALL_PATH_DICT[CURRENT_PLATFORM]
+LEGACY_OPENSSL_HEADERS_INSTALL_PATH = join(_ROOT_BUILD_PATH, 'openssl-legacy', 'include')
+
+MODERN_OPENSSL_LIB_INSTALL_PATH = MODERN_OPENSSL_INSTALL_PATH_DICT[CURRENT_PLATFORM]
+MODERN_OPENSSL_HEADERS_INSTALL_PATH = join(_ROOT_BUILD_PATH, 'openssl-modern', 'include')
+
 ZLIB_LIB_INSTALL_PATH = ZLIB_INSTALL_PATH_DICT[CURRENT_PLATFORM]
 
 
@@ -69,7 +83,7 @@ NASSL_SETUP = {
     'name': "nassl",
     'version': __version__,
     'package_dir': {'nassl': 'nassl'},
-    'py_modules': ['nassl.__init__', 'nassl.ssl_client', 'nassl.debug_ssl_client',
+    'py_modules': ['nassl.__init__', 'nassl.ssl_client', 'nassl.legacy_ssl_client',
                    'nassl.ocsp_response'],
     'description': 'Experimental OpenSSL wrapper for Python 2.7 / 3.3+ and SSLyze.',
     'extras_require': {':python_version < "3.4"': ['enum34'],
@@ -82,8 +96,10 @@ NASSL_SETUP = {
     'tests_require': ['nose'],
 }
 
-NASSL_EXT_SETUP = {
-    'name': "nassl._nassl",
+# There are two native extensions: the "legacy" OpenSSL one and the "modern" OpenSSL one
+BASE_NASSL_EXT_SETUP = {
+    'extra_compile_args': [],
+    'extra_link_args': [],
     'sources': ["nassl/_nassl/nassl.c", "nassl/_nassl/nassl_SSL_CTX.c", "nassl/_nassl/nassl_SSL.c",
                 "nassl/_nassl/nassl_X509.c", "nassl/_nassl/nassl_errors.c", "nassl/_nassl/nassl_BIO.c",
                 "nassl/_nassl/nassl_X509_EXTENSION.c", "nassl/_nassl/nassl_X509_NAME_ENTRY.c",
@@ -91,38 +107,58 @@ NASSL_EXT_SETUP = {
                 "nassl/_nassl/nassl_OCSP_RESPONSE.c", "nassl/_nassl/python_utils.c"],
 }
 
-
 if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
-    # Add arguments specific to Windows builds
-    # Visual Studio is expected to be in the default folder
-    WIN_VISUAL_STUDIO_PATH = 'C:\\Program Files (x86)\\Microsoft Visual Studio 9.0\\VC\\'
-    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-        WIN_VISUAL_STUDIO_LIB_PATH = join(WIN_VISUAL_STUDIO_PATH, 'lib')
-    else:
-        WIN_VISUAL_STUDIO_LIB_PATH = join(WIN_VISUAL_STUDIO_PATH, 'lib', 'amd64')
-
     # Build using the Python that was used to run this script; will not work for cross-compiling
     PYTHON_LIBS_PATH = join(os.path.dirname(sys.executable), 'libs')
 
-    NASSL_EXT_SETUP.update({
-        'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join(WIN_VISUAL_STUDIO_PATH, 'include')],
-        'library_dirs': [PYTHON_LIBS_PATH, WIN_VISUAL_STUDIO_LIB_PATH],
-        'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32'],
-        'extra_objects': [ZLIB_LIB_INSTALL_PATH, join(OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib'),
-                          join(OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib')]
+    BASE_NASSL_EXT_SETUP.update({
+        'library_dirs': [PYTHON_LIBS_PATH],
+        'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32', 'crypt32',]
+    })
+else:
+    BASE_NASSL_EXT_SETUP['extra_compile_args'].append('-Wall')
+
+
+LEGACY_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
+LEGACY_NASSL_EXT_SETUP['name'] = 'nassl._nassl_legacy'
+LEGACY_NASSL_EXT_SETUP['define_macros'] = [('LEGACY_OPENSSL', '1')]
+
+MODERN_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
+MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl'
+
+
+if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+    LEGACY_NASSL_EXT_SETUP.update({
+        'include_dirs': [LEGACY_OPENSSL_HEADERS_INSTALL_PATH],
+        'extra_objects': [ZLIB_LIB_INSTALL_PATH,
+                          join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'libeay32.lib'),
+                          join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'ssleay32.lib')],
+    })
+
+    MODERN_NASSL_EXT_SETUP.update({
+        'include_dirs': [MODERN_OPENSSL_HEADERS_INSTALL_PATH],
+        'extra_objects': [ZLIB_LIB_INSTALL_PATH,
+                          join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libcrypto.lib'),
+                          join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libssl.lib')]
     })
 
 else:
     # Add arguments specific to Unix builds
-    NASSL_EXT_SETUP.update({
-        'include_dirs': [OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
-        'extra_compile_args': ['-Wall'],
-        'extra_objects': [join(OPENSSL_LIB_INSTALL_PATH, 'libssl.a'), join(OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a'),
+    LEGACY_NASSL_EXT_SETUP.update({
+        'include_dirs': [LEGACY_OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
+        'extra_objects': [join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'libssl.a'),
+                          join(LEGACY_OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a'),
+                          ZLIB_LIB_INSTALL_PATH]
+    })
+    MODERN_NASSL_EXT_SETUP.update({
+        'include_dirs': [MODERN_OPENSSL_HEADERS_INSTALL_PATH, join('nassl', '_nassl')],
+        'extra_objects': [join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libssl.a'),
+                          join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libcrypto.a'),
                           ZLIB_LIB_INSTALL_PATH]
     })
 
 
-NASSL_SETUP.update({'ext_modules': [Extension(**NASSL_EXT_SETUP)]})
+NASSL_SETUP.update({'ext_modules': [Extension(**LEGACY_NASSL_EXT_SETUP), Extension(**MODERN_NASSL_EXT_SETUP)]})
 
 
 if __name__ == "__main__":

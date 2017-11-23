@@ -4,19 +4,15 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import os
-import sys
-sys.path.insert(1, os.path.join(os.path.dirname(__file__), u'lib'))
-
-from nassl.ssl_client import OpenSslVersionEnum
+from nassl.ssl_client import OpenSslVersionEnum, SslClient
 import socket
-from nassl.debug_ssl_client import DebugSslClient
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(5)
 sock.connect(('www.yahoo.com', 443))
 
-ssl_client = DebugSslClient(ssl_version=OpenSslVersionEnum.TLSV1_2, sock=sock, ssl_verify_locations=u'mozilla.pem')
+ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock,
+                       ssl_verify_locations=u'mozilla.pem')
 ssl_client.set_tlsext_status_ocsp()
 ssl_client.do_handshake()
 

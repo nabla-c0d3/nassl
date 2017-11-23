@@ -78,11 +78,19 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
 static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *self, PyObject *args)
 {
     X509_STORE *trustedCAs = NULL;
-    int certNum = 0, verifyRes = 0, i = 0;
+    int certNum = 0, verifyRes = 0, i = 0, respStatus = 0;
     OCSP_BASICRESP *basicResp = NULL;
     char *caFilePath = NULL;
     if (PyArg_ParseFilePath(args, &caFilePath) == NULL)
     {
+        return NULL;
+    }
+
+    // Ensure the response that can be verified
+    respStatus = OCSP_response_status(self->ocspResp);
+    if (respStatus != OCSP_RESPONSE_STATUS_SUCCESSFUL)
+    {
+        PyErr_SetString(PyExc_ValueError, "Cannot verify an OCSP response with a non-successful status");
         return NULL;
     }
 
@@ -117,6 +125,13 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
 }
 
 
+static PyObject* nassl_OCSP_RESPONSE_status(nassl_OCSP_RESPONSE_Object *self)
+{
+    int status = OCSP_response_status(self->ocspResp);
+    return Py_BuildValue("I", status);
+}
+
+
 static PyMethodDef nassl_OCSP_RESPONSE_Object_methods[] =
 {
     {"as_text", (PyCFunction)nassl_OCSP_RESPONSE_as_text, METH_NOARGS,
@@ -124,6 +139,9 @@ static PyMethodDef nassl_OCSP_RESPONSE_Object_methods[] =
     },
     {"basic_verify", (PyCFunction)nassl_OCSP_RESPONSE_basic_verify, METH_VARARGS,
      "OpenSSL's OCSP_basic_verify()."
+    },
+    {"get_status", (PyCFunction)nassl_OCSP_RESPONSE_status, METH_VARARGS,
+     "OpenSSL's OCSP_response_status() ."
     },
     {NULL}  // Sentinel
 };
@@ -172,7 +190,6 @@ PyTypeObject nassl_OCSP_RESPONSE_Type =
 };
 
 
-
 void module_add_OCSP_RESPONSE(PyObject* m)
 {
 	nassl_OCSP_RESPONSE_Type.tp_new = nassl_OCSP_RESPONSE_new;
@@ -184,4 +201,3 @@ void module_add_OCSP_RESPONSE(PyObject* m)
     Py_INCREF(&nassl_OCSP_RESPONSE_Type);
     PyModule_AddObject(m, "OCSP_RESPONSE", (PyObject *)&nassl_OCSP_RESPONSE_Type);
 }
-

@@ -15,7 +15,8 @@ typedef enum
 	sslv3,
 	tlsv1,
 	tlsv1_1,
-	tlsv1_2
+	tlsv1_2,
+	tlsv1_3
 } SslProtocolVersion;
 
 
@@ -56,11 +57,23 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 			sslCtx = SSL_CTX_new(SSLv23_method());
 			break;
 		case sslv2:
+		#ifdef LEGACY_OPENSSL
 			sslCtx = SSL_CTX_new(SSLv2_method());
-			break;
+            break;
+        #else
+            PyErr_SetString(PyExc_NotImplementedError, "SSL 2.0 is disabled; re-compile with -DLEGACY_OPENSSL");
+            Py_DECREF(self);
+            return NULL;
+        #endif
 		case sslv3:
+		#ifdef LEGACY_OPENSSL
 			sslCtx = SSL_CTX_new(SSLv3_method());
-			break;
+            break;
+        #else
+            PyErr_SetString(PyExc_NotImplementedError, "SSL 3.0 is disabled; re-compile with -DLEGACY_OPENSSL");
+            Py_DECREF(self);
+            return NULL;
+        #endif
 		case tlsv1:
 			sslCtx = SSL_CTX_new(TLSv1_method());
 			break;
@@ -70,6 +83,16 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 		case tlsv1_2:
 			sslCtx = SSL_CTX_new(TLSv1_2_method());
 			break;
+        #ifndef LEGACY_OPENSSL
+		case tlsv1_3:
+		    // Replicate the pre-1.1.0 OpenSSL API to avoid breaking _nassl's API
+		    // TODO(AD): Break modern _nassl's API to make it nicer by exposing min/max_proto_version
+		    sslCtx = SSL_CTX_new(TLS_client_method());
+		    // Force TLS 1.3
+		    SSL_CTX_set_min_proto_version(sslCtx, TLS1_3_VERSION);
+		    SSL_CTX_set_max_proto_version(sslCtx, 0);
+			break;
+		#endif
 		default:
         	PyErr_SetString(PyExc_ValueError, "Invalid value for ssl version");
         	Py_DECREF(self);

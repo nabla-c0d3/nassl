@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from enum import IntEnum
 from typing import Tuple
 from typing import Any
 from nassl import _nassl
@@ -16,6 +17,15 @@ class OcspResponseNotTrustedError(IOError):
         self.trust_store_path = trust_store_path
 
 
+class OcspResponseStatusEnum(IntEnum):
+    SUCCESSFUL = 0
+    MALFORMED_REQUEST = 1
+    INTERNAL_ERROR = 2
+    TRY_LATER = 3
+    SIG_REQUIRED = 5
+    UNAUTHORIZED = 6
+
+
 class OcspResponse(object):
     """High level API for parsing an OCSP response.
     """
@@ -24,6 +34,10 @@ class OcspResponse(object):
         # type: (_nassl.OCSP_RESPONSE) -> None
         self._ocsp_response = ocsp_response
         self._ocsp_response_dict = None
+
+    @property
+    def status(self):
+        return OcspResponseStatusEnum(self._ocsp_response.get_status())
 
     def as_text(self):
         # type: () -> Text

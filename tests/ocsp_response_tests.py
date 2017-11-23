@@ -9,7 +9,8 @@ from nassl import _nassl
 import socket
 import tempfile
 
-from nassl.ocsp_response import OcspResponseNotTrustedError
+from nassl.legacy_ssl_client import LegacySslClient
+from nassl.ocsp_response import OcspResponseNotTrustedError, OcspResponseStatusEnum
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
@@ -19,7 +20,16 @@ class OcspResponseTests(unittest.TestCase):
         self.assertRaises(NotImplementedError, _nassl.OCSP_RESPONSE, (None))
 
 
-class OcspResponseOnlineTests(unittest.TestCase):
+class CommonOcspResponseOnlineTests(unittest.TestCase):
+
+    # To be defined in subclasses
+    _SSL_CLIENT_CLS = None
+
+    @classmethod
+    def setUpClass(cls):
+        if cls is CommonOcspResponseOnlineTests:
+            raise unittest.SkipTest("Skip tests, it's a base class")
+        super(CommonOcspResponseOnlineTests, cls).setUpClass()
 
     def test(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -30,6 +40,7 @@ class OcspResponseOnlineTests(unittest.TestCase):
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
+        self.assertEqual(ocsp_response.status, OcspResponseStatusEnum.SUCCESSFUL)
 
         # Test as_text()
         self.assertIsNotNone(ocsp_response.as_text())
@@ -72,6 +83,14 @@ Pd2eQ9+DkopOz3UGU7c=
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
 
         self.assertIsNotNone(ocsp_response.as_dict()['responses'][0]['singleExtensions']['ctCertificateScts'])
+
+
+class ModernSslClientOcspResponseOnlineTests(CommonOcspResponseOnlineTests):
+    _SSL_CLIENT_CLS = SslClient
+
+
+class LegacySslClientOcspResponseOnlineTests(CommonOcspResponseOnlineTests):
+    _SSL_CLIENT_CLS = LegacySslClient
 
 
 def main():
