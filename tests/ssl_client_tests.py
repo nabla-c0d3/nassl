@@ -127,58 +127,28 @@ class CommonSslClientOnlineTests(unittest.TestCase):
         ssl_client.do_handshake()
         self.ssl_client = ssl_client
 
+    def tearDown(self):
+        self.ssl_client.shutdown()
+        self.ssl_client.get_underlying_socket().close()
 
     def test_write(self):
         self.assertGreater(self.ssl_client.write(b'GET / HTTP/1.0\r\n\r\n'), 1)
-
 
     def test_read(self):
         self.ssl_client.write(b'GET / HTTP/1.0\r\n\r\n')
         self.assertRegexpMatches(self.ssl_client.read(1024), b'google')
 
-
     def test_get_peer_certificate(self):
         self.assertIsNotNone(self.ssl_client.get_peer_certificate())
-
 
     def test_get_peer_cert_chain(self):
         self.assertIsNotNone(self.ssl_client.get_peer_cert_chain())
 
-
     def test_get_ecdh_param(self):
         self.assertIsNotNone(self.ssl_client.get_ecdh_param())
 
-
-    def test_shutdown(self):
-        self.assertIsNone(self.ssl_client.shutdown())
-
-
     def test_get_certificate_chain_verify_result(self):
         self.assertEqual(20, self.ssl_client.get_certificate_chain_verify_result()[0])
-
-
-    def test_client_certificate_requested(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect(('auth.startssl.com', 443))
-
-        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                     ssl_verify=OpenSslVerifyEnum.NONE)
-
-        self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
-                                ssl_client.do_handshake)
-
-
-    def test_ignore_client_authentication_requests(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect(('auth.startssl.com', 443))
-
-        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                     ssl_verify=OpenSslVerifyEnum.NONE, ignore_client_authentication_requests=True)
-
-        ssl_client.do_handshake()
-        self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
 
 
 class ModernSslClientOnlineTests(CommonSslClientOnlineTests):
@@ -192,6 +162,50 @@ class LegacySslClientOnlineTests(CommonSslClientOnlineTests):
 
     def test_do_ssl2_iis_handshake(self):
         self.ssl_client.do_ssl2_iis_handshake()
+
+
+class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
+
+    # To be defined in subclasses
+    _SSL_CLIENT_CLS = None
+
+    @classmethod
+    def setUpClass(cls):
+        if cls is CommonSslClientPrivateKeyTests:
+            raise unittest.SkipTest("Skip tests, it's a base class")
+        super(CommonSslClientOnlineClientAuthenticationTests, cls).setUpClass()
+
+    def test_client_certificate_requested(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect(('auth.startssl.com', 443))
+
+        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                     ssl_verify=OpenSslVerifyEnum.NONE)
+
+        self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
+                                ssl_client.do_handshake)
+
+    def test_ignore_client_authentication_requests(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        sock.connect(('auth.startssl.com', 443))
+
+        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
+                                     ssl_verify=OpenSslVerifyEnum.NONE, ignore_client_authentication_requests=True)
+
+        ssl_client.do_handshake()
+        self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
+
+
+class ModernSslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
+
+    _SSL_CLIENT_CLS = SslClient
+
+
+class LegacySslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
+
+    _SSL_CLIENT_CLS = LegacySslClient
 
 
 class ModernSslClientOnlineTls13Tests(unittest.TestCase):

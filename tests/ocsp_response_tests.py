@@ -40,6 +40,9 @@ class CommonOcspResponseOnlineTests(unittest.TestCase):
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
+        ssl_client.shutdown()
+        sock.close()
+
         self.assertEqual(ocsp_response.status, OcspResponseStatusEnum.SUCCESSFUL)
 
         # Test as_text()
@@ -81,6 +84,8 @@ Pd2eQ9+DkopOz3UGU7c=
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
+        ssl_client.shutdown()
+        sock.close()
 
         self.assertIsNotNone(ocsp_response.as_dict()['responses'][0]['singleExtensions']['ctCertificateScts'])
 

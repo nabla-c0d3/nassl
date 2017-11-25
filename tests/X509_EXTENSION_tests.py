@@ -52,6 +52,8 @@ class Common_X509_EXTENSION_Tests_Online(unittest.TestCase):
         sslClient = self._SSL_CLIENT_CLS(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         sslClient.do_handshake()
         x509ext = sslClient.get_peer_certificate().get_extensions()[0]
+        sslClient.shutdown()
+        sock.close()
 
         self.assertIsNotNone(x509ext.get_data())
         self.assertIsNotNone(x509ext.get_object())
