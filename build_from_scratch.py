@@ -55,7 +55,7 @@ def build_legacy_openssl():
             OPENSSL_CONF_CMD(target=openssl_target, install_path=LEGACY_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                              zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
             first_build_step,
-            #'nmake -f ms\\nt.mak clean',
+            'nmake -f ms\\nt.mak clean',
             'nmake -f ms\\nt.mak',
             'nmake -f ms\\nt.mak install',
         ]
@@ -116,6 +116,7 @@ def build_modern_openssl():
         build_tasks = [
             OPENSSL_CONF_CMD(target=openssl_target, install_path=MODERN_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                              zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
+            'nmake clean',
             'nmake',
             # TODO(AD): The tests are failing on openssl-tls1.3-draft-18; re-enable them once 1.1.1 is released
             #'nmake test',
