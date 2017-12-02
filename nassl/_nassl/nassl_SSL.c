@@ -407,13 +407,15 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
         cipherPyString = PyUnicode_FromString(cipherName);
         if (cipherPyString == NULL)
         {
-            return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+            return PyErr_NoMemory();
         }
 
         if (PyList_Append(ciphersPyList, cipherPyString) == -1)
         {
+            Py_DECREF(cipherPyString);
             return NULL; // PyList_Append() sets an exception
         }
+        Py_DECREF(cipherPyString);
 
         priority++;
     } while (SSL_get_cipher_list(self->ssl, priority) != NULL) ;
@@ -498,13 +500,15 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
         namePyString = PyUnicode_FromString(nameStr);
         if (namePyString == NULL)
         {
-            return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+            return PyErr_NoMemory();
         }
 
         if (PyList_Append(namesPyList, namePyString) == -1)
         {
+            Py_DECREF(namePyString);
             return NULL; // PyList_Append() sets an exception
         }
+        Py_DECREF(namePyString);
     }
     return namesPyList;
 }
