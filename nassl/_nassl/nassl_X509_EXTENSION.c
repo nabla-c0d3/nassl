@@ -64,7 +64,9 @@ static PyObject* nassl_X509_EXTENSION_get_data(nassl_X509_EXTENSION_Object *self
     }
 
     X509V3_EXT_print(memBio, self->x509ext, X509V3_EXT_ERROR_UNKNOWN, 0);
-    return bioToPyString(memBio);
+    PyObject *result = bioToPyString(memBio);
+    BIO_vfree(memBio);
+    return result;
 }
 
 

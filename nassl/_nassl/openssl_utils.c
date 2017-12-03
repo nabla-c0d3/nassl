@@ -22,6 +22,7 @@ PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const voi
     dataTxtBuffer = (char *) PyMem_Malloc(dataTxtSize);
     if (dataTxtBuffer == NULL)
     {
+        BIO_vfree(memBio);
         return PyErr_NoMemory();
     }
 
@@ -29,6 +30,7 @@ PyObject* generic_print_to_string(int (*openSslPrintFunction)(BIO *fp, const voi
     BIO_read(memBio, dataTxtBuffer, dataTxtSize);
     res = PyUnicode_FromStringAndSize(dataTxtBuffer, dataTxtSize);
     PyMem_Free(dataTxtBuffer);
+    BIO_vfree(memBio);
     return res;
 }
 

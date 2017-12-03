@@ -41,7 +41,7 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
     BIO_puts(bio, pemCertificate);
 
     self->x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-    BIO_free(bio);
+    BIO_vfree(bio);
 
     if (self->x509 == NULL)
     {
