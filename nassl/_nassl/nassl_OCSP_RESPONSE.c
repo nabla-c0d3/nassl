@@ -64,12 +64,14 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
     txtBuffer = (char *) PyMem_Malloc(txtLen);
     if (txtBuffer == NULL)
     {
+        BIO_vfree(memBio);
         return PyErr_NoMemory();
     }
 
     BIO_read(memBio, txtBuffer, txtLen);
     ocsResp_PyString = PyUnicode_FromStringAndSize(txtBuffer, txtLen);
     PyMem_Free(txtBuffer);
+    BIO_vfree(memBio);
 
     return ocsResp_PyString;
 }

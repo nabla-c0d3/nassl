@@ -87,7 +87,6 @@ static PyObject* nassl_BIO_read(nassl_BIO_Object *self, PyObject *args)
     else
     {
         PyErr_SetString(PyExc_IOError, "BIO_read() failed.");
-        return NULL;
     }
 
     PyMem_Free(readBuffer);
