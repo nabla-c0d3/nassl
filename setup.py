@@ -11,6 +11,12 @@ from nassl import __author__, __version__
 from setuptools import setup, Extension
 
 
+SHOULD_BUILD_FOR_DEBUG = False
+if platform == 'win32':
+    # If we want to build debug builds on Windows (with symbols etc); does not do anything on other platforms
+    SHOULD_BUILD_FOR_DEBUG = False
+
+
 _ROOT_BUILD_PATH = os.path.join(os.path.dirname(__file__), 'bin')
 
 # TODO(AD): Switch to an enum after dropping support for Python 2
@@ -139,9 +145,19 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
         'include_dirs': [MODERN_OPENSSL_HEADERS_INSTALL_PATH],
         'extra_objects': [ZLIB_LIB_INSTALL_PATH,
                           join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libcrypto.lib'),
-                          join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libssl.lib')]
+                          join(MODERN_OPENSSL_LIB_INSTALL_PATH, 'libssl.lib')],
     })
 
+    if SHOULD_BUILD_FOR_DEBUG:
+        LEGACY_NASSL_EXT_SETUP.update({
+            'extra_compile_args': ['/Zi'],
+            'extra_link_args': ['/DEBUG'],
+        })
+
+        MODERN_NASSL_EXT_SETUP.update({
+            'extra_compile_args': ['/Zi'],
+            'extra_link_args': ['/DEBUG'],
+        })
 else:
     # Add arguments specific to Unix builds
     LEGACY_NASSL_EXT_SETUP.update({

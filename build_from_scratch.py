@@ -11,7 +11,7 @@ import sys
 import shutil
 from setup import MODERN_OPENSSL_LIB_INSTALL_PATH, CURRENT_PLATFORM, SupportedPlatformEnum, \
     MODERN_OPENSSL_HEADERS_INSTALL_PATH, LEGACY_OPENSSL_LIB_INSTALL_PATH, LEGACY_OPENSSL_HEADERS_INSTALL_PATH, \
-    ZLIB_LIB_INSTALL_PATH
+    ZLIB_LIB_INSTALL_PATH, SHOULD_BUILD_FOR_DEBUG
 from os import getcwd
 from os.path import join
 import subprocess
@@ -45,17 +45,23 @@ def perform_build_task(title, commands_dict, cwd=None):
 def build_legacy_openssl():
     if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
         if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-            openssl_target = 'VC-WIN32'
+            if SHOULD_BUILD_FOR_DEBUG:
+                openssl_target = 'debug-VC-WIN32'
+            else:
+                openssl_target = 'VC-WIN32'
             first_build_step = 'ms\\do_ms'
         else:
-            openssl_target = 'VC-WIN64A'
+            if SHOULD_BUILD_FOR_DEBUG:
+                openssl_target = 'debug-VC-WIN64A'
+            else:
+                openssl_target = 'VC-WIN64A'
             first_build_step = 'ms\\do_win64a.bat'
 
         build_tasks = [
             OPENSSL_CONF_CMD(target=openssl_target, install_path=LEGACY_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
                              zlib_install_path=ZLIB_LIB_INSTALL_PATH, extra_args=' -no-asm -DZLIB_WINAPI'),  # *hate* zlib
             first_build_step,
-            'nmake -f ms\\nt.mak clean',
+            #'nmake -f ms\\nt.mak clean',
             'nmake -f ms\\nt.mak',
             'nmake -f ms\\nt.mak install',
         ]
@@ -109,9 +115,15 @@ def build_legacy_openssl():
 def build_modern_openssl():
     if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
         if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-            openssl_target = 'VC-WIN32'
+            if SHOULD_BUILD_FOR_DEBUG:
+                openssl_target = 'debug-VC-WIN32'
+            else:
+                openssl_target = 'VC-WIN32'
         else:
-            openssl_target = 'VC-WIN64A'
+            if SHOULD_BUILD_FOR_DEBUG:
+                openssl_target = 'debug-VC-WIN64A'
+            else:
+                openssl_target = 'VC-WIN64A'
 
         build_tasks = [
             OPENSSL_CONF_CMD(target=openssl_target, install_path=MODERN_OPENSSL_LIB_INSTALL_PATH, zlib_path=ZLIB_PATH,
