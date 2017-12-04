@@ -142,6 +142,7 @@ class SslClient(object):
         # http://www.openssl.org/docs/crypto/BIO_s_bio.html
         nassl_module.BIO.make_bio_pair(self._internal_bio, self._network_bio)
         self._ssl.set_bio(self._internal_bio)
+        self._ssl.set_network_bio_to_free_when_dealloc(self._network_bio)
 
     def set_underlying_socket(self, sock):
         # type: (socket.socket) -> None

@@ -46,7 +46,7 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
     self->ssl = NULL;
     self->sslCtx_Object = NULL;
-    self->bio_Object = NULL;
+    self->networkBio_Object = NULL;
 
     // Recover and store the corresponding ssl_ctx
     if (!PyArg_ParseTuple(args, "O!", &nassl_SSL_CTX_Type, &sslCtx_Object))
@@ -72,7 +72,6 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
     self->sslCtx_Object = sslCtx_Object;
     self->ssl = ssl;
-    self->bio_Object = NULL;
 
     return (PyObject *)self;
 }
@@ -80,15 +79,22 @@ static PyObject* nassl_SSL_new(PyTypeObject *type, PyObject *args, PyObject *kwd
 
 static void nassl_SSL_dealloc(nassl_SSL_Object *self)
 {
-    if (self->bio_Object != NULL)
+    if (self->networkBio_Object != NULL)
     {
-        Py_DECREF(self->bio_Object);
-        // The underlying OpenSSL BIO is implicitly freed by SSL_free()
-        self->bio_Object = NULL;
+        if (self->networkBio_Object->bio != NULL)
+        {
+            // Manually free the network BIO; it's the only place where we know that it is not needed anymore
+            // If a reference to the BIO Python object is kept, the object will not be usable
+            BIO_vfree(self->networkBio_Object->bio);
+            self->networkBio_Object->bio = NULL;
+        }
+        Py_DECREF(self->networkBio_Object);
+        self->networkBio_Object = NULL;
     }
 
     if (self->ssl != NULL)
     {
+        // This will also free the internal BIO
         SSL_free(self->ssl);
         self->ssl = NULL;
     }
@@ -103,15 +109,28 @@ static void nassl_SSL_dealloc(nassl_SSL_Object *self)
 
 static PyObject* nassl_SSL_set_bio(nassl_SSL_Object *self, PyObject *args)
 {
-    nassl_BIO_Object* bioObject;
-    if (!PyArg_ParseTuple(args, "O!", &nassl_BIO_Type, &bioObject))
+    nassl_BIO_Object* internalBioObject;
+    if (!PyArg_ParseTuple(args, "O!", &nassl_BIO_Type, &internalBioObject))
     {
         return NULL;
     }
+    SSL_set_bio(self->ssl, internalBioObject->bio, internalBioObject->bio);
+    Py_RETURN_NONE;
+}
 
-    Py_INCREF(bioObject);
-    self->bio_Object = bioObject;
-    SSL_set_bio(self->ssl, bioObject->bio, bioObject->bio);
+
+static PyObject* nassl_SSL_set_network_bio_to_free_when_dealloc(nassl_SSL_Object *self, PyObject *args)
+{
+    // The network BIO is only needed here so we properly free it when the SSL object gets freed
+    // Other than that it's never used
+    nassl_BIO_Object* networkBioObject;
+
+    if (!PyArg_ParseTuple(args, "O!", &nassl_BIO_Type, &networkBioObject))
+    {
+        return NULL;
+    }
+    Py_INCREF(networkBioObject);
+    self->networkBio_Object = networkBioObject;
     Py_RETURN_NONE;
 }
 
@@ -823,6 +842,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
 {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
      "OpenSSL's SSL_set_bio() on the internal BIO of an _nassl.BIO_Pair object."
+    },
+    {"set_network_bio_to_free_when_dealloc", (PyCFunction)nassl_SSL_set_network_bio_to_free_when_dealloc, METH_VARARGS,
+     "Supply the network BIO paired with the internal BIO in order to have it freed when it's not needed anymore and to avoid memory leaks."
     },
     {"do_handshake", (PyCFunction)nassl_SSL_do_handshake, METH_NOARGS,
      "OpenSSL's SSL_do_handshake()."

@@ -8,7 +8,10 @@ typedef struct {
     PyObject_HEAD
     SSL *ssl;
     nassl_SSL_CTX_Object *sslCtx_Object;
-    nassl_BIO_Object *bio_Object;
+
+    // We only keep a reference of the network BIO so we know when to free the BIO object
+    // The internal BIO is auto-freed by SSL_free() which is called in nassl_SSL_dealloc
+    nassl_BIO_Object *networkBio_Object;
 } nassl_SSL_Object;
 
 
