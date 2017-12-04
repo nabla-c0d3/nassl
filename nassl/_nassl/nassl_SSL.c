@@ -193,7 +193,7 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
     }
 
     returnValue = SSL_write(self->ssl, writeBuffer, writeSize);
-    if (returnValue > 0) \
+    if (returnValue > 0)
     {
         // Write OK
         res = Py_BuildValue("I", returnValue);
@@ -264,6 +264,7 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
         const SSL_COMP *method = sk_SSL_COMP_value(compMethods, i);
         if (method == NULL)
         {
+            Py_DECREF(compMethodPyList);
             PyErr_SetString(PyExc_ValueError, "Could not extract a compression method. Should not happen ?");
             return NULL;
         }
@@ -275,7 +276,8 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
 #endif
         if (methodPyString == NULL)
         {
-            return PyErr_NoMemory(); // TODO: Is it really a memory error ?
+            Py_DECREF(compMethodPyList);
+            return PyErr_NoMemory();
         }
 
         PyList_SET_ITEM(compMethodPyList, i,  methodPyString);
@@ -407,11 +409,13 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
         cipherPyString = PyUnicode_FromString(cipherName);
         if (cipherPyString == NULL)
         {
+            Py_DECREF(ciphersPyList);
             return PyErr_NoMemory();
         }
 
         if (PyList_Append(ciphersPyList, cipherPyString) == -1)
         {
+            Py_DECREF(ciphersPyList);
             Py_DECREF(cipherPyString);
             return NULL; // PyList_Append() sets an exception
         }
@@ -490,6 +494,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
         X509_NAME *name = sk_X509_NAME_pop(x509Names);
         if (name == NULL)
         {
+            Py_DECREF(namesPyList);
             PyErr_SetString(PyExc_ValueError, "Could not extract an X509_NAME from the client CA list. Should not happen ?");
             return NULL;
         }
@@ -500,11 +505,13 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
         namePyString = PyUnicode_FromString(nameStr);
         if (namePyString == NULL)
         {
+            Py_DECREF(namesPyList);
             return PyErr_NoMemory();
         }
 
         if (PyList_Append(namesPyList, namePyString) == -1)
         {
+            Py_DECREF(namesPyList);
             Py_DECREF(namePyString);
             return NULL; // PyList_Append() sets an exception
         }
@@ -790,6 +797,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
         X509 *cert = X509_dup(sk_X509_value(certChain, i));
         if (cert == NULL)
         {
+            Py_DECREF(certChainPyList);
             PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
             return NULL;
         }
@@ -798,6 +806,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
         x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
         if (x509_Object == NULL)
         {
+            Py_DECREF(certChainPyList);
             return PyErr_NoMemory();
         }
         x509_Object->x509 = cert;

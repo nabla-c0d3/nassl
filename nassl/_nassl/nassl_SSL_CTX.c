@@ -201,7 +201,7 @@ static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, P
     {
         return NULL;
     }
-    filePath = PyBytes_AsString(pyFilePath);
+    filePath = PyBytes_AsString(pyFilePath);  // Must not be deallocated
     if (filePath == NULL)
     {
         PyErr_SetString(PyExc_ValueError, "Could not extract the file path");

@@ -153,6 +153,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
         X509_EXTENSION *x509ext = X509_get_ext(self->x509, i);
         if (x509ext == NULL)
         {
+            Py_DECREF(extensionsPyList);
             PyErr_SetString(PyExc_ValueError, "Could not extract a X509_EXTENSION from the certificate. Exotic certificate ?");
             return NULL;
         }
@@ -160,6 +161,7 @@ static PyObject* nassl_X509_get_extensions(nassl_X509_Object *self, PyObject *ar
         x509ext_Object = (nassl_X509_EXTENSION_Object *)nassl_X509_EXTENSION_Type.tp_alloc(&nassl_X509_EXTENSION_Type, 0);
         if (x509ext_Object == NULL)
         {
+            Py_DECREF(extensionsPyList);
             return PyErr_NoMemory();
         }
 

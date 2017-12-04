@@ -108,8 +108,12 @@ PyMODINIT_FUNC init_nassl(void)
     struct module_state *state;
 
     // Initialize OpenSSL
+#ifdef LEGACY_OPENSSL
     SSL_library_init();
     SSL_load_error_strings();
+#else
+    OPENSSL_init_ssl(0, NULL);
+#endif
 
     // Check OpenSSL PRNG
     if(RAND_status() != 1) {
