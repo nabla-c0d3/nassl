@@ -21,7 +21,7 @@ sample client:
 
     git clone https://github.com/nabla-c0d3/nassl.git
     cd nassl
-    pip install -r requirements.txt --target ./lib
+    pip install -r requirements.txt
     python setup.py build_ext -i
     python sample_client.py
 

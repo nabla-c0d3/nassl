@@ -21,7 +21,7 @@ class OpenSslVerifyEnum(IntEnum):
     """
     NONE = 0
     PEER = 1
-    FAIL_IF_NO_PEER_CERT =  2
+    FAIL_IF_NO_PEER_CERT = 2
     CLIENT_ONCE = 4
 
 
