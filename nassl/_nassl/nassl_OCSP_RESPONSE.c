@@ -69,7 +69,9 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
     }
 
     BIO_read(memBio, txtBuffer, txtLen);
-    ocsResp_PyString = PyUnicode_FromStringAndSize(txtBuffer, txtLen);
+    // An OCSP response may contain non-utf8 characters (if there are certificates in it) so we return it as bytes
+    // To handle decoding errors in Python
+    ocsResp_PyString = PyBytes_FromStringAndSize(txtBuffer, txtLen);
     PyMem_Free(txtBuffer);
     BIO_vfree(memBio);
 

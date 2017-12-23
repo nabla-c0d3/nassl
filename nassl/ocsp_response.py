@@ -41,7 +41,10 @@ class OcspResponse(object):
 
     def as_text(self):
         # type: () -> Text
-        return self._ocsp_response.as_text()
+        ocsp_resp_bytes = self._ocsp_response.as_text()
+        # The response may contain certificates, which then may contain non-utf8 characters - get rid of them
+        ocsp_first_resp = ocsp_resp_bytes.split(b'Certificate:')[0]
+        return ocsp_first_resp.decode('utf-8')
 
     def verify(self, verify_locations):
         # type: (Text) -> None
