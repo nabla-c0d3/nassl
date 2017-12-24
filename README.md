@@ -96,7 +96,7 @@ SSLyze, so I had to write my own wrapper.
 License
 -------
 
-Licensed under the GPLv2; see ./LICENSE
+See ./LICENSE.txt
 
 Please contact me if this license doesn't work for you.
 
