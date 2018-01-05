@@ -44,6 +44,14 @@ class OpenSslFileTypeEnum(IntEnum):
     ASN1 = 2
 
 
+class OpenSslEarlyDataStatusEnum(IntEnum):
+    """Early data status constants.
+    """
+    NOT_SENT = 0
+    REJECTED = 1
+    ACCEPTED = 2
+
+
 class ClientCertificateRequested(IOError):
     ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
     ERROR_MSG = 'Server requested a client certificate.'
@@ -181,9 +189,15 @@ class SslClient(object):
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
-    def read(self, size):
-        # type: (int) -> bytes
-        if not self._is_handshake_completed:
+    def is_handshake_completed(self):
+        # type: () -> bool
+        return self._is_handshake_completed
+
+    # When sending early data, client can call read even if the handshake hasn't been
+    # finished yet
+    def read(self, size, handshake_must_be_completed = True):
+        # type: (int, bool) -> bytes
+        if handshake_must_be_completed and not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot receive data.')
 
         while True:
@@ -220,6 +234,31 @@ class SslClient(object):
         final_length = self._flush_ssl_engine()
 
         return final_length
+
+    def write_early_data(self, data):
+        # type: (bytes) -> int
+        """Returns the number of (encrypted) bytes sent.
+        """
+        if self._is_handshake_completed:
+            raise IOError('SSL Handshake was completed; cannot send early data.')
+
+        # Pass the cleartext data to the SSL engine
+        self._ssl.write_early_data(data)
+
+        # Recover the corresponding encrypted data
+        final_length = self._flush_ssl_engine()
+
+        return final_length
+
+    def get_early_data_status(self):
+        # type: () -> OpenSslEarlyDataStatusEnum
+        status_dict = {
+            0: OpenSslEarlyDataStatusEnum.NOT_SENT,
+            1: OpenSslEarlyDataStatusEnum.REJECTED,
+            2: OpenSslEarlyDataStatusEnum.ACCEPTED,
+        }
+
+        return status_dict[self._ssl.get_early_data_status()]
 
     def _flush_ssl_engine(self):
         # type: () -> int

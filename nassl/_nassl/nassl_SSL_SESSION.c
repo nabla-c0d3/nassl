@@ -31,13 +31,29 @@ static PyObject* nassl_SSL_SESSION_as_text(nassl_SSL_SESSION_Object *self)
     return generic_print_to_string((int (*)(BIO *, const void *)) &SSL_SESSION_print, self->sslSession);
 }
 
+#ifndef LEGACY_OPENSSL
+static PyObject* nassl_SSL_SESSION_get_max_early_data(nassl_SSL_SESSION_Object *self, PyObject *args)
+{
+    int returnValue = 0;
 
+    if (self->sslSession != NULL) {
+        returnValue = SSL_SESSION_get_max_early_data(self->sslSession);
+    }
+
+    return Py_BuildValue("I", returnValue);
+}
+#endif
 
 static PyMethodDef nassl_SSL_SESSION_Object_methods[] =
 {
     {"as_text", (PyCFunction)nassl_SSL_SESSION_as_text, METH_NOARGS,
      "OpenSSL's SSL_SESSION_print()."
     },
+#ifndef LEGACY_OPENSSL
+    {"get_max_early_data", (PyCFunction)nassl_SSL_SESSION_get_max_early_data, METH_NOARGS,
+     "OpenSSL's SSL_SESSION_get_max_early_data()."
+    },
+#endif
     {NULL}  // Sentinel
 };
 /*

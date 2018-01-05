@@ -225,6 +225,46 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
     return res;
 }
 
+#ifndef LEGACY_OPENSSL
+static PyObject* nassl_SSL_write_early_data(nassl_SSL_Object *self, PyObject *args)
+{
+    int returnValue, writeSize, writtenDataSize;
+    char *writeBuffer;
+    PyObject *res = NULL;
+
+    if (!PyArg_ParseTuple(args, "s#", &writeBuffer, &writeSize))
+    {
+        return NULL;
+    }
+
+    returnValue = SSL_write_early_data(self->ssl, writeBuffer, writeSize, &writtenDataSize);
+    if (returnValue > 0)
+    {
+        // Write OK
+        res = Py_BuildValue("I", writtenDataSize);
+    }
+    else
+    {
+        // Write failed
+        raise_OpenSSL_ssl_error(self->ssl, returnValue);
+    }
+    return res;
+}
+
+static PyObject* nassl_SSL_get_early_data_status(nassl_SSL_Object *self, PyObject *args)
+{
+    int returnValue = SSL_get_early_data_status(self->ssl);
+
+    return Py_BuildValue("I", returnValue);
+}
+
+static PyObject* nassl_SSL_get_max_early_data(nassl_SSL_Object *self, PyObject *args)
+{
+    int returnValue = SSL_get_max_early_data(self->ssl);
+
+    return Py_BuildValue("I", returnValue);
+}
+#endif
 
 static PyObject* nassl_SSL_shutdown(nassl_SSL_Object *self, PyObject *args)
 {
@@ -268,7 +308,7 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
     int i, compMethodsCount = 0;
     STACK_OF(SSL_COMP) *compMethods = SSL_COMP_get_compression_methods();
 
-   // We'll return a Python list containing the name of each compression method
+    // We'll return a Python list containing the name of each compression method
     compMethodsCount = sk_SSL_COMP_num(compMethods);
     compMethodPyList = PyList_New(compMethodsCount);
     if (compMethodPyList == NULL)
@@ -861,6 +901,17 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"write", (PyCFunction)nassl_SSL_write, METH_VARARGS,
      "OpenSSL's SSL_write()."
     },
+#ifndef LEGACY_OPENSSL
+    {"write_early_data", (PyCFunction)nassl_SSL_write_early_data, METH_VARARGS,
+     "OpenSSL's SSL_write_ealy_data()."
+    },
+    {"get_early_data_status", (PyCFunction)nassl_SSL_get_early_data_status, METH_VARARGS,
+     "OpenSSL's SSL_get_early_data_status()."
+    },
+    {"get_max_early_data", (PyCFunction)nassl_SSL_get_max_early_data, METH_VARARGS,
+     "OpenSSL's SSL_get_max_early_data()."
+    },
+#endif
     {"pending", (PyCFunction)nassl_SSL_pending, METH_NOARGS,
      "OpenSSL's SSL_pending()."
     },
