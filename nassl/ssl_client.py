@@ -128,7 +128,7 @@ class SslClient(object):
             self._ssl_ctx.set_client_cert_cb_NULL()
 
     def _init_openssl_objects(self, underlying_socket, ssl_version, nassl_module):
-        # type: (socket.socket, OpenSslVersionEnum, Union[_nassl_legacy, _nassl]) -> None
+        # type: (Optional[socket.socket], OpenSslVersionEnum, Union[_nassl_legacy, _nassl]) -> None
         # A Python socket handles transmission of the data
         self._sock = underlying_socket
         self._is_handshake_completed = False
@@ -154,6 +154,8 @@ class SslClient(object):
 
     def set_underlying_socket(self, sock):
         # type: (socket.socket) -> None
+        if self._sock:
+            raise RuntimeError('A socket was already set')
         self._sock = sock
 
     def get_underlying_socket(self):
