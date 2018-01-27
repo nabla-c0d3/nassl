@@ -12,6 +12,7 @@
 *.pyd
 *.egg-info
 lib/*
+wheelhouse/*
 
 # Shared objects (inc. Windows DLLs)
 *.dll
