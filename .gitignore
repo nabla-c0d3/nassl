@@ -1,3 +1,5 @@
+.mypy_cache/
+
 # OpenSSL build artifacts
 *.cnf
 *.cnf.dist

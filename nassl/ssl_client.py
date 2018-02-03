@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 import socket
 
 from nassl import _nassl
-from nassl import _nassl_legacy
+from nassl import _nassl_legacy  # type: ignore
 from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
 
 from enum import IntEnum
@@ -115,10 +115,10 @@ class SslClient(object):
             client_key_password,                    # type: Text
             ignore_client_authentication_requests   # type: bool
     ):
+        # type: (...) -> None
         """Setup client authentication using the supplied certificate and key.
         """
-        # type: (...) -> None
-        if client_certchain_file is not None:
+        if client_certchain_file is not None and client_key_file is not None:
             self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
 
         if ignore_client_authentication_requests:
@@ -133,7 +133,6 @@ class SslClient(object):
         self._sock = underlying_socket
         self._is_handshake_completed = False
         self._ssl_version = ssl_version
-        self._client_CA_list = []
 
         # OpenSSL objects
         # SSL_CTX
@@ -199,6 +198,8 @@ class SslClient(object):
     # finished yet
     def read(self, size, handshake_must_be_completed = True):
         # type: (int, bool) -> bytes
+        if self._sock is None:
+            raise IOError('Internal socket set to None; cannot perform handshake.')
         if handshake_must_be_completed and not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot receive data.')
 
@@ -226,6 +227,8 @@ class SslClient(object):
         # type: (bytes) -> int
         """Returns the number of (encrypted) bytes sent.
         """
+        if self._sock is None:
+            raise IOError('Internal socket set to None; cannot perform handshake.')
         if not self._is_handshake_completed:
             raise IOError('SSL Handshake was not completed; cannot send data.')
 
@@ -264,6 +267,9 @@ class SslClient(object):
 
     def _flush_ssl_engine(self):
         # type: () -> int
+        if self._sock is None:
+            raise IOError('Internal socket set to None; cannot perform handshake.')
+
         length_to_read = self._network_bio.pending()
         final_length = length_to_read
         while length_to_read:
@@ -368,9 +374,7 @@ class SslClient(object):
 
     def get_client_CA_list(self):
         # type: () -> List[Text]
-        if not self._client_CA_list:
-            self._client_CA_list = self._ssl.get_client_CA_list()
-        return self._client_CA_list
+        return self._ssl.get_client_CA_list()
 
     def get_session(self):
         # type: () -> _nassl.SSL_SESSION

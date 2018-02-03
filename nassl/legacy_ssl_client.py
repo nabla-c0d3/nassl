@@ -15,7 +15,7 @@ from typing import Text
 import sys
 
 # The legacy client uses the legacy OpenSSL
-from nassl import _nassl_legacy
+from nassl import _nassl_legacy  # type: ignore
 
 
 class LegacySslClient(SslClient):
@@ -47,7 +47,8 @@ class LegacySslClient(SslClient):
             self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
         else:
             # Handshake workaround for SSL2 + IIS 7
-            self.do_handshake = self.do_ssl2_iis_handshake
+            # TODO(AD): Provide a built-in mechansim for overriding the handshake logic
+            self.do_handshake = self.do_ssl2_iis_handshake  # type: ignore
 
     def get_secure_renegotiation_support(self):
         # type: () -> bool
@@ -114,7 +115,7 @@ class LegacySslClient(SslClient):
         # type: (str, str) -> Dict[str, str]
         """EDH and ECDH parameters pretty-printing.
         """
-        d = {}
+        d = {}  # type: Dict[Text, Text]
         to_XML = lambda x : "_".join(m for m in x.replace('-', ' ').split(' '))
         current_arg = None
         for l in s.splitlines() :
@@ -131,8 +132,9 @@ class LegacySslClient(SslClient):
                     current_arg = to_XML(args[0])
                     d[current_arg] = ''
             else :
-                d[current_arg] += l.strip()
-        if current_arg :
+                if current_arg:
+                    d[current_arg] += l.strip()
+        if current_arg:
             d[current_arg] = "0x"+d[current_arg].replace(':', '')
         return d
 
