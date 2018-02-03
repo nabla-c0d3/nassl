@@ -23,7 +23,7 @@ import subprocess
 ZLIB_PATH = join(getcwd(), 'zlib-1.2.11')
 
 #MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-1.1.0f')
-MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-tls1.3-draft-18')
+MODREN_OPENSSL_PATH = join(getcwd(), 'openssl-master')  # Tested with 1f5878b8e25a785dde330bf485e6ed5a6ae09a1a
 LEGACY_OPENSSL_PATH = join(getcwd(), 'openssl-1.0.2e')
 
 
