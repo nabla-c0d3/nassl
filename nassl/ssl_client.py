@@ -252,18 +252,11 @@ class SslClient(object):
 
         # Recover the corresponding encrypted data
         final_length = self._flush_ssl_engine()
-
         return final_length
 
     def get_early_data_status(self):
         # type: () -> OpenSslEarlyDataStatusEnum
-        status_dict = {
-            0: OpenSslEarlyDataStatusEnum.NOT_SENT,
-            1: OpenSslEarlyDataStatusEnum.REJECTED,
-            2: OpenSslEarlyDataStatusEnum.ACCEPTED,
-        }
-
-        return status_dict[self._ssl.get_early_data_status()]
+        return OpenSslEarlyDataStatusEnum[self._ssl.get_early_data_status()]
 
     def _flush_ssl_engine(self):
         # type: () -> int
