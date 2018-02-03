@@ -185,6 +185,8 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
 
         self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
                                 ssl_client.do_handshake)
+        ssl_client.shutdown()
+        sock.close()
 
     def test_ignore_client_authentication_requests(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -196,6 +198,8 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
 
         ssl_client.do_handshake()
         self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
+        ssl_client.shutdown()
+        sock.close()
 
 
 class ModernSslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
