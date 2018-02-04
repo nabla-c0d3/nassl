@@ -6,6 +6,7 @@ import unittest
 import socket
 import tempfile
 
+from nassl._nassl import OpenSSLError
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum, \
     SslClient
@@ -213,7 +214,6 @@ class LegacySslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClient
 
 
 class ModernSslClientOnlineTls13Tests(unittest.TestCase):
-
     def test_tls_1_3(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
@@ -222,9 +222,61 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
                                ssl_verify=OpenSslVerifyEnum.NONE)
         self.assertTrue(ssl_client)
 
+class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
+
+    _DATA_TO_SEND = 'GET / HTTP/1.1\r\nHost: tls13.crypto.mozilla.org\r\n\r\n'
+
+    def setUp(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        #sock.connect(('tls13.crypto.mozilla.org', 443))
+        sock.connect(('tls13.baishancloud.com', 44344))
+        ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
+                               ssl_verify=OpenSslVerifyEnum.NONE)
+        self.ssl_client = ssl_client
+
+    def tearDown(self):
+        self.ssl_client.shutdown()
+        self.ssl_client.get_underlying_socket().close()
+
+    def test_write_early_data_doesnot_finish_handshake(self):
+        self.ssl_client.do_handshake()
+        self.ssl_client.write(self._DATA_TO_SEND);
+        self.ssl_client.read(2048) 
+        sess = self.ssl_client.get_session()
+        self.assertIsNotNone(sess)
+        self.tearDown()
+        self.setUp()
+        self.ssl_client.set_session(sess)
+        self.ssl_client.write_early_data(self._DATA_TO_SEND);
+        self.assertFalse(self.ssl_client.is_handshake_completed())
+
+    def test_write_early_data_fail_when_used_on_non_reused_session(self):
+        self.assertRaisesRegexp(OpenSSLError, 
+                                'function you should not call',
+                                self.ssl_client.write_early_data,
+                                self._DATA_TO_SEND)
+
+    def test_write_early_data_fail_when_trying_to_send_more_than_max_ealry_data(self):
+        self.ssl_client.do_handshake()
+        self.ssl_client.write(self._DATA_TO_SEND);
+        self.ssl_client.read(2048) 
+        sess = self.ssl_client.get_session()
+        max_early = sess.get_max_early_data()
+        str_to_send = 'GET / HTTP/1.1\r\nData: {}\r\n\r\n'
+        self.assertIsNotNone(sess)
+        self.tearDown()
+        self.setUp()
+        self.ssl_client.set_session(sess)
+        self.assertRaisesRegexp(OpenSSLError, 
+                                'too much early data',
+                                self.ssl_client.write_early_data,
+                                str_to_send.format('*' * max_early))
+
 
 def main():
     unittest.main()
 
 if __name__ == '__main__':
     main()
+
