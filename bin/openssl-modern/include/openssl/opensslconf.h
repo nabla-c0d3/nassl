@@ -22,11 +22,11 @@ extern "C" {
  * OpenSSL was configured with the following options:
  */
 
-#ifndef OPENSSL_NO_ARIA
-# define OPENSSL_NO_ARIA
-#endif
 #ifndef OPENSSL_THREADS
 # define OPENSSL_THREADS
+#endif
+#ifndef OPENSSL_RAND_SEED_OS
+# define OPENSSL_RAND_SEED_OS
 #endif
 #ifndef OPENSSL_NO_ASAN
 # define OPENSSL_NO_ASAN
@@ -36,6 +36,9 @@ extern "C" {
 #endif
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # define OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+#endif
+#ifndef OPENSSL_NO_DEVCRYPTOENG
+# define OPENSSL_NO_DEVCRYPTOENG
 #endif
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 # define OPENSSL_NO_EC_NISTP_64_GCC_128
@@ -69,6 +72,9 @@ extern "C" {
 #endif
 #ifndef OPENSSL_NO_SSL3_METHOD
 # define OPENSSL_NO_SSL3_METHOD
+#endif
+#ifndef OPENSSL_NO_TLS13DOWNGRADE
+# define OPENSSL_NO_TLS13DOWNGRADE
 #endif
 #ifndef OPENSSL_NO_UBSAN
 # define OPENSSL_NO_UBSAN
@@ -115,6 +121,12 @@ extern "C" {
 #if !defined(OPENSSL_API_COMPAT) || OPENSSL_API_COMPAT < OPENSSL_MIN_API
 # undef OPENSSL_API_COMPAT
 # define OPENSSL_API_COMPAT OPENSSL_MIN_API
+#endif
+
+#if OPENSSL_API_COMPAT < 0x10200000L
+# define DEPRECATEDIN_1_2_0(f)   DECLARE_DEPRECATED(f)
+#else
+# define DEPRECATEDIN_1_2_0(f)
 #endif
 
 #if OPENSSL_API_COMPAT < 0x10100000L

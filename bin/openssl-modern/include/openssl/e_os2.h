@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,7 +49,6 @@ extern "C" {
 #  define OPENSSL_SYS_WIN32_UWIN
 # else
 #  if defined(__CYGWIN__) || defined(OPENSSL_SYS_CYGWIN)
-#   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WIN32_CYGWIN
 #  else
 #   if defined(_WIN32) || defined(OPENSSL_SYS_WIN32)
@@ -206,9 +205,9 @@ extern "C" {
 #  endif
 # endif
 
-# if defined(OPENSSL_SYS_UEFI) && !defined(ssize_t)
-#  define ossl_ssize_t int
-#  define OSSL_SSIZE_MAX INT_MAX
+# if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
+#  define ossl_ssize_t INTN
+#  define OSSL_SSIZE_MAX MAX_INTN
 # endif
 
 # ifndef ossl_ssize_t
@@ -236,7 +235,6 @@ typedef INT32 int32_t;
 typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
-#  define PRIu64 "%Lu"
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
      defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
@@ -256,29 +254,6 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 # else
 #  include <stdint.h>
-# endif
-
-/*
- * We need a format operator for some client tools for uint64_t.  If inttypes.h
- * isn't available or did not define it, just go with hard-coded.
- */
-# ifndef PRIu64
-#  ifdef SIXTY_FOUR_BIT_LONG
-#   define PRIu64 "lu"
-#  else
-#   define PRIu64 "llu"
-#  endif
-# endif
-
-/* Format specifier for printing size_t */
-# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-#  define OSSLzu  "zu"
-# else
-#  ifdef THIRTY_TWO_BIT
-#   define OSSLzu "u"
-#  else
-#   define OSSLzu PRIu64
-#  endif
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */
