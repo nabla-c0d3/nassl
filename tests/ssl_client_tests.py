@@ -229,8 +229,7 @@ class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(10)
-        #sock.connect(('tls13.crypto.mozilla.org', 443))
-        sock.connect(('tls13.baishancloud.com', 44344))
+        sock.connect(('tls13.crypto.mozilla.org', 443))
         ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
                                ssl_verify=OpenSslVerifyEnum.NONE)
         self.ssl_client = ssl_client
