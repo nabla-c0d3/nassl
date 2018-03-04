@@ -2,107 +2,122 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import logging
 import unittest
 import socket
-import tempfile
 
 from nassl._nassl import OpenSSLError
 from nassl.legacy_ssl_client import LegacySslClient
-from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum, \
-    SslClient
+from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient
+from tests.openssl_server import VulnerableOpenSslServer, NotOnLinux64Error, ClientAuthenticationServerConfigurationEnum
 
 
-class CommonSslClientPrivateKeyTests(unittest.TestCase):
+class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
 
     # To be defined in subclasses
     _SSL_CLIENT_CLS = None
 
     @classmethod
     def setUpClass(cls):
-        if cls is CommonSslClientPrivateKeyTests:
+        if cls is CommonSslClientOnlineClientAuthenticationTests:
             raise unittest.SkipTest("Skip tests, it's a base class")
-        super(CommonSslClientPrivateKeyTests, cls).setUpClass()
+        super(CommonSslClientOnlineClientAuthenticationTests, cls).setUpClass()
 
-    def setUp(self):
-        self.ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, ssl_verify=OpenSslVerifyEnum.NONE)
+    def test_client_authentication_no_certificate_supplied(self):
+        # Given a server that requires client authentication
+        try:
+            with VulnerableOpenSslServer(
+                    client_auth_config=ClientAuthenticationServerConfigurationEnum.REQUIRED
+            ) as server:
+                # And the client does NOT provide a client certificate
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((server.hostname, server.port))
 
-        test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
-        test_file.write("""-----BEGIN RSA PRIVATE KEY-----
-Proc-Type: 4,ENCRYPTED
-DEK-Info: DES-EDE3-CBC,7D15D836EE9E1B77
+                ssl_client = self._SSL_CLIENT_CLS(
+                    ssl_version=OpenSslVersionEnum.SSLV23,
+                    underlying_socket=sock,
+                    ssl_verify=OpenSslVerifyEnum.NONE,
+                )
+                # When doing the handshake the right error is returned
+                self.assertRaisesRegexp(
+                    ClientCertificateRequested,
+                    'Server requested a client certificate',
+                    ssl_client.do_handshake
+                )
+                sock.close()
 
-fzTe/7+BUBBpW7rFqfffSMeNTNwjVT8uT6+aQFkv1sazU295heEWcvnqYPQ2suDS
-dqud4pxLizkSRZpAIoKZV/E0z3iM1zsrGiyNXZ3mouRjSZdESEBnPEbtIdsyHLkL
-9arhA/kvuMqXMjgun+tPD0+ETlaFf5GCKgfFQzbF2W4WpeEXii43ZLZ9UmObUUql
-5Y65K/07+ga/dj3E+l1dLtA7VhVV5CK+8TTmVdqOr85pEZ/BC3U09vnwovDWJ+l0
-sV7GhzsDFSpwxeArZy7wSMkSOTe71O1gvjOxWlupznFcZvirhRtI+5k1/btcn7hx
-8b7dp36pTb/GfwaeUVsAvJBqwdSun3NOWX7zJxIDGU6LxA80eiV4z3SxAykS52gl
-rlb2e+F6dV+tRuREfaDaeS1DSlDMp1mQjPSD2ix6nSypv19FHdh01OoCd0OFxM6D
-xs5RQnUeu4J9g45Wdp6lmXM62EhUqYLKRbjXnZbFMlVMq81UwpMazwAruTEOCxl4
-iQk3rNzfREONa9HeshiMlkeRAQpyB1qLZwhoTwTl6xKaMkt6nFEE6qX1KrrACHkH
-CFJVbuWVJCyoRFv+0Gypi7zn1ZZGkE4inDHxqIzUa0sSmbShEWooTxCyGUSoosaY
-u2ozh8ESQCy03JFR9DY6mo3YekbIcCEjgdmE35nK4lJQFbo3A8YlHunEdVK0tb8Z
-Wxf7cJ6J55bG5/Kft65kJnXAHrV9LnM1tPiRkB8umZkj/ou5NpDKiuLjR+WBfwi0
-tqXk90NdSqJtMMGgrtVM84TYFPXP58QCBnE9oAI7XYM1rusuVBOXZw==
------END RSA PRIVATE KEY-----""")
-        test_file.close()
-        self.test_file = test_file
-        test_file2 = tempfile.NamedTemporaryFile(delete=False, mode='wt')
-        test_file2.write("""-----BEGIN CERTIFICATE-----
-MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
-DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
-ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
-9w0BCQEWC2xvbEBsb2wuY29tMB4XDTEzMDEyNzAwMDM1OFoXDTE0MDEyNzAwMDM1
-OFowgZcxCzAJBgNVBAYTAkZSMQwwCgYDVQQIDAMxMjMxDTALBgNVBAcMBFRlc3Qx
-IjAgBgNVBAoMGUludHJvc3B5IFRlc3QgQ2xpZW50IENlcnQxCzAJBgNVBAsMAjEy
-MRUwEwYDVQQDDAxBbGJhbiBEaXF1ZXQxIzAhBgkqhkiG9w0BCQEWFG5hYmxhLWMw
-ZDNAZ21haWwuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlnvP1ltVO
-8JDNT3AA99QqtiqCi/7BeEcFDm2al46mv7looz6CmB84osrusNVFsS5ICLbrCmeo
-w5sxW7VVveGueBQyWynngl2PmmufA5Mhwq0ZY8CvwV+O7m0hEXxzwbyGa23ai16O
-zIiaNlBAb0mC2vwJbsc3MTMovE6dHUgmzQIDAQABo3sweTAJBgNVHRMEAjAAMCwG
-CWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNV
-HQ4EFgQUYR45okpFsqTYB1wlQQblLH9cRdgwHwYDVR0jBBgwFoAUP0X2HQlaca7D
-NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
-gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
-dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
-Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
-DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
-ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
-9w0BCQEWC2xvbEBsb2wuY29tMB4XDTEzMDEyNzAwMDM1OFoXDTE0MDEyNzAwMDM1
-OFowgZcxCzAJBgNVBAYTAkZSMQwwCgYDVQQIDAMxMjMxDTALBgNVBAcMBFRlc3Qx
-IjAgBgNVBAoMGUludHJvc3B5IFRlc3QgQ2xpZW50IENlcnQxCzAJBgNVBAsMAjEy
-MRUwEwYDVQQDDAxBbGJhbiBEaXF1ZXQxIzAhBgkqhkiG9w0BCQEWFG5hYmxhLWMw
-ZDNAZ21haWwuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlnvP1ltVO
-8JDNT3AA99QqtiqCi/7BeEcFDm2al46mv7looz6CmB84osrusNVFsS5ICLbrCmeo
-w5sxW7VVveGueBQyWynngl2PmmufA5Mhwq0ZY8CvwV+O7m0hEXxzwbyGa23ai16O
-zIiaNlBAb0mC2vwJbsc3MTMovE6dHUgmzQIDAQABo3sweTAJBgNVHRMEAjAAMCwG
-CWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNV
-HQ4EFgQUYR45okpFsqTYB1wlQQblLH9cRdgwHwYDVR0jBBgwFoAUP0X2HQlaca7D
-NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
-gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
-dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
-Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----""")
-        test_file2.close()
-        self.testFile2 = test_file2
+        except NotOnLinux64Error:
+            logging.warning('WARNING: Not on Linux - skipping test')
+            return
 
-    def test_use_private_key(self):
-        self.assertIsNone(self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name,
-                                                           OpenSslFileTypeEnum.PEM, 'testPW'))
+    def test_client_authentication_no_certificate_supplied_but_ignore(self):
+        # Given a server that accepts optional client authentication
+        try:
+            with VulnerableOpenSslServer(
+                    client_auth_config=ClientAuthenticationServerConfigurationEnum.OPTIONAL
+            ) as server:
+                # And the client does NOT provide a client cert but is configured to ignore the client auth request
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((server.hostname, server.port))
 
-    def test_use_private_key_bad(self):
-        with self.assertRaises(ValueError):
-            self.ssl_client._use_private_key(self.testFile2.name, self.test_file.name, OpenSslFileTypeEnum.PEM, 'bad')
+                ssl_client = self._SSL_CLIENT_CLS(
+                    ssl_version=OpenSslVersionEnum.SSLV23,
+                    underlying_socket=sock,
+                    ssl_verify=OpenSslVerifyEnum.NONE,
+                    ignore_client_authentication_requests=True,
+                )
+                # When doing the handshake
+                try:
+                    ssl_client.do_handshake()
+                    # It succeeds
+                    self.assertTrue(ssl_client)
+                finally:
+                    ssl_client.shutdown()
+                    sock.close()
+
+        except NotOnLinux64Error:
+            logging.warning('WARNING: Not on Linux - skipping test')
+            return
+
+    def test_client_authentication_succeeds(self):
+        # Given a server that requires client authentication
+        try:
+            with VulnerableOpenSslServer(
+                    client_auth_config=ClientAuthenticationServerConfigurationEnum.REQUIRED
+            ) as server:
+                # And the client provides a client certificate
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((server.hostname, server.port))
+
+                ssl_client = self._SSL_CLIENT_CLS(
+                    ssl_version=OpenSslVersionEnum.SSLV23,
+                    underlying_socket=sock,
+                    ssl_verify=OpenSslVerifyEnum.NONE,
+                    client_certchain_file=server.get_client_certificate_path(),
+                    client_key_file=server.get_client_key_path(),
+                )
+
+                # When doing the handshake, it succeeds
+                try:
+                    ssl_client.do_handshake()
+                finally:
+                    ssl_client.shutdown()
+                    sock.close()
+
+        except NotOnLinux64Error:
+            logging.warning('WARNING: Not on Linux - skipping test')
+            return
 
 
-class ModernSslClientPrivateKeyTests(CommonSslClientPrivateKeyTests):
+class ModernSslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
     _SSL_CLIENT_CLS = SslClient
 
 
-class LegacySslClientPrivateKeyTests(CommonSslClientPrivateKeyTests):
+class LegacySslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
     _SSL_CLIENT_CLS = LegacySslClient
 
 
@@ -113,43 +128,38 @@ class CommonSslClientOnlineTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        if cls is CommonSslClientPrivateKeyTests:
+        if cls is CommonSslClientOnlineTests:
             raise unittest.SkipTest("Skip tests, it's a base class")
         super(CommonSslClientOnlineTests, cls).setUpClass()
 
-    def setUp(self):
+    def test(self):
+        # Given an SslClient connecting to Google
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                     ssl_verify=OpenSslVerifyEnum.NONE)
-        ssl_client.set_cipher_list('ECDH')  # Needed for test_get_ecdh_param()
-        ssl_client.do_handshake()
-        self.ssl_client = ssl_client
+        ssl_client = self._SSL_CLIENT_CLS(
+            ssl_version=OpenSslVersionEnum.SSLV23,
+            underlying_socket=sock,
+            ssl_verify=OpenSslVerifyEnum.NONE
+        )
 
-    def tearDown(self):
-        self.ssl_client.shutdown()
-        self.ssl_client.get_underlying_socket().close()
+        # When doing a TLS handshake, it succeeds
+        try:
+            ssl_client.do_handshake()
 
-    def test_write(self):
-        self.assertGreater(self.ssl_client.write(b'GET / HTTP/1.0\r\n\r\n'), 1)
+            # When sending a GET request
+            self.assertGreater(ssl_client.write(b'GET / HTTP/1.0\r\n\r\n'), 1)
+            # It gets response
+            self.assertRegexpMatches(ssl_client.read(1024), b'google')
 
-    def test_read(self):
-        self.ssl_client.write(b'GET / HTTP/1.0\r\n\r\n')
-        self.assertRegexpMatches(self.ssl_client.read(1024), b'google')
-
-    def test_get_peer_certificate(self):
-        self.assertIsNotNone(self.ssl_client.get_peer_certificate())
-
-    def test_get_peer_cert_chain(self):
-        self.assertIsNotNone(self.ssl_client.get_peer_cert_chain())
-
-    def test_get_ecdh_param(self):
-        self.assertIsNotNone(self.ssl_client.get_ecdh_param())
-
-    def test_get_certificate_chain_verify_result(self):
-        self.assertEqual(20, self.ssl_client.get_certificate_chain_verify_result()[0])
+            # When requesting the server certificate, it returns it
+            self.assertIsNotNone(ssl_client.get_peer_certificate())
+            self.assertIsNotNone(ssl_client.get_peer_cert_chain())
+            self.assertTrue(ssl_client.get_certificate_chain_verify_result()[0])
+        finally:
+            ssl_client.shutdown()
+            sock.close()
 
 
 class ModernSslClientOnlineTests(CommonSslClientOnlineTests):
@@ -161,56 +171,34 @@ class LegacySslClientOnlineTests(CommonSslClientOnlineTests):
 
     _SSL_CLIENT_CLS = LegacySslClient
 
-    def test_do_ssl2_iis_handshake(self):
-        self.ssl_client.do_ssl2_iis_handshake()
 
+class LegacySslClientOnlineSsl2Tests(unittest.TestCase):
 
-class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
+    def test_ssl_2(self):
+        # Given a server that supports SSL 2.0
+        try:
+            with VulnerableOpenSslServer() as server:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                sock.connect((server.hostname, server.port))
 
-    # To be defined in subclasses
-    _SSL_CLIENT_CLS = None
+                ssl_client = LegacySslClient(
+                    ssl_version=OpenSslVersionEnum.SSLV2,
+                    underlying_socket=sock,
+                    ssl_verify=OpenSslVerifyEnum.NONE,
+                    ignore_client_authentication_requests=True,
+                )
+                # When doing the special SSL 2.0 handshake, it succeeds
+                try:
+                    ssl_client.do_handshake()
+                    self.assertTrue(ssl_client)
+                finally:
+                    ssl_client.shutdown()
+                    sock.close()
 
-    @classmethod
-    def setUpClass(cls):
-        if cls is CommonSslClientPrivateKeyTests:
-            raise unittest.SkipTest("Skip tests, it's a base class")
-        super(CommonSslClientOnlineClientAuthenticationTests, cls).setUpClass()
-
-    def test_client_certificate_requested(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect(('auth.startssl.com', 443))
-
-        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                     ssl_verify=OpenSslVerifyEnum.NONE)
-
-        self.assertRaisesRegexp(ClientCertificateRequested, 'Server requested a client certificate',
-                                ssl_client.do_handshake)
-        ssl_client.shutdown()
-        sock.close()
-
-    def test_ignore_client_authentication_requests(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect(('auth.startssl.com', 443))
-
-        ssl_client = LegacySslClient(ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock,
-                                     ssl_verify=OpenSslVerifyEnum.NONE, ignore_client_authentication_requests=True)
-
-        ssl_client.do_handshake()
-        self.assertGreater(len(ssl_client.get_client_CA_list()), 2)
-        ssl_client.shutdown()
-        sock.close()
-
-
-class ModernSslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
-
-    _SSL_CLIENT_CLS = SslClient
-
-
-class LegacySslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
-
-    _SSL_CLIENT_CLS = LegacySslClient
+        except NotOnLinux64Error:
+            logging.warning('WARNING: Not on Linux - skipping test')
+            return
 
 
 class ModernSslClientOnlineTls13Tests(unittest.TestCase):
