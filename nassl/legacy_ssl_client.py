@@ -22,6 +22,8 @@ class LegacySslClient(SslClient):
     """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
     """
 
+    _NASSL_MODULE = _nassl_legacy
+
     def __init__(
             self,
             underlying_socket=None,                         # type: Optional[socket.socket]
@@ -35,10 +37,15 @@ class LegacySslClient(SslClient):
             ignore_client_authentication_requests=False     # type: bool
     ):
         # type: (...) -> None
-        self._init_openssl_objects(underlying_socket, ssl_version, _nassl_legacy)
+        self._init_base_objects(ssl_version, underlying_socket)
+
+        # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
+        # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
         self._init_server_authentication(ssl_verify, ssl_verify_locations)
         self._init_client_authentication(client_certchain_file, client_key_file, client_key_type,
                                          client_key_password,ignore_client_authentication_requests)
+        # Now create the SSL object
+        self._init_ssl_objects()
 
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest

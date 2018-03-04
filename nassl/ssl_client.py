@@ -77,6 +77,7 @@ class SslClient(object):
     """
 
     _DEFAULT_BUFFER_SIZE = 4096
+    _NASSL_MODULE = _nassl
 
     def __init__(
             self,
@@ -91,10 +92,26 @@ class SslClient(object):
             ignore_client_authentication_requests=False     # type: bool
     ):
         # type: (...) -> None
-        self._init_openssl_objects(underlying_socket, ssl_version, _nassl)
+        self._init_base_objects(ssl_version, underlying_socket)
+
+        # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
+        # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
         self._init_server_authentication(ssl_verify, ssl_verify_locations)
         self._init_client_authentication(client_certchain_file, client_key_file, client_key_type,
                                          client_key_password,ignore_client_authentication_requests)
+        # Now create the SSL object
+        self._init_ssl_objects()
+
+    def _init_base_objects(self, ssl_version, underlying_socket):
+        # type: (OpenSslVerifyEnum, Optional[socket.socket]) -> None
+        """Setup the socket and SSL_CTX objects.
+        """
+        self._is_handshake_completed = False
+        self._ssl_version = ssl_version
+        self._ssl_ctx = self._NASSL_MODULE.SSL_CTX(ssl_version.value)
+
+        # A Python socket handles transmission of the data
+        self._sock = underlying_socket
 
     def _init_server_authentication(self, ssl_verify, ssl_verify_locations):
         # type: (OpenSslVerifyEnum, Optional[Text]) -> None
@@ -127,27 +144,16 @@ class SslClient(object):
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
-    def _init_openssl_objects(self, underlying_socket, ssl_version, nassl_module):
-        # type: (Optional[socket.socket], OpenSslVersionEnum, Union[_nassl_legacy, _nassl]) -> None
-        # A Python socket handles transmission of the data
-        self._sock = underlying_socket
-        self._is_handshake_completed = False
-        self._ssl_version = ssl_version
-
-        # OpenSSL objects
-        # SSL_CTX
-        self._ssl_ctx = nassl_module.SSL_CTX(ssl_version.value)
-
-        # SSL
-        self._ssl = nassl_module.SSL(self._ssl_ctx)
+    def _init_ssl_objects(self):
+        # type: (...) -> None
+        self._ssl = self._NASSL_MODULE.SSL(self._ssl_ctx)
         self._ssl.set_connect_state()
 
-        # BIOs
-        self._internal_bio = nassl_module.BIO()
-        self._network_bio = nassl_module.BIO()
+        self._internal_bio = self._NASSL_MODULE.BIO()
+        self._network_bio = self._NASSL_MODULE.BIO()
 
         # http://www.openssl.org/docs/crypto/BIO_s_bio.html
-        nassl_module.BIO.make_bio_pair(self._internal_bio, self._network_bio)
+        self._NASSL_MODULE.BIO.make_bio_pair(self._internal_bio, self._network_bio)
         self._ssl.set_bio(self._internal_bio)
         self._ssl.set_network_bio_to_free_when_dealloc(self._network_bio)
 
