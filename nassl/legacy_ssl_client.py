@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import socket
 
-from nassl._nassl import WantReadError, WantX509LookupError
+from nassl._nassl import WantReadError, WantX509LookupError  # type: ignore
 
 from nassl.ssl_client import SslClient, ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, \
     OpenSslFileTypeEnum
@@ -14,7 +14,7 @@ from typing import Optional
 from typing import Text
 import sys
 
-# The legacy client uses the legacy OpenSSL
+
 from nassl import _nassl_legacy  # type: ignore
 
 
@@ -22,6 +22,7 @@ class LegacySslClient(SslClient):
     """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
     """
 
+    # The legacy client uses the legacy OpenSSL
     _NASSL_MODULE = _nassl_legacy
 
     def __init__(

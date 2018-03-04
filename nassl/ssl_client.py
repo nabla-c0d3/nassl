@@ -4,12 +4,11 @@ from __future__ import unicode_literals
 
 import socket
 
-from nassl import _nassl
-from nassl import _nassl_legacy  # type: ignore
-from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
+from nassl import _nassl  # type: ignore
+from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509  # type: ignore
 
 from enum import IntEnum
-from typing import List, Union
+from typing import List
 from typing import Optional
 from typing import Text
 from typing import Tuple
@@ -77,6 +76,9 @@ class SslClient(object):
     """
 
     _DEFAULT_BUFFER_SIZE = 4096
+
+
+    # The default client uses the modern OpenSSL
     _NASSL_MODULE = _nassl
 
     def __init__(
@@ -103,7 +105,7 @@ class SslClient(object):
         self._init_ssl_objects()
 
     def _init_base_objects(self, ssl_version, underlying_socket):
-        # type: (OpenSslVerifyEnum, Optional[socket.socket]) -> None
+        # type: (OpenSslVersionEnum, Optional[socket.socket]) -> None
         """Setup the socket and SSL_CTX objects.
         """
         self._is_handshake_completed = False

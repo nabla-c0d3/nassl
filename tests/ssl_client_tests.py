@@ -222,6 +222,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
                                ssl_verify=OpenSslVerifyEnum.NONE)
         self.assertTrue(ssl_client)
 
+
 class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
 
     _DATA_TO_SEND = 'GET / HTTP/1.1\r\nHost: tls13.crypto.mozilla.org\r\n\r\n'
