@@ -1,9 +1,6 @@
 #!/bin/bash
 set -e -x
 
-# docker run --rm -v D:\GitHub\nassl\:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh
-# docker run --rm -v D:\GitHub\nassl\:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh
-
 # Update perl as OpenSSL 1.1.x requires 5.10; there's probably a better/Docker way to do this
 wget http://www.cpan.org/src/perl-5.10.1.tar.gz
 tar -xzf perl-5.10.1.tar.gz
