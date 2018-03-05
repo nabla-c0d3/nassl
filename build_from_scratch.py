@@ -154,7 +154,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
     _OPENSSL_CONF_CMD = (
         'perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
         'enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_include_path} '
-        '--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args}'
+        '--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args} no-async'
     )
 
     @property
@@ -274,8 +274,13 @@ def main():
     elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
         NASSL_EXTRA_ARGS = ' --plat-name=win-amd64'
 
-    NASSL_BUILD_TASKS = ['{python} setup.py build_ext -i{extra_args}'.format(python=sys.executable,
-                                                                             extra_args=NASSL_EXTRA_ARGS)]
+    # Reset the ./build folder if there was a previous version of nassl
+    build_path = os.path.join(os.path.dirname(__file__), 'build')
+    if os.path.exists(build_path):
+        shutil.rmtree(build_path)
+    NASSL_BUILD_TASKS = [
+        '{python} setup.py build_ext -i{extra_args}'.format(python=sys.executable, extra_args=NASSL_EXTRA_ARGS)
+    ]
     perform_build_task('NASSL', NASSL_BUILD_TASKS)
 
     # Test nassl
