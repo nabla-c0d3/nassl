@@ -94,8 +94,8 @@ extern "C" {
 
 #if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
-#define ENGINESDIR "/mnt/d/GitHub/linux/nassl/bin/openssl-legacy/linux64/lib/engines"
-#define OPENSSLDIR "/mnt/d/GitHub/linux/nassl/bin/openssl-legacy/linux64"
+#define ENGINESDIR "/usr/local/ssl/lib/engines"
+#define OPENSSLDIR "/usr/local/ssl"
 #endif
 #endif
 
