@@ -209,6 +209,8 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
         ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
                                ssl_verify=OpenSslVerifyEnum.NONE)
         self.assertTrue(ssl_client)
+        ssl_client.shutdown()
+        sock.close()
 
 
 class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
