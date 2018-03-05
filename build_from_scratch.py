@@ -105,7 +105,7 @@ class OpenSslBuildConfig(object):
             return [
                 self.configure_command,
                 do_build_step,
-                # 'nmake -f ms\\nt.mak clean',   Does not work if tmp32 does not exist (openssl was never built)
+                'nmake -f ms\\nt.mak clean',  # Does not work if tmp32 does not exist (openssl was never built)
                 'nmake -f ms\\nt.mak',
             ]
 
