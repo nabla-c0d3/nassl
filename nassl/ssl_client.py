@@ -287,6 +287,11 @@ class SslClient(object):
         self._is_handshake_completed = False
         try:
             self._flush_ssl_engine()
+        except IOError:
+            # Ensure shutting down the connection never raises an exception
+            pass
+
+        try:
             self._ssl.shutdown()
         except OpenSSLError as e:
             # Ignore "uninitialized" exception
