@@ -903,7 +903,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
 #ifndef LEGACY_OPENSSL
     {"write_early_data", (PyCFunction)nassl_SSL_write_early_data, METH_VARARGS,
-     "OpenSSL's SSL_write_ealy_data()."
+     "OpenSSL's SSL_write_early_data()."
     },
     {"get_early_data_status", (PyCFunction)nassl_SSL_get_early_data_status, METH_VARARGS,
      "OpenSSL's SSL_get_early_data_status()."
