@@ -286,8 +286,8 @@ class SslClient(object):
         # type: () -> None
         self._is_handshake_completed = False
         try:
-            self._ssl.shutdown()
             self._flush_ssl_engine()
+            self._ssl.shutdown()
         except OpenSSLError as e:
             # Ignore "uninitialized" exception
             if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
