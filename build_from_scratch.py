@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """ Base script to successively build Zlib, OpenSSL and nassl from scratch.
 
 It will build the _nassl C extension for the python interpreter/platform that was used to run this script (ie. no
