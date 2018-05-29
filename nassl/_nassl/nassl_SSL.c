@@ -1,17 +1,6 @@
 
 #include <Python.h>
 
-#ifdef LEGACY_OPENSSL
-// Include internal headers so we can access EDH and ECDH parameter
-// They need to be included before including winsock.h otherwise we get a bunch of errors on Windows
-// http://stackoverflow.com/questions/11726958/cant-include-winsock2-h-in-msvc-2010
-/* crappy solution, ssl_locl and e_os are normally not exported by openssl but we need them to read non exported structures.
-   Plus CERT is defined by ssl_locl so we have to undefine it before including it... */
-#undef CERT
-#include "openssl-internal/ssl_locl.h"
-#endif
-
-
 // Fix symbol clashing on Windows
 // https://bugs.launchpad.net/pyopenssl/+bug/570101
 #ifdef _WIN32
@@ -726,105 +715,6 @@ static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *a
     const char *stateString = SSL_state_string_long(self->ssl);
     return PyUnicode_FromString(stateString);
 }
-
-
-static PyObject* nassl_SSL_get_dh_param(nassl_SSL_Object *self)
-{
-    DH *dh_srvr;
-    SSL_SESSION* session;
-    const SSL_CIPHER *cipher = get_tmp_new_cipher(self);
-    long alg_k;
-
-    if (cipher == NULL)
-    {
-        PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
-        return NULL;
-    }
-    alg_k = cipher->algorithm_mkey;
-    session = SSL_get1_session(self->ssl);
-
-    if (!(alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd)))
-    {
-        PyErr_SetString(PyExc_TypeError, "Diffie-Hellman is not used in this session");
-        return NULL;
-    }
-
-    if (session == NULL)
-    {
-        PyErr_SetString(PyExc_TypeError, "Unable to get Diffie-Hellman parameters");
-        return NULL;
-    }
-
-    if ((session->sess_cert == NULL) || (session->sess_cert->peer_dh_tmp == NULL))
-    {
-        PyErr_SetString(PyExc_TypeError, "Unable to get Diffie-Hellman parameters");
-        return NULL;
-    }
-    dh_srvr = session->sess_cert->peer_dh_tmp;
-
-    if ((dh_srvr->p == NULL) ||(dh_srvr->g == NULL) ||(dh_srvr->pub_key == NULL))
-    {
-        PyErr_SetString(PyExc_TypeError, "Unable to get Diffie-Hellman parameters");
-        return NULL;
-    }
-
-    return generic_print_to_string((int (*)(BIO *, const void *)) &DHparams_print, dh_srvr);
-}
-
-
-/* mostly ripped from OpenSSL's s3_clnt.c */
-static PyObject* nassl_SSL_get_ecdh_param(nassl_SSL_Object *self)
-{
-    EC_KEY *ec_key;
-    SSL_SESSION* session;
-    const SSL_CIPHER *cipher = get_tmp_new_cipher(self);
-    long alg_k;
-    EVP_PKEY *srvr_pub_pkey = NULL;
-
-    if (cipher == NULL)
-    {
-        PyErr_SetString(PyExc_TypeError, "Invalid session (unable to get master key derivation algorithm)");
-        return NULL;
-    }
-    alg_k = cipher->algorithm_mkey;
-    session = SSL_get1_session(self->ssl);
-
-    if (!(alg_k & (SSL_kECDHr|SSL_kECDHe|SSL_kEECDH)))
-    {
-        PyErr_SetString(PyExc_TypeError, "Elliptic curve Diffie-Hellman is not used in this session");
-        return NULL;
-    }
-
-    if ((session == NULL) || (session->sess_cert == NULL))
-    {
-        PyErr_SetString(PyExc_TypeError, "Unable to get ECDH parameters - Invalid session");
-        return NULL;
-    }
-
-
-    if (session->sess_cert->peer_ecdh_tmp != NULL)
-    {
-        ec_key = session->sess_cert->peer_ecdh_tmp;
-    }
-    else
-    {
-        /* Get the Server Public Key from Cert */
-        srvr_pub_pkey = X509_get_pubkey(session-> \
-            sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
-        if ((srvr_pub_pkey == NULL) ||
-            (srvr_pub_pkey->type != EVP_PKEY_EC) ||
-            (srvr_pub_pkey->pkey.ec == NULL))
-        {
-            if (srvr_pub_pkey)
-                EVP_PKEY_free(srvr_pub_pkey);
-            PyErr_SetString(PyExc_TypeError, "Unable to get server public key.");
-            return NULL;
-        }
-        ec_key = srvr_pub_pkey->pkey.ec;
-    }
-
-    return generic_print_to_string((int (*)(BIO *, const void *)) &ECParameters_print, ec_key);
-}
 #endif
 
 static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject *args)
@@ -975,12 +865,6 @@ static PyMethodDef nassl_SSL_Object_methods[] =
 #ifdef LEGACY_OPENSSL
     {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
      "OpenSSL's SSL_state_string_long()."
-    },
-    {"get_dh_param", (PyCFunction)nassl_SSL_get_dh_param, METH_NOARGS,
-     "return Diffie-Hellman parameters as a string."
-    },
-    {"get_ecdh_param", (PyCFunction)nassl_SSL_get_ecdh_param, METH_NOARGS,
-     "return elliptic curve Diffie-Hellman parameters as a string."
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,

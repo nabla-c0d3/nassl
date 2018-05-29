@@ -7,9 +7,8 @@ import logging
 import unittest
 import socket
 
-from nassl._nassl import OpenSSLError
 from nassl.legacy_ssl_client import LegacySslClient
-from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient
+from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, OpenSSLError
 from tests.openssl_server import VulnerableOpenSslServer, NotOnLinux64Error, ClientAuthenticationServerConfigurationEnum
 
 
@@ -215,7 +214,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
 class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
 
-    _DATA_TO_SEND = 'GET / HTTP/1.1\r\nHost: tls13.crypto.mozilla.org\r\n\r\n'
+    _DATA_TO_SEND = b'GET / HTTP/1.1\r\nHost: tls13.crypto.mozilla.org\r\n\r\n'
 
     def setUp(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -230,8 +229,6 @@ class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
         self.ssl_client.get_underlying_socket().close()
 
     def test_write_early_data_doesnot_finish_handshake(self):
-        # TODO(AD): Fix early data code
-        return
         self.ssl_client.do_handshake()
         self.ssl_client.write(self._DATA_TO_SEND);
         self.ssl_client.read(2048) 
@@ -244,16 +241,12 @@ class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
         self.assertFalse(self.ssl_client.is_handshake_completed())
 
     def test_write_early_data_fail_when_used_on_non_reused_session(self):
-        # TODO(AD): Fix early data code
-        return
         self.assertRaisesRegexp(OpenSSLError, 
                                 'function you should not call',
                                 self.ssl_client.write_early_data,
                                 self._DATA_TO_SEND)
 
     def test_write_early_data_fail_when_trying_to_send_more_than_max_ealry_data(self):
-        # TODO(AD): Fix early data code
-        return
         self.ssl_client.do_handshake()
         self.ssl_client.write(self._DATA_TO_SEND);
         self.ssl_client.read(2048) 
