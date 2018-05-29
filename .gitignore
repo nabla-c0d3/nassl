@@ -1,3 +1,5 @@
+deps
+
 .mypy_cache/
 
 # OpenSSL build artifacts
