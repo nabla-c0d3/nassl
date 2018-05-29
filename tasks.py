@@ -17,9 +17,10 @@ def test(ctx):
 
 
 @task
-def build_ext(ctx):
-    ctx.run('python setup.py build_ext -i')
-
+def build_linux_wheels(ctx):
+    # Build the Linux 32 and 64 bit wheels using Docker
+    ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh')
+    ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh')
 
 @task
 def release(ctx):
@@ -39,6 +40,6 @@ def release(ctx):
     # Build the Windows wheel
     ctx.run('python setup.py bdist_wheel')
 
-    # Build the Linux 32 and 64 bit wheels using Docker
-    ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh')
-    ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh')
+    # Build the Linux wheels
+    build_linux_wheel(ctx)
+

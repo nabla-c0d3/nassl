@@ -10,16 +10,16 @@ make
 make install
 export PATH=$HOME/localperl/bin:$PATH
 
-# Build Zlib, OpenSSL
+# Build everything
 cd ../io
-"/opt/python/cp36-cp36m/bin/python" build_from_scratch.py
+"/opt/python/cp36-cp36m/bin/pip" install pipenv
+"/opt/python/cp36-cp36m/bin/pipenv" --python "/opt/python/cp36-cp36m/bin/python" install --dev
+"/opt/python/cp36-cp36m/bin/pipenv" run invoke -c build_tasks build-all
 cd ..
 
 # Compile wheels
-for PYBIN in "cp27-cp27mu" "cp34-cp34m" "cp35-cp35m" "cp36-cp36m"; do
-    "/opt/python/${PYBIN}/bin/pip" install -r /io/requirements.txt
-    "/opt/python/${PYBIN}/bin/pip" wheel /io/ -w wheelhouse/
-done
+"/opt/python/cp36-cp36m/bin/pip" wheel /io/ -w wheelhouse/
+
 
 # Bundle external shared libraries into the wheels
 for whl in wheelhouse/nassl*.whl; do
