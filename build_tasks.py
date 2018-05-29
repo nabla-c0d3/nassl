@@ -270,7 +270,7 @@ class ZlibBuildConfig(BuildConfig):
 
         else:
             # Linux/macOS build
-            with ctx.cd(self.src_path):
+            with ctx.cd(str(self.src_path)):
                 ctx.run('CFLAGS="-fPIC" ./configure -static')
                 ctx.run('make clean')
                 ctx.run('make')
