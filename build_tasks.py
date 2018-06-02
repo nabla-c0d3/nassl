@@ -56,10 +56,13 @@ class BuildConfig(ABC):
 
     @property
     @abstractmethod
-    def src_path(self):
+    def src_path(self) -> Path:
         """Where the src package is extracted to before trying to build it.
         """
         pass
+
+    def clean(self):
+            shutil.rmtree(self.src_path, ignore_errors=True)
 
     @property
     @abstractmethod
@@ -208,7 +211,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
     def _openssl_git_tag(self):
-        return 'OpenSSL_1_1_1-pre6'
+        return 'OpenSSL_1_1_1-pre5'
 
     _OPENSSL_CONF_CMD = (
         'perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
@@ -293,6 +296,7 @@ class ZlibBuildConfig(BuildConfig):
 def build_zlib(ctx):
     print('ZLIB: Starting...')
     zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
+    zlib_cfg.clean()
     zlib_cfg.fetch_source()
     zlib_cfg.build(ctx)
     print('ZLIB: All done')
@@ -302,6 +306,7 @@ def build_zlib(ctx):
 def build_legacy_openssl(ctx):
     print('OPENSSL LEGACY: Starting...')
     ssl_legacy_cfg = LegacyOpenSslBuildConfig(CURRENT_PLATFORM)
+    ssl_legacy_cfg.clean()
     ssl_legacy_cfg.fetch_source()
     zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
     ssl_legacy_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
@@ -312,6 +317,7 @@ def build_legacy_openssl(ctx):
 def build_modern_openssl(ctx):
     print('OPENSSL MODERN: Starting...')
     ssl_modern_cfg = ModernOpenSslBuildConfig(CURRENT_PLATFORM)
+    ssl_modern_cfg.clean()
     ssl_modern_cfg.fetch_source()
     zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
     ssl_modern_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)

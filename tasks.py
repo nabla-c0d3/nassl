@@ -22,6 +22,13 @@ def build_linux_wheels(ctx):
     ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh')
     ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh')
 
+
+@task
+def build_wheel(ctx):
+    # Works on Windows anc macOS
+    ctx.run('python setup.py bdist_wheel')
+
+
 @task
 def release(ctx):
     raise NotImplementedError()
@@ -38,7 +45,7 @@ def release(ctx):
     ctx.run('git push --tags')
 
     # Build the Windows wheel
-    ctx.run('python setup.py bdist_wheel')
+    build_wheel(ctx)
 
     # Build the Linux wheels
     build_linux_wheel(ctx)
