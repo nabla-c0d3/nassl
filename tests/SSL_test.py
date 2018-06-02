@@ -84,11 +84,6 @@ class Common_SSL_Tests(unittest.TestCase):
         test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         self.assertIsNone(test_ssl.set_cipher_list('HIGH'))
 
-    def test_set_cipher_list_bad(self):
-        # Invalid cipher string
-        test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        self.assertRaises(_nassl.OpenSSLError, test_ssl.set_cipher_list, 'badcipherstring')
-
     def test_shutdown_bad(self):
         test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         self.assertRaisesRegexp(_nassl.OpenSSLError, 'uninitialized', test_ssl.shutdown)
@@ -146,6 +141,11 @@ class Legacy_SSL_Tests(Common_SSL_Tests):
     _NASSL_MODULE = _nassl_legacy
 
     # The following tests don't pass with modern OpenSSL - the API might have changed
+    def test_set_cipher_list_bad(self):
+        # Invalid cipher string
+        test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
+        self.assertRaises(_nassl.OpenSSLError, test_ssl.set_cipher_list, 'badcipherstring')
+
     def test_do_handshake_bad_eof(self):
         # No BIO attached to the SSL object
         test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
