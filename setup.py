@@ -93,7 +93,6 @@ else:
     MODERN_NASSL_EXT_SETUP['include_dirs'].append(str(Path('nassl') / '_nassl'))
 
 
-
 NASSL_SETUP.update({'ext_modules': [Extension(**LEGACY_NASSL_EXT_SETUP), Extension(**MODERN_NASSL_EXT_SETUP)]})
 
 

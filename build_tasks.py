@@ -50,6 +50,8 @@ elif architecture()[0] == '32bit':
 
 
 class BuildConfig(ABC):
+    """Base class we use to configure and build Zlib and OpenSSL.
+    """
 
     def __init__(self, platform):
         self.platform = platform
