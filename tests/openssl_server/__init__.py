@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import os
 import shlex
 
@@ -30,7 +26,7 @@ class NotOnLinux64Error(EnvironmentError):
     """
 
 
-class VulnerableOpenSslServer(object):
+class VulnerableOpenSslServer:
     """An OpenSSL server running the 1.0.1e version of OpenSSL, vilnerable to CCS Injection and Heartbleed.
     """
 

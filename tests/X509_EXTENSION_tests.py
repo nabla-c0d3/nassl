@@ -1,7 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
 import unittest
 from nassl import _nassl_legacy
 from nassl import _nassl

@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import socket
 
 from nassl import _nassl  # type: ignore
@@ -68,7 +64,7 @@ class ClientCertificateRequested(IOError):
         return exc_msg
 
 
-class SslClient(object):
+class SslClient:
     """High level API implementing an SSL client.
 
     Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the

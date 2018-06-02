@@ -1,9 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 from enum import IntEnum
-from typing import Tuple, Optional, List, Union
+from typing import Tuple, Optional
 from typing import Any
 from nassl import _nassl
 from typing import Dict
@@ -26,7 +22,7 @@ class OcspResponseStatusEnum(IntEnum):
     UNAUTHORIZED = 6
 
 
-class OcspResponse(object):
+class OcspResponse:
     """High level API for parsing an OCSP response.
     """
 
