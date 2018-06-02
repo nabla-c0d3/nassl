@@ -5,7 +5,5 @@ install:
   - pip install pipenv
   - pipenv install --dev
   - invoke -c build_tasks build-all
-before_script:
-  git lfs pull
 script:
   - invoke test
