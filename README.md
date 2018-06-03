@@ -3,7 +3,6 @@ nassl
 
 
 [![Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
-[![Coverage Status](https://coveralls.io/repos/github/nabla-c0d3/nassl/badge.svg?branch=master)](https://coveralls.io/github/nabla-c0d3/nassl?branch=master)
 [![PyPI version](https://badge.fury.io/py/nassl.svg)](https://badge.fury.io/py/nassl)
 
 Experimental OpenSSL wrapper for Python 3.6+ and SSLyze. **Do NOT use for anything serious**. This code has not
