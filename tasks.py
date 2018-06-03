@@ -1,6 +1,8 @@
 from pathlib import Path
 
-from invoke import task
+from invoke import task, Collection
+
+import build_tasks
 from nassl import __version__
 
 root_path = Path(__file__).parent.absolute()
@@ -18,14 +20,14 @@ def test(ctx):
 
 
 @task
-def build_linux_wheels(ctx):
+def package_linux_wheels(ctx):
     # Build the Linux 32 and 64 bit wheels using Docker
     ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh')
     ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh')
 
 
 @task
-def build_wheel(ctx):
+def package_wheel(ctx):
     # Works on Windows anc macOS
     ctx.run('python setup.py bdist_wheel')
 
@@ -51,3 +53,22 @@ def release(ctx):
     # Build the Linux wheels
     build_linux_wheel(ctx)
 
+
+# Setup all the tasks
+ns = Collection()
+ns.add_task(release)
+ns.add_task(test)
+
+
+package = Collection('package')
+package.add_task(package_linux_wheels, 'linux_wheels')
+package.add_task(package_wheel, 'wheel')
+ns.add_collection(package)
+
+build = Collection('build')
+build.add_task(build_tasks.build_zlib, 'zlib')
+build.add_task(build_tasks.build_legacy_openssl, 'legacy_openssl')
+build.add_task(build_tasks.build_modern_openssl, 'modern_openssl')
+build.add_task(build_tasks.build_nassl, 'nassl')
+build.add_task(build_tasks.build_all, 'all')
+ns.add_collection(build)

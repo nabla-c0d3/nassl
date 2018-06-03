@@ -29,7 +29,7 @@ If you want to setup a local environment where you can work on SSLyze, you will 
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
-    $ invoke -c build_tasks build-all
+    $ invoke build.all
 
 Then, the tests can be run using:
 

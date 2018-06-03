@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from platform import architecture
 from sys import platform
-from typing import Optional
+from typing import Optional, Any
 
 try:
     from invoke import task, Context
@@ -16,6 +16,8 @@ except ImportError:
     def task(*args, **kwargs):  # type: ignore
         # Return a function - anything will do
         return repr
+
+    Context = Any
 
 
 # Where we store the src packages of OpenSSL and Zlib
