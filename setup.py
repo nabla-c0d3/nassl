@@ -61,8 +61,8 @@ LEGACY_NASSL_EXT_SETUP.update({
     'include_dirs': [str(legacy_openssl_config.include_path)],
     'extra_objects': [
         str(zlib_config.libz_path),
-        str(legacy_openssl_config.libcrypto_path),
         str(legacy_openssl_config.libssl_path),
+        str(legacy_openssl_config.libcrypto_path),
     ],
 })
 
@@ -72,8 +72,8 @@ MODERN_NASSL_EXT_SETUP.update({
     'include_dirs': [str(modern_openssl_config.include_path)],
     'extra_objects': [
         str(zlib_config.libz_path),
-        str(modern_openssl_config.libcrypto_path),
         str(modern_openssl_config.libssl_path),
+        str(modern_openssl_config.libcrypto_path),
     ],
 })
 
