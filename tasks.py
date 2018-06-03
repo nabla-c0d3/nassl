@@ -12,8 +12,9 @@ def test(ctx):
     ctx.run('pytest')
 
     # Run linters
-    ctx.run('flake8 sslyze')
-    ctx.run('mypy sslyze')
+    ctx.run('mypy nassl')
+    # TODO(AD): Enable once we move to python 3 type annotations
+    #ctx.run('flake8 nassl')
 
 
 @task

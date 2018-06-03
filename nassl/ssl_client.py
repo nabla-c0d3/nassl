@@ -55,7 +55,7 @@ class ClientCertificateRequested(IOError):
         # type: (List[Text]) -> None
         self._ca_list = ca_list
 
-    def __str__(self):
+    def __str__(self) -> str:
         exc_msg = self.ERROR_MSG
 
         if len(self._ca_list) > 0:

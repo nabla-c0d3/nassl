@@ -1,5 +1,5 @@
 from enum import IntEnum
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 from typing import Any
 from nassl import _nassl
 from typing import Dict
@@ -32,7 +32,7 @@ class OcspResponse:
         self._ocsp_response_dict = self._parse_ocsp_response_from_openssl_text(self.as_text(), self.status)
 
     @property
-    def status(self):
+    def status(self) -> OcspResponseStatusEnum:
         return OcspResponseStatusEnum(self._ocsp_response.get_status())
 
     def as_text(self):
@@ -131,7 +131,7 @@ class OcspResponse:
         return key, final_value
 
     @classmethod
-    def _parse_single_sct(cls, sct_text_output):
+    def _parse_single_sct(cls, sct_text_output: str) -> Dict[Text, Any]:
         parsed_sct = {}
         for line in sct_text_output.split('\n'):
             # One-line fields
@@ -149,7 +149,7 @@ class OcspResponse:
         return parsed_sct
 
     @classmethod
-    def _get_scts_from_text_output(cls, response_text):
+    def _get_scts_from_text_output(cls, response_text: str) -> Optional[List[Dict[Text, Any]]]:
         scts_text_list = response_text.split('Signed Certificate Timestamp')
         if len(scts_text_list) < 1:
             return None
