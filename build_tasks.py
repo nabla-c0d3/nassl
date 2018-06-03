@@ -6,13 +6,14 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from platform import architecture
 from sys import platform
+from typing import Optional
 
 try:
-    from invoke import task
+    from invoke import task, Context
 except ImportError:
     # This will happen when doing pip install nassl in an environment that does not have invoke pre-installed
     # We still want this script to be usable directly by pip
-    def task(*args, **kwargs):
+    def task(*args, **kwargs):  # type: ignore
         # Return a function - anything will do
         return repr
 
@@ -53,7 +54,7 @@ class BuildConfig(ABC):
     """Base class we use to configure and build Zlib and OpenSSL.
     """
 
-    def __init__(self, platform):
+    def __init__(self, platform: SupportedPlatformEnum) -> None:
         self.platform = platform
 
     @property
@@ -63,17 +64,17 @@ class BuildConfig(ABC):
         """
         pass
 
-    def clean(self):
-            shutil.rmtree(self.src_path, ignore_errors=True)
+    def clean(self) -> None:
+        shutil.rmtree(self.src_path, ignore_errors=True)
 
     @property
     @abstractmethod
-    def src_tar_gz_url(self):
+    def src_tar_gz_url(self) -> str:
         """Where to download src package from.
         """
         pass
 
-    def fetch_source(self):
+    def fetch_source(self) -> None:
         """Download the tar archive that contains the source code for the library.
         """
         import requests  # Do not import at the top that this file can be imported by setup.py
@@ -88,12 +89,12 @@ class BuildConfig(ABC):
             tar_file.extractall(path=_DEPS_PATH)
 
     @abstractmethod
-    def build(self, ctx):
+    def build(self, ctx: Context) -> None:
         pass
 
     @property
     @abstractmethod
-    def include_path(self):
+    def include_path(self) -> Path:
         pass
 
 
@@ -101,18 +102,18 @@ class OpenSslBuildConfig(BuildConfig, ABC):
 
     @property
     @abstractmethod
-    def _openssl_git_tag(self):
+    def _openssl_git_tag(self) -> str:
         pass
 
     @property
-    def src_tar_gz_url(self):
+    def src_tar_gz_url(self) -> str:
         return f'https://github.com/openssl/openssl/archive/{self._openssl_git_tag}.tar.gz'
 
     @property
-    def src_path(self):
+    def src_path(self) -> Path:
         return _DEPS_PATH / f'openssl-{self._openssl_git_tag}'
 
-    def _get_build_target(self, should_build_for_debug):
+    def _get_build_target(self, should_build_for_debug: bool) -> str:
         if self.platform == SupportedPlatformEnum.WINDOWS_32:
             openssl_target = 'VC-WIN32'
         elif self.platform == SupportedPlatformEnum.WINDOWS_64:
@@ -134,7 +135,13 @@ class OpenSslBuildConfig(BuildConfig, ABC):
 
         return openssl_target
 
-    def build(self, ctx, zlib_lib_path=None, zlib_include_path=None, should_build_for_debug=False):
+    def build(
+            self,
+            ctx: Context,
+            zlib_lib_path: Optional[Path] = None,
+            zlib_include_path: Optional[Path] = None,
+            should_build_for_debug: bool = False
+    ) -> None:
         if not zlib_lib_path or not zlib_include_path:
             raise ValueError('Missing argument')
 
@@ -145,9 +152,15 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             self._run_build_steps(ctx)
 
     # To be defined in subclasses
-    _OPENSSL_CONF_CMD = None
+    _OPENSSL_CONF_CMD: str = None
 
-    def _run_configure_command(self, ctx, openssl_target, zlib_lib_path, zlib_include_path):
+    def _run_configure_command(
+            self,
+            ctx: Context,
+            openssl_target: str,
+            zlib_lib_path: Path,
+            zlib_include_path: Path
+    ) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             extra_args = '-no-asm -DZLIB_WINAPI'  # *hate* zlib
         else:
@@ -160,7 +173,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             extra_args=extra_args
         ))
 
-    def _run_build_steps(self, ctx):
+    def _run_build_steps(self, ctx: Context) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             if self.platform == SupportedPlatformEnum.WINDOWS_32:
                 ctx.run('ms\\do_ms')
@@ -178,7 +191,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
 class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
-    def _openssl_git_tag(self):
+    def _openssl_git_tag(self) -> str:
         return 'OpenSSL_1_0_2e'
 
     _OPENSSL_CONF_CMD = (
@@ -188,21 +201,21 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
     )
 
     @property
-    def include_path(self):
+    def include_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             return self.src_path / 'inc32'
         else:
             return self.src_path / 'include'
 
     @property
-    def libcrypto_path(self):
+    def libcrypto_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             return self.src_path / 'out32' / 'libeay32.lib'
         else:
             return self.src_path / 'libcrypto.a'
 
     @property
-    def libssl_path(self):
+    def libssl_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             return self.src_path / 'out32' / 'ssleay32.lib'
         else:
@@ -212,7 +225,7 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
 class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
-    def _openssl_git_tag(self):
+    def _openssl_git_tag(self) -> str:
         return 'OpenSSL_1_1_1-pre5'
 
     _OPENSSL_CONF_CMD = (
@@ -221,7 +234,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
         '--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args} no-async'
     )
 
-    def _run_build_steps(self, ctx):
+    def _run_build_steps(self, ctx: Context) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             ctx.run('nmake clean', warn=True)
             ctx.run('nmake build_libs')
@@ -229,35 +242,35 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
             return super()._run_build_steps(ctx)
 
     @property
-    def libcrypto_path(self):
+    def libcrypto_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             return self.src_path / 'libcrypto.lib'
         else:
             return self.src_path / 'libcrypto.a'
 
     @property
-    def libssl_path(self):
+    def libssl_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             return self.src_path / 'libssl.lib'
         else:
             return self.src_path / 'libssl.a'
 
     @property
-    def include_path(self):
+    def include_path(self) -> Path:
         return self.src_path / 'include'
 
 
 class ZlibBuildConfig(BuildConfig):
 
     @property
-    def src_tar_gz_url(self):
+    def src_tar_gz_url(self) -> str:
         return 'http://zlib.net/zlib-1.2.11.tar.gz'
 
     @property
-    def src_path(self):
+    def src_path(self) -> Path:
         return _DEPS_PATH / 'zlib-1.2.11'
 
-    def build(self, ctx):
+    def build(self, ctx: Context) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             if self.platform == SupportedPlatformEnum.WINDOWS_32:
                 arch = 'x86'
@@ -281,7 +294,7 @@ class ZlibBuildConfig(BuildConfig):
                 ctx.run('make')
 
     @property
-    def libz_path(self):
+    def libz_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             arch = 'x86' if self.platform == SupportedPlatformEnum.WINDOWS_32 else 'x64'
             zlib_lib_path = self.src_path / 'contrib' / 'vstudio' / 'vc14' / arch / 'ZlibStatRelease' / 'zlibstat.lib'
@@ -290,7 +303,7 @@ class ZlibBuildConfig(BuildConfig):
         return zlib_lib_path
 
     @property
-    def include_path(self):
+    def include_path(self) -> Path:
         return self.src_path
 
 
