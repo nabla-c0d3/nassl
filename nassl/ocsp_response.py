@@ -3,13 +3,11 @@ from typing import Tuple, Optional, List
 from typing import Any
 from nassl import _nassl
 from typing import Dict
-from typing import Text
 
 
 class OcspResponseNotTrustedError(IOError):
 
-    def __init__(self, trust_store_path):
-        # type: (Text) -> None
+    def __init__(self, trust_store_path: str) -> None:
         self.trust_store_path = trust_store_path
 
 
@@ -26,8 +24,7 @@ class OcspResponse:
     """High level API for parsing an OCSP response.
     """
 
-    def __init__(self, ocsp_response):
-        # type: (_nassl.OCSP_RESPONSE) -> None
+    def __init__(self, ocsp_response: _nassl.OCSP_RESPONSE) -> None:
         self._ocsp_response = ocsp_response
         self._ocsp_response_dict = self._parse_ocsp_response_from_openssl_text(self.as_text(), self.status)
 
@@ -35,15 +32,13 @@ class OcspResponse:
     def status(self) -> OcspResponseStatusEnum:
         return OcspResponseStatusEnum(self._ocsp_response.get_status())
 
-    def as_text(self):
-        # type: () -> Text
+    def as_text(self) -> str:
         ocsp_resp_bytes = self._ocsp_response.as_text()
         # The response may contain certificates, which then may contain non-utf8 characters - get rid of them
         ocsp_first_resp = ocsp_resp_bytes.split(b'Certificate:')[0]
         return ocsp_first_resp.decode('utf-8')
 
-    def verify(self, verify_locations):
-        # type: (Text) -> None
+    def verify(self, verify_locations: str) -> None:
         """Verify that the OCSP response is trusted.
 
         Args:
@@ -63,13 +58,15 @@ class OcspResponse:
                 raise OcspResponseNotTrustedError(verify_locations)
             raise
 
-    def as_dict(self):
-        # type: () -> Dict[Text, Any]
+    def as_dict(self) -> Dict[str, Any]:
         return self._ocsp_response_dict
 
     @classmethod
-    def _parse_ocsp_response_from_openssl_text(cls, response_text, response_status):
-        # type: (Text, OcspResponseStatusEnum) -> Dict[Text, Any]
+    def _parse_ocsp_response_from_openssl_text(
+            cls,
+            response_text: str,
+            response_status: OcspResponseStatusEnum
+    ) -> Dict[str, Any]:
         """Parse OpenSSL's text output and make a lot of assumptions.
         """
         response_dict = {
@@ -78,7 +75,7 @@ class OcspResponse:
             'responseType': cls._get_value_from_text_output('Response Type:', response_text),
             'responderID': cls._get_value_from_text_output('Responder Id:', response_text),
             'producedAt': cls._get_value_from_text_output('Produced At:', response_text),
-            }  # type: Dict[Text, Any]
+            }  # type: Dict[str, Any]
 
         if response_status != OcspResponseStatusEnum.SUCCESSFUL:
             return response_dict
@@ -107,20 +104,17 @@ class OcspResponse:
 
 # Text parsing
     @staticmethod
-    def _get_value_from_text_output(key, text_output):
-        # type: (Text, Text) -> Optional[Text]
+    def _get_value_from_text_output(key: str, text_output: str) -> Optional[str]:
         value = text_output.split(key)
         return None if len(value) < 2 else value[1].split('\n')[0].strip()
 
     @classmethod
-    def _get_value_from_text_output_no_p(cls, key, text_output):
-        # type: (Text, Text) -> Optional[Text]
+    def _get_value_from_text_output_no_p(cls, key: str, text_output: str) -> Optional[str]:
         value = cls._get_value_from_text_output(key, text_output)
         return None if value is None else value.split('(')[0].strip()
 
     @staticmethod
-    def _parse_sct_text_line(text_output):
-        # type: (Text) -> Tuple[Text, Optional[Text]]
+    def _parse_sct_text_line(text_output: str) -> Tuple[str, Optional[str]]:
         text_output_split = text_output.split(':', 1)
         key = text_output_split[0].strip()
         value = text_output_split[1].strip()
@@ -131,7 +125,7 @@ class OcspResponse:
         return key, final_value
 
     @classmethod
-    def _parse_single_sct(cls, sct_text_output: str) -> Dict[Text, Any]:
+    def _parse_single_sct(cls, sct_text_output: str) -> Dict[str, Any]:
         parsed_sct = {}
         for line in sct_text_output.split('\n'):
             # One-line fields
@@ -149,7 +143,7 @@ class OcspResponse:
         return parsed_sct
 
     @classmethod
-    def _get_scts_from_text_output(cls, response_text: str) -> Optional[List[Dict[Text, Any]]]:
+    def _get_scts_from_text_output(cls, response_text: str) -> Optional[List[Dict[str, Any]]]:
         scts_text_list = response_text.split('Signed Certificate Timestamp')
         if len(scts_text_list) < 1:
             return None

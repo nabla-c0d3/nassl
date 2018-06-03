@@ -8,11 +8,9 @@ from sys import platform
 
 import logging
 import time
-from typing import Text
+
 
 # This module is taken from SSLyze
-
-
 class ClientAuthenticationServerConfigurationEnum(Enum):
     """Whether the server asked for client authentication.
     """
@@ -48,21 +46,26 @@ class VulnerableOpenSslServer:
     _CLIENT_KEY_PATH = os.path.join(os.path.dirname(__file__), 'client-key.pem')
 
     @classmethod
-    def get_client_certificate_path(cls):
-        # type: () -> Text
+    def get_client_certificate_path(cls) -> str:
         return cls._CLIENT_CERT_PATH
 
     @classmethod
-    def get_client_key_path(cls):
-        # type: () -> Text
+    def get_client_key_path(cls) -> str:
         return cls._CLIENT_KEY_PATH
 
-    def __init__(self, client_auth_config=ClientAuthenticationServerConfigurationEnum.DISABLED):
-        # type: (ClientAuthenticationServerConfigurationEnum) -> None
+    @staticmethod
+    def is_platform_supported() -> bool:
         if platform not in ['linux', 'linux2']:
-            raise NotOnLinux64Error()
-
+            return False
         if architecture()[0] != '64bit':
+            return False
+        return True
+
+    def __init__(
+            self,
+            client_auth_config: ClientAuthenticationServerConfigurationEnum = ClientAuthenticationServerConfigurationEnum.DISABLED
+    ) -> None:
+        if not self.is_platform_supported():
             raise NotOnLinux64Error()
 
         self.hostname = 'localhost'

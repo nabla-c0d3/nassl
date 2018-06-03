@@ -1,12 +1,11 @@
 import socket
 
-from nassl import _nassl  # type: ignore
-from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509  # type: ignore
+from nassl import _nassl
+from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
 
 from enum import IntEnum
 from typing import List
 from typing import Optional
-from typing import Text
 from typing import Tuple
 from nassl.ocsp_response import OcspResponse
 
@@ -51,8 +50,7 @@ class ClientCertificateRequested(IOError):
     ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
     ERROR_MSG = 'Server requested a client certificate.'
 
-    def __init__(self, ca_list):
-        # type: (List[Text]) -> None
+    def __init__(self, ca_list: List[str]) -> None:
         self._ca_list = ca_list
 
     def __str__(self) -> str:
@@ -79,17 +77,16 @@ class SslClient:
 
     def __init__(
             self,
-            underlying_socket=None,                         # type: Optional[socket.socket]
-            ssl_version=OpenSslVersionEnum.SSLV23,          # type: OpenSslVersionEnum
-            ssl_verify=OpenSslVerifyEnum.PEER,              # type: OpenSslVerifyEnum
-            ssl_verify_locations=None,                      # type: Optional[Text]
-            client_certchain_file=None,                     # type: Optional[Text]
-            client_key_file=None,                           # type: Optional[Text]
-            client_key_type=OpenSslFileTypeEnum.PEM,        # type: OpenSslFileTypeEnum
-            client_key_password='',                         # type: Text
-            ignore_client_authentication_requests=False     # type: bool
-    ):
-        # type: (...) -> None
+            underlying_socket: Optional[socket.socket] = None,
+            ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+            ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
+            ssl_verify_locations: Optional[str] = None,
+            client_certchain_file: Optional[str] = None,
+            client_key_file: Optional[str] = None,
+            client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
+            client_key_password: str = '',
+            ignore_client_authentication_requests: bool = False
+    ) -> None:
         self._init_base_objects(ssl_version, underlying_socket)
 
         # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
@@ -100,8 +97,7 @@ class SslClient:
         # Now create the SSL object
         self._init_ssl_objects()
 
-    def _init_base_objects(self, ssl_version, underlying_socket):
-        # type: (OpenSslVersionEnum, Optional[socket.socket]) -> None
+    def _init_base_objects(self, ssl_version: OpenSslVersionEnum, underlying_socket: Optional[socket.socket]) -> None:
         """Setup the socket and SSL_CTX objects.
         """
         self._is_handshake_completed = False
@@ -111,8 +107,7 @@ class SslClient:
         # A Python socket handles transmission of the data
         self._sock = underlying_socket
 
-    def _init_server_authentication(self, ssl_verify, ssl_verify_locations):
-        # type: (OpenSslVerifyEnum, Optional[Text]) -> None
+    def _init_server_authentication(self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[str]) -> None:
         """Setup the certificate validation logic for authenticating the server.
         """
         self._ssl_ctx.set_verify(ssl_verify.value)
@@ -124,13 +119,12 @@ class SslClient:
 
     def _init_client_authentication(
             self,
-            client_certchain_file,                  # type: Optional[Text]
-            client_key_file,                        # type: Optional[Text]
-            client_key_type,                        # type: OpenSslFileTypeEnum
-            client_key_password,                    # type: Text
-            ignore_client_authentication_requests   # type: bool
-    ):
-        # type: (...) -> None
+            client_certchain_file: Optional[str],
+            client_key_file: Optional[str],
+            client_key_type: OpenSslFileTypeEnum,
+            client_key_password: str,
+            ignore_client_authentication_requests: bool
+    ) -> None:
         """Setup client authentication using the supplied certificate and key.
         """
         if client_certchain_file is not None and client_key_file is not None:
@@ -142,8 +136,7 @@ class SslClient:
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
-    def _init_ssl_objects(self):
-        # type: (...) -> None
+    def _init_ssl_objects(self) -> None:
         self._ssl = self._NASSL_MODULE.SSL(self._ssl_ctx)
         self._ssl.set_connect_state()
 
@@ -155,18 +148,15 @@ class SslClient:
         self._ssl.set_bio(self._internal_bio)
         self._ssl.set_network_bio_to_free_when_dealloc(self._network_bio)
 
-    def set_underlying_socket(self, sock):
-        # type: (socket.socket) -> None
+    def set_underlying_socket(self, sock: socket.socket) -> None:
         if self._sock:
             raise RuntimeError('A socket was already set')
         self._sock = sock
 
-    def get_underlying_socket(self):
-        # type: () -> Optional[socket.socket]
+    def get_underlying_socket(self) -> Optional[socket.socket]:
         return self._sock
 
-    def do_handshake(self):
-        # type: () -> None
+    def do_handshake(self) -> None:
         if self._sock is None:
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
@@ -194,14 +184,12 @@ class SslClient:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
-    def is_handshake_completed(self):
-        # type: () -> bool
+    def is_handshake_completed(self) -> bool:
         return self._is_handshake_completed
 
     # When sending early data, client can call read even if the handshake hasn't been
     # finished yet
-    def read(self, size, handshake_must_be_completed = True):
-        # type: (int, bool) -> bytes
+    def read(self, size: int, handshake_must_be_completed: bool = True) -> bytes:
         if self._sock is None:
             raise IOError('Internal socket set to None; cannot perform handshake.')
         if handshake_must_be_completed and not self._is_handshake_completed:
@@ -227,8 +215,7 @@ class SslClient:
                 # before it can decrypt the whole message
                 pass
 
-    def write(self, data):
-        # type: (bytes) -> int
+    def write(self, data: bytes) -> int:
         """Returns the number of (encrypted) bytes sent.
         """
         if self._sock is None:
@@ -244,8 +231,7 @@ class SslClient:
 
         return final_length
 
-    def write_early_data(self, data):
-        # type: (bytes) -> int
+    def write_early_data(self, data: bytes) -> int:
         """Returns the number of (encrypted) bytes sent.
         """
         if self._is_handshake_completed:
@@ -258,12 +244,10 @@ class SslClient:
         final_length = self._flush_ssl_engine()
         return final_length
 
-    def get_early_data_status(self):
-        # type: () -> OpenSslEarlyDataStatusEnum
+    def get_early_data_status(self) -> OpenSslEarlyDataStatusEnum:
         return OpenSslEarlyDataStatusEnum[self._ssl.get_early_data_status()]
 
-    def _flush_ssl_engine(self):
-        # type: () -> int
+    def _flush_ssl_engine(self) -> int:
         if self._sock is None:
             raise IOError('Internal socket set to None; cannot perform handshake.')
 
@@ -278,8 +262,7 @@ class SslClient:
 
         return final_length
 
-    def shutdown(self):
-        # type: () -> None
+    def shutdown(self) -> None:
         self._is_handshake_completed = False
         try:
             self._flush_ssl_engine()
@@ -294,41 +277,39 @@ class SslClient:
             if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
                 raise
 
-    def set_tlsext_host_name(self, name_indication):
-        # type: (Text) -> None
+    def set_tlsext_host_name(self, name_indication: str) -> None:
         """Set the hostname within the Server Name Indication extension in the client SSL Hello.
         """
         self._ssl.set_tlsext_host_name(name_indication)
 
-    def get_peer_certificate(self):
-        # type: () -> Optional[X509]
+    def get_peer_certificate(self) -> Optional[X509]:
         return self._ssl.get_peer_certificate()
 
-    def get_peer_cert_chain(self):
-        # type: () -> List[X509]
+    def get_peer_cert_chain(self) -> List[X509]:
         """See the OpenSSL documentation for differences between get_peer_cert_chain() and get_peer_certificate().
         https://www.openssl.org/docs/ssl/SSL_get_peer_cert_chain.html
         """
         return self._ssl.get_peer_cert_chain()
 
-    def set_cipher_list(self, cipher_list):
-        # type: (Text) -> None
+    def set_cipher_list(self, cipher_list: str) -> None:
         self._ssl.set_cipher_list(cipher_list)
 
-    def get_cipher_list(self):
-        # type: () -> List[Text]
+    def get_cipher_list(self) -> List[str]:
         return self._ssl.get_cipher_list()
 
-    def get_current_cipher_name(self):
-        # type: () -> Text
+    def get_current_cipher_name(self) -> str:
         return self._ssl.get_cipher_name()
 
-    def get_current_cipher_bits(self):
-        # type: () -> int
+    def get_current_cipher_bits(self) -> int:
         return self._ssl.get_cipher_bits()
 
-    def _use_private_key(self, client_certchain_file, client_key_file, client_key_type, client_key_password):
-        # type: (Text, Text, OpenSslFileTypeEnum, Text) -> None
+    def _use_private_key(
+            self,
+            client_certchain_file: str,
+            client_key_file: str,
+            client_key_type: OpenSslFileTypeEnum,
+            client_key_password: str
+    ) -> None:
         """The certificate chain file must be in PEM format. Private method because it should be set via the
         constructor.
         """
@@ -350,22 +331,19 @@ class SslClient:
 
         self._ssl_ctx.check_private_key()
 
-    def get_certificate_chain_verify_result(self):
-        # type: () -> Tuple[int, Text]
+    def get_certificate_chain_verify_result(self) -> Tuple[int, str]:
         verify_result = self._ssl.get_verify_result()
         verify_result_str = X509.verify_cert_error_string(verify_result)
         return verify_result, verify_result_str
 
     _TLSEXT_STATUSTYPE_ocsp = 1
 
-    def set_tlsext_status_ocsp(self):
-        # type: () -> None
+    def set_tlsext_status_ocsp(self) -> None:
         """Enable the OCSP Stapling extension.
         """
         self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
 
-    def get_tlsext_status_ocsp_resp(self):
-        # type: () -> Optional[OcspResponse]
+    def get_tlsext_status_ocsp_resp(self) -> Optional[OcspResponse]:
         """Retrieve the server's OCSP Stapling status.
         """
         ocsp_response = self._ssl.get_tlsext_status_ocsp_resp()
@@ -374,24 +352,20 @@ class SslClient:
         else:
             return None
 
-    def get_client_CA_list(self):
-        # type: () -> List[Text]
+    def get_client_CA_list(self) -> List[str]:
         return self._ssl.get_client_CA_list()
 
-    def get_session(self):
-        # type: () -> _nassl.SSL_SESSION
+    def get_session(self) -> _nassl.SSL_SESSION:
         """Get the SSL connection's Session object.
         """
         return self._ssl.get_session()
 
-    def set_session(self, ssl_session):
-        # type: (_nassl.SSL_SESSION) -> None
+    def set_session(self, ssl_session: _nassl.SSL_SESSION) -> None:
         """Set the SSL connection's Session object.
         """
         self._ssl.set_session(ssl_session)
 
     _SSL_OP_NO_TICKET = 0x00004000  # No TLS Session tickets
 
-    def disable_stateless_session_resumption(self):
-        # type: () -> None
+    def disable_stateless_session_resumption(self) -> None:
         self._ssl.set_options(self._SSL_OP_NO_TICKET)
