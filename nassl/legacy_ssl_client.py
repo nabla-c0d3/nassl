@@ -36,8 +36,13 @@ class LegacySslClient(SslClient):
         # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
         # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
         self._init_server_authentication(ssl_verify, ssl_verify_locations)
-        self._init_client_authentication(client_certchain_file, client_key_file, client_key_type,
-                                         client_key_password,ignore_client_authentication_requests)
+        self._init_client_authentication(
+            client_certchain_file,
+            client_key_file,
+            client_key_type,
+            client_key_password,
+            ignore_client_authentication_requests
+        )
         # Now create the SSL object
         self._init_ssl_objects()
 
@@ -104,7 +109,7 @@ class LegacySslClient(SslClient):
                         # waiting for the server's response, causing IIS 7 to hang on the connection.
                         # This workaround forces our client to send the CMK message, then wait for the server's
                         # response, and then send the data packet
-                        #if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
+                        # if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
                         message_type = handshake_data_out[2]
                         IS_PYTHON_2 = sys.version_info < (3, 0)
                         if IS_PYTHON_2:

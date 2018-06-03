@@ -71,7 +71,7 @@ class OcspResponse:
         """
         response_dict = {
             'responseStatus': cls._get_value_from_text_output_no_p('OCSP Response Status:', response_text),
-            'version' : cls._get_value_from_text_output_no_p('Version:', response_text),
+            'version': cls._get_value_from_text_output_no_p('Version:', response_text),
             'responseType': cls._get_value_from_text_output('Response Type:', response_text),
             'responderID': cls._get_value_from_text_output('Responder Id:', response_text),
             'producedAt': cls._get_value_from_text_output('Produced At:', response_text),
@@ -153,4 +153,3 @@ class OcspResponse:
         for sct_text in scts_text_list:
             parsed_scts.append(cls._parse_single_sct(sct_text))
         return parsed_scts
-

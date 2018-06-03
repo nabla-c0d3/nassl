@@ -14,7 +14,7 @@ def test(ctx):
     # Run linters
     ctx.run('mypy nassl')
     # TODO(AD): Enable once we move to python 3 type annotations
-    #ctx.run('flake8 nassl')
+    ctx.run('flake8 nassl')
 
 
 @task

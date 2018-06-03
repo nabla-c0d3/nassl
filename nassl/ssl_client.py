@@ -71,7 +71,6 @@ class SslClient:
 
     _DEFAULT_BUFFER_SIZE = 4096
 
-
     # The default client uses the modern OpenSSL
     _NASSL_MODULE = _nassl
 
@@ -92,8 +91,13 @@ class SslClient:
         # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
         # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
         self._init_server_authentication(ssl_verify, ssl_verify_locations)
-        self._init_client_authentication(client_certchain_file, client_key_file, client_key_type,
-                                         client_key_password,ignore_client_authentication_requests)
+        self._init_client_authentication(
+            client_certchain_file,
+            client_key_file,
+            client_key_type,
+            client_key_password,
+            ignore_client_authentication_requests
+        )
         # Now create the SSL object
         self._init_ssl_objects()
 
