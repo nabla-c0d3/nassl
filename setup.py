@@ -60,9 +60,10 @@ LEGACY_NASSL_EXT_SETUP['define_macros'] = [('LEGACY_OPENSSL', '1')]
 LEGACY_NASSL_EXT_SETUP.update({
     'include_dirs': [str(legacy_openssl_config.include_path)],
     'extra_objects': [
-        str(zlib_config.libz_path),
+        # The order matters on some flavors of Linux
         str(legacy_openssl_config.libssl_path),
         str(legacy_openssl_config.libcrypto_path),
+        str(zlib_config.libz_path),
     ],
 })
 
@@ -71,9 +72,10 @@ MODERN_NASSL_EXT_SETUP['name'] = 'nassl._nassl'
 MODERN_NASSL_EXT_SETUP.update({
     'include_dirs': [str(modern_openssl_config.include_path)],
     'extra_objects': [
-        str(zlib_config.libz_path),
+        # The order matters on some flavors of Linux
         str(modern_openssl_config.libssl_path),
         str(modern_openssl_config.libcrypto_path),
+        str(zlib_config.libz_path),
     ],
 })
 
