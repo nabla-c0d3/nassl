@@ -1,17 +1,11 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
 import socket
 
-from nassl._nassl import WantReadError, WantX509LookupError  # type: ignore
+from nassl._nassl import WantReadError, WantX509LookupError
 
 from nassl.ssl_client import SslClient, ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, \
     OpenSslFileTypeEnum
-from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Text
 import sys
 
 
@@ -27,24 +21,28 @@ class LegacySslClient(SslClient):
 
     def __init__(
             self,
-            underlying_socket=None,                         # type: Optional[socket.socket]
-            ssl_version=OpenSslVersionEnum.SSLV23,          # type: OpenSslVersionEnum
-            ssl_verify=OpenSslVerifyEnum.PEER,              # type: OpenSslVerifyEnum
-            ssl_verify_locations=None,                      # type: Optional[Text]
-            client_certchain_file=None,                     # type: Optional[Text]
-            client_key_file=None,                           # type: Optional[Text]
-            client_key_type=OpenSslFileTypeEnum.PEM,        # type: OpenSslFileTypeEnum
-            client_key_password='',                         # type: Text
-            ignore_client_authentication_requests=False     # type: bool
-    ):
-        # type: (...) -> None
+            underlying_socket: Optional[socket.socket] = None,
+            ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+            ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
+            ssl_verify_locations: Optional[str] = None,
+            client_certchain_file: Optional[str] = None,
+            client_key_file: Optional[str] = None,
+            client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
+            client_key_password: str = '',
+            ignore_client_authentication_requests: bool = False
+    ) -> None:
         self._init_base_objects(ssl_version, underlying_socket)
 
         # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
         # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
         self._init_server_authentication(ssl_verify, ssl_verify_locations)
-        self._init_client_authentication(client_certchain_file, client_key_file, client_key_type,
-                                         client_key_password,ignore_client_authentication_requests)
+        self._init_client_authentication(
+            client_certchain_file,
+            client_key_file,
+            client_key_type,
+            client_key_password,
+            ignore_client_authentication_requests
+        )
         # Now create the SSL object
         self._init_ssl_objects()
 
@@ -58,23 +56,19 @@ class LegacySslClient(SslClient):
             # TODO(AD): Provide a built-in mechansim for overriding the handshake logic
             self.do_handshake = self.do_ssl2_iis_handshake  # type: ignore
 
-    def get_secure_renegotiation_support(self):
-        # type: () -> bool
+    def get_secure_renegotiation_support(self) -> bool:
         return self._ssl.get_secure_renegotiation_support()
 
-    def get_current_compression_method(self):
-        # type: () -> Optional[Text]
+    def get_current_compression_method(self) -> Optional[str]:
         return self._ssl.get_current_compression_method()
 
     @staticmethod
-    def get_available_compression_methods():
-        # type: () -> List[Text]
+    def get_available_compression_methods() -> List[str]:
         """Returns the list of SSL compression methods supported by SslClient.
         """
         return _nassl_legacy.SSL.get_available_compression_methods()
 
-    def do_renegotiate(self):
-        # type: () -> None
+    def do_renegotiate(self) -> None:
         """Initiate an SSL renegotiation.
         """
         if not self._is_handshake_completed:
@@ -85,70 +79,11 @@ class LegacySslClient(SslClient):
 
     _SSL_MODE_SEND_FALLBACK_SCSV = 0x00000080
 
-    def enable_fallback_scsv(self):
-        # type: () -> None
+    def enable_fallback_scsv(self) -> None:
         self._ssl.set_mode(self._SSL_MODE_SEND_FALLBACK_SCSV)
 
-    def get_dh_param(self):
-        # type: () -> Dict[str, str]
-        """Retrieve the negotiated Ephemeral Diffie Helmann parameters.
-        """
-        d = self._openssl_str_to_dic(self._ssl.get_dh_param())
-        d['GroupSize'] = d.pop('DH_Parameters').strip('( bit)')
-        d['Type'] = "DH"
-        d['Generator'] = d.pop('generator').split(' ')[0]
-        return d
-
-    def get_ecdh_param(self):
-        # type: () -> Dict[str, str]
-        """Retrieve the negotiated Ephemeral EC Diffie Helmann parameters.
-        """
-        d = self._openssl_str_to_dic(self._ssl.get_ecdh_param(), '        ')
-        d['GroupSize'] = d.pop('ECDSA_Parameters').strip('( bit)')
-        d['Type'] = "ECDH"
-        if 'Cofactor' in d :
-            d['Cofactor'] = d['Cofactor'].split(' ')[0]
-
-        for k in d.keys() :
-            if k.startswith('Generator') :
-                d['Generator'] = d.pop(k)
-                d['GeneratorType'] = k.split('_')[1].strip('()')
-                break
-        else :
-            d['GeneratorType'] = 'Unknown'
-        return d
-
-    @staticmethod
-    def _openssl_str_to_dic(s, param_tab='            '):
-        # type: (str, str) -> Dict[str, str]
-        """EDH and ECDH parameters pretty-printing.
-        """
-        d = {}  # type: Dict[Text, Text]
-        to_XML = lambda x : "_".join(m for m in x.replace('-', ' ').split(' '))
-        current_arg = None
-        for l in s.splitlines() :
-            if not l.startswith(param_tab) :
-                if current_arg :
-                    d[current_arg] = "0x"+d[current_arg].replace(':', '')
-                    current_arg = None
-                args = tuple(arg.strip() for arg in l.split(':') if arg.strip())
-                if len(args) > 1 :
-                    # one line parameter
-                    d[to_XML(args[0])] = args[1]
-                else :
-                    # multi-line parameter
-                    current_arg = to_XML(args[0])
-                    d[current_arg] = ''
-            else :
-                if current_arg:
-                    d[current_arg] += l.strip()
-        if current_arg:
-            d[current_arg] = "0x"+d[current_arg].replace(':', '')
-        return d
-
     # TODO(AD): Allow the handshake method to be overridden instead of this
-    def do_ssl2_iis_handshake(self):
-        # type: () -> None
+    def do_ssl2_iis_handshake(self) -> None:
         if self._sock is None:
             # TODO: Auto create a socket ?
             raise IOError('Internal socket set to None; cannot perform handshake.')
@@ -174,7 +109,7 @@ class LegacySslClient(SslClient):
                         # waiting for the server's response, causing IIS 7 to hang on the connection.
                         # This workaround forces our client to send the CMK message, then wait for the server's
                         # response, and then send the data packet
-                        #if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
+                        # if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
                         message_type = handshake_data_out[2]
                         IS_PYTHON_2 = sys.version_info < (3, 0)
                         if IS_PYTHON_2:
