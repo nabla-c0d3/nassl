@@ -286,9 +286,10 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
     @property
     def exe_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
-            return self.src_path / 'openssl.exe'
+            return self.src_path / 'apps' / 'openssl.exe'
         else:
-            return self.src_path / 'openssl'
+            return self.src_path / 'apps' / 'openssl'
+
 
 class ZlibBuildConfig(BuildConfig):
 

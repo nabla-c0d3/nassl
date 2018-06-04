@@ -179,69 +179,109 @@ class LegacySslClientOnlineSsl2Tests(unittest.TestCase):
 
 
 class ModernSslClientOnlineTls13Tests(unittest.TestCase):
+
     def test_tls_1_3(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect(('tls13.crypto.mozilla.org', 443))
-        ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
-                               ssl_verify=OpenSslVerifyEnum.NONE)
-        self.assertTrue(ssl_client)
-        ssl_client.shutdown()
-        sock.close()
+        # Given a server that supports TLS 1.3
+        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-
-class ModernSslClientOnlineEarlyDataTests(unittest.TestCase):
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+            # When doing the TLS 1.3 handshake, it succeeds
+            try:
+                ssl_client.do_handshake()
+                self.assertTrue(ssl_client)
+            finally:
+                ssl_client.shutdown()
+                sock.close()
 
     _DATA_TO_SEND = b'GET / HTTP/1.1\r\nHost: tls13.crypto.mozilla.org\r\n\r\n'
 
-    def setUp(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(10)
-        sock.connect(('tls13.crypto.mozilla.org', 443))
-        ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock,
-                               ssl_verify=OpenSslVerifyEnum.NONE)
-        self.ssl_client = ssl_client
+    def test_tls_1_3_write_early_data_does_not_finish_handshake(self):
+        # Given a server that supports TLS 1.3
+        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-    def tearDown(self):
-        self.ssl_client.shutdown()
-        self.ssl_client.get_underlying_socket().close()
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
 
-    @unittest.skip("Needs early data fix")
-    def test_write_early_data_doesnot_finish_handshake(self):
-        self.ssl_client.do_handshake()
-        self.ssl_client.write(self._DATA_TO_SEND);
-        self.ssl_client.read(2048) 
-        sess = self.ssl_client.get_session()
-        self.assertIsNotNone(sess)
-        self.tearDown()
-        self.setUp()
-        self.ssl_client.set_session(sess)
-        self.ssl_client.write_early_data(self._DATA_TO_SEND);
-        self.assertFalse(self.ssl_client.is_handshake_completed())
+            try:
+                ssl_client.do_handshake()
+                ssl_client.write(self._DATA_TO_SEND)
+                ssl_client.read(2048)
+                sess = ssl_client.get_session()
 
-    @unittest.skip("Needs early data fix")
-    def test_write_early_data_fail_when_used_on_non_reused_session(self):
-        self.assertRaisesRegexp(OpenSSLError, 
-                                'function you should not call',
-                                self.ssl_client.write_early_data,
-                                self._DATA_TO_SEND)
+            finally:
+                ssl_client.shutdown()
+                sock.close()
 
-    @unittest.skip("Needs early data fix")
-    def test_write_early_data_fail_when_trying_to_send_more_than_max_ealry_data(self):
-        self.ssl_client.do_handshake()
-        self.ssl_client.write(self._DATA_TO_SEND);
-        self.ssl_client.read(2048) 
-        sess = self.ssl_client.get_session()
-        max_early = sess.get_max_early_data()
-        str_to_send = 'GET / HTTP/1.1\r\nData: {}\r\n\r\n'
-        self.assertIsNotNone(sess)
-        self.tearDown()
-        self.setUp()
-        self.ssl_client.set_session(sess)
-        self.assertRaisesRegexp(OpenSSLError, 
-                                'too much early data',
-                                self.ssl_client.write_early_data,
-                                str_to_send.format('*' * max_early))
+        ssl_client.set_session(sess)
+        ssl_client.write_early_data(self._DATA_TO_SEND)
+        self.assertFalse(ssl_client.is_handshake_completed())
+
+    def test_tls_1_3_write_early_data_fail_when_used_on_non_reused_session(self):
+        # Given a server that supports TLS 1.3
+        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            self.assertRaisesRegexp(
+                OpenSSLError,
+                'function you should not call',
+                ssl_client.write_early_data,
+                self._DATA_TO_SEND
+            )
+
+    def test_tls_1_3_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self):
+        # Given a server that supports TLS 1.3
+        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+                ssl_client.write(self._DATA_TO_SEND)
+                ssl_client.read(2048)
+                sess = ssl_client.get_session()
+                self.assertIsNotNone(sess)
+                max_early = sess.get_max_early_data()
+                str_to_send = 'GET / HTTP/1.1\r\nData: {}\r\n\r\n'
+
+            finally:
+                ssl_client.shutdown()
+                sock.close()
+
+            ssl_client.set_session(sess)
+            self.assertRaisesRegexp(
+                OpenSSLError,
+                'too much early data',
+                ssl_client.write_early_data,
+                str_to_send.format('*' * max_early)
+            )
 
 
 def main():
@@ -249,4 +289,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
