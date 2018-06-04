@@ -4,7 +4,7 @@ import socket
 
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, OpenSSLError
-from tests.openssl_server import VulnerableOpenSslServer, NotOnLinux64Error, ClientAuthenticationServerConfigurationEnum
+from tests.openssl_server import OpenSslServer, ClientAuthConfigEnum, OpenSslServerVersion
 
 
 class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
@@ -20,91 +20,79 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
 
     def test_client_authentication_no_certificate_supplied(self):
         # Given a server that requires client authentication
-        try:
-            with VulnerableOpenSslServer(
-                    client_auth_config=ClientAuthenticationServerConfigurationEnum.REQUIRED
-            ) as server:
-                # And the client does NOT provide a client certificate
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-                sock.connect((server.hostname, server.port))
+        with OpenSslServer(
+            server_version=OpenSslServerVersion.MODERN,
+            client_auth_config=ClientAuthConfigEnum.REQUIRED
+        ) as server:
+            # And the client does NOT provide a client certificate
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-                ssl_client = self._SSL_CLIENT_CLS(
-                    ssl_version=OpenSslVersionEnum.SSLV23,
-                    underlying_socket=sock,
-                    ssl_verify=OpenSslVerifyEnum.NONE,
-                )
-                # When doing the handshake the right error is returned
-                self.assertRaisesRegexp(
-                    ClientCertificateRequested,
-                    'Server requested a client certificate',
-                    ssl_client.do_handshake
-                )
-                sock.close()
-
-        except NotOnLinux64Error:
-            logging.warning('WARNING: Not on Linux - skipping test')
-            return
+            ssl_client = self._SSL_CLIENT_CLS(
+                ssl_version=OpenSslVersionEnum.SSLV23,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            # When doing the handshake the right error is returned
+            self.assertRaisesRegexp(
+                ClientCertificateRequested,
+                'Server requested a client certificate',
+                ssl_client.do_handshake
+            )
+            sock.close()
 
     def test_client_authentication_no_certificate_supplied_but_ignore(self):
         # Given a server that accepts optional client authentication
-        try:
-            with VulnerableOpenSslServer(
-                    client_auth_config=ClientAuthenticationServerConfigurationEnum.OPTIONAL
-            ) as server:
-                # And the client does NOT provide a client cert but is configured to ignore the client auth request
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-                sock.connect((server.hostname, server.port))
+        with OpenSslServer(
+            server_version=OpenSslServerVersion.MODERN,
+            client_auth_config=ClientAuthConfigEnum.OPTIONAL
+        ) as server:
+            # And the client does NOT provide a client cert but is configured to ignore the client auth request
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-                ssl_client = self._SSL_CLIENT_CLS(
-                    ssl_version=OpenSslVersionEnum.SSLV23,
-                    underlying_socket=sock,
-                    ssl_verify=OpenSslVerifyEnum.NONE,
-                    ignore_client_authentication_requests=True,
-                )
-                # When doing the handshake
-                try:
-                    ssl_client.do_handshake()
-                    # It succeeds
-                    self.assertTrue(ssl_client)
-                finally:
-                    ssl_client.shutdown()
-                    sock.close()
-
-        except NotOnLinux64Error:
-            logging.warning('WARNING: Not on Linux - skipping test')
-            return
+            ssl_client = self._SSL_CLIENT_CLS(
+                ssl_version=OpenSslVersionEnum.SSLV23,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+                ignore_client_authentication_requests=True,
+            )
+            # When doing the handshake
+            try:
+                ssl_client.do_handshake()
+                # It succeeds
+                self.assertTrue(ssl_client)
+            finally:
+                ssl_client.shutdown()
+                sock.close()
 
     def test_client_authentication_succeeds(self):
         # Given a server that requires client authentication
-        try:
-            with VulnerableOpenSslServer(
-                    client_auth_config=ClientAuthenticationServerConfigurationEnum.REQUIRED
-            ) as server:
-                # And the client provides a client certificate
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-                sock.connect((server.hostname, server.port))
+        with OpenSslServer(
+            server_version=OpenSslServerVersion.MODERN,
+            client_auth_config=ClientAuthConfigEnum.REQUIRED
+        ) as server:
+            # And the client provides a client certificate
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-                ssl_client = self._SSL_CLIENT_CLS(
-                    ssl_version=OpenSslVersionEnum.SSLV23,
-                    underlying_socket=sock,
-                    ssl_verify=OpenSslVerifyEnum.NONE,
-                    client_certchain_file=server.get_client_certificate_path(),
-                    client_key_file=server.get_client_key_path(),
-                )
+            ssl_client = self._SSL_CLIENT_CLS(
+                ssl_version=OpenSslVersionEnum.SSLV23,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+                client_certchain_file=server.get_client_certificate_path(),
+                client_key_file=server.get_client_key_path(),
+            )
 
-                # When doing the handshake, it succeeds
-                try:
-                    ssl_client.do_handshake()
-                finally:
-                    ssl_client.shutdown()
-                    sock.close()
-
-        except NotOnLinux64Error:
-            logging.warning('WARNING: Not on Linux - skipping test')
-            return
+            # When doing the handshake, it succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+                sock.close()
 
 
 class ModernSslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
@@ -170,29 +158,24 @@ class LegacySslClientOnlineSsl2Tests(unittest.TestCase):
 
     def test_ssl_2(self):
         # Given a server that supports SSL 2.0
-        try:
-            with VulnerableOpenSslServer() as server:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(5)
-                sock.connect((server.hostname, server.port))
+        with OpenSslServer(server_version=OpenSslServerVersion.LEGACY) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-                ssl_client = LegacySslClient(
-                    ssl_version=OpenSslVersionEnum.SSLV2,
-                    underlying_socket=sock,
-                    ssl_verify=OpenSslVerifyEnum.NONE,
-                    ignore_client_authentication_requests=True,
-                )
-                # When doing the special SSL 2.0 handshake, it succeeds
-                try:
-                    ssl_client.do_handshake()
-                    self.assertTrue(ssl_client)
-                finally:
-                    ssl_client.shutdown()
-                    sock.close()
-
-        except NotOnLinux64Error:
-            logging.warning('WARNING: Not on Linux - skipping test')
-            return
+            ssl_client = LegacySslClient(
+                ssl_version=OpenSslVersionEnum.SSLV2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+                ignore_client_authentication_requests=True,
+            )
+            # When doing the special SSL 2.0 handshake, it succeeds
+            try:
+                ssl_client.do_handshake()
+                self.assertTrue(ssl_client)
+            finally:
+                ssl_client.shutdown()
+                sock.close()
 
 
 class ModernSslClientOnlineTls13Tests(unittest.TestCase):

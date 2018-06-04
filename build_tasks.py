@@ -115,6 +115,21 @@ class OpenSslBuildConfig(BuildConfig, ABC):
     def src_path(self) -> Path:
         return _DEPS_PATH / f'openssl-{self._openssl_git_tag}'
 
+    @property
+    @abstractmethod
+    def libcrypto_path(self) -> Path:
+        pass
+
+    @property
+    @abstractmethod
+    def libssl_path(self) -> Path:
+        pass
+
+    @property
+    @abstractmethod
+    def exe_path(self) -> Path:
+        pass
+
     def _get_build_target(self, should_build_for_debug: bool) -> str:
         if self.platform == SupportedPlatformEnum.WINDOWS_32:
             openssl_target = 'VC-WIN32'
@@ -187,7 +202,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
 
         else:
             ctx.run('make clean', warn=True)
-            ctx.run('make build_libs')  # Only build the libs as it is faster - not available on Windows
+            ctx.run('make')  # Only build the libs as it is faster - not available on Windows
 
 
 class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
@@ -223,6 +238,13 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
         else:
             return self.src_path / 'libssl.a'
 
+    @property
+    def exe_path(self) -> Path:
+        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+            return self.src_path / 'out32' / 'openssl.exe'
+        else:
+            return self.src_path / 'openssl'
+
 
 class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 
@@ -239,7 +261,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
     def _run_build_steps(self, ctx: Context) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             ctx.run('nmake clean', warn=True)
-            ctx.run('nmake build_libs')
+            ctx.run('nmake')
         else:
             return super()._run_build_steps(ctx)
 
@@ -261,6 +283,12 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
     def include_path(self) -> Path:
         return self.src_path / 'include'
 
+    @property
+    def exe_path(self) -> Path:
+        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+            return self.src_path / 'openssl.exe'
+        else:
+            return self.src_path / 'openssl'
 
 class ZlibBuildConfig(BuildConfig):
 
@@ -307,6 +335,7 @@ class ZlibBuildConfig(BuildConfig):
     @property
     def include_path(self) -> Path:
         return self.src_path
+
 
 
 @task

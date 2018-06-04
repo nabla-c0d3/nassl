@@ -3,15 +3,14 @@ import shlex
 
 import subprocess
 from enum import Enum
-from platform import architecture
-from sys import platform
 
 import logging
 import time
 
+from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM
 
-# This module is taken from SSLyze
-class ClientAuthenticationServerConfigurationEnum(Enum):
+
+class ClientAuthConfigEnum(Enum):
     """Whether the server asked for client authentication.
     """
     DISABLED = 1
@@ -19,16 +18,14 @@ class ClientAuthenticationServerConfigurationEnum(Enum):
     REQUIRED = 3
 
 
-class NotOnLinux64Error(EnvironmentError):
-    """The embedded OpenSSL server is only available on Linux 64.
+class OpenSslServerVersion(Enum):
+    LEGACY = 1
+    MODERN = 2
+
+
+class OpenSslServer:
+    """A wrapper around OpenSSL's s_server CLI.
     """
-
-
-class VulnerableOpenSslServer:
-    """An OpenSSL server running the 1.0.1e version of OpenSSL, vilnerable to CCS Injection and Heartbleed.
-    """
-
-    _OPENSSL_PATH = os.path.join(os.path.dirname(__file__), 'openssl-1-0-0e-linux64')
 
     _SERVER_CERT_PATH = os.path.join(os.path.dirname(__file__), 'server-self-signed-cert.pem')
     _SERVER_KEY_PATH = os.path.join(os.path.dirname(__file__), 'server-self-signed-key.pem')
@@ -53,20 +50,17 @@ class VulnerableOpenSslServer:
     def get_client_key_path(cls) -> str:
         return cls._CLIENT_KEY_PATH
 
-    @staticmethod
-    def is_platform_supported() -> bool:
-        if platform not in ['linux', 'linux2']:
-            return False
-        if architecture()[0] != '64bit':
-            return False
-        return True
-
     def __init__(
             self,
-            client_auth_config: ClientAuthenticationServerConfigurationEnum = ClientAuthenticationServerConfigurationEnum.DISABLED
+            server_version: OpenSslServerVersion,
+            client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+
     ) -> None:
-        if not self.is_platform_supported():
-            raise NotOnLinux64Error()
+        # Get the path to the OpenSSL executable from the build tasks
+        if server_version == OpenSslServerVersion.MODERN:
+            openssl_path = str(ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path)
+        else:
+            openssl_path = str(LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path)
 
         self.hostname = 'localhost'
         self.ip_address = '127.0.0.1'
@@ -75,24 +69,24 @@ class VulnerableOpenSslServer:
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
         self._process = None
 
-        if client_auth_config == ClientAuthenticationServerConfigurationEnum.DISABLED:
+        if client_auth_config == ClientAuthConfigEnum.DISABLED:
             self._command_line = self._S_SERVER_CMD.format(
-                openssl=self._OPENSSL_PATH,
+                openssl=openssl_path,
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
             )
-        elif client_auth_config == ClientAuthenticationServerConfigurationEnum.OPTIONAL:
+        elif client_auth_config == ClientAuthConfigEnum.OPTIONAL:
             self._command_line = self._S_SERVER_WITH_OPTIONAL_CLIENT_AUTH_CMD.format(
-                openssl=self._OPENSSL_PATH,
+                openssl=openssl_path,
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
                 client_ca=self._CLIENT_CA_PATH,
             )
-        elif client_auth_config == ClientAuthenticationServerConfigurationEnum.REQUIRED:
+        elif client_auth_config == ClientAuthConfigEnum.REQUIRED:
             self._command_line = self._S_SERVER_WITH_REQUIRED_CLIENT_AUTH_CMD.format(
-                openssl=self._OPENSSL_PATH,
+                openssl=openssl_path,
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
@@ -101,8 +95,7 @@ class VulnerableOpenSslServer:
 
     def __enter__(self):
         logging.warning('Running s_server: "{}"'.format(self._command_line))
-        args = shlex.split(self._command_line)
-        self._process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self._process = subprocess.Popen(self._command_line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Block until s_server is ready to accept requests
         s_server_out = self._process.stdout.readline()
