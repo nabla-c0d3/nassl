@@ -180,12 +180,16 @@ class OpenSslBuildConfig(BuildConfig, ABC):
     ) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             extra_args = '-no-asm -DZLIB_WINAPI'  # *hate* zlib
+            # On Windows OpenSSL wants the full path to the lib file
+            final_zlib_path = zlib_lib_path
         else:
             extra_args = ' -fPIC'
+            # On Unix OpenSSL wants the path to the folder where the lib is
+            final_zlib_path = zlib_lib_path.parent
 
         ctx.run(self._OPENSSL_CONF_CMD.format(
             target=openssl_target,
-            zlib_lib_path=zlib_lib_path,
+            zlib_lib_path=final_zlib_path,
             zlib_include_path=zlib_include_path,
             extra_args=extra_args
         ))

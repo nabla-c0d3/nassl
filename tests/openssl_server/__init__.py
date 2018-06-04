@@ -7,7 +7,7 @@ from enum import Enum
 import logging
 import time
 
-from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM
+from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM, SupportedPlatformEnum
 
 
 class ClientAuthConfigEnum(Enum):
@@ -58,9 +58,9 @@ class OpenSslServer:
     ) -> None:
         # Get the path to the OpenSSL executable from the build tasks
         if server_version == OpenSslServerVersion.MODERN:
-            openssl_path = str(ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path)
+            openssl_path = ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
         else:
-            openssl_path = str(LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path)
+            openssl_path = LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
 
         self.hostname = 'localhost'
         self.ip_address = '127.0.0.1'
@@ -95,7 +95,11 @@ class OpenSslServer:
 
     def __enter__(self):
         logging.warning('Running s_server: "{}"'.format(self._command_line))
-        self._process = subprocess.Popen(self._command_line, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32]:
+            args = self._command_line
+        else:
+            args = shlex.split(self._command_line)
+        self._process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         # Block until s_server is ready to accept requests
         s_server_out = self._process.stdout.readline()
