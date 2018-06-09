@@ -217,7 +217,8 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
 #ifndef LEGACY_OPENSSL
 static PyObject* nassl_SSL_write_early_data(nassl_SSL_Object *self, PyObject *args)
 {
-    int returnValue, writeSize, writtenDataSize;
+    int returnValue, writeSize;
+    size_t writtenDataSize;
     char *writeBuffer;
     PyObject *res = NULL;
 
