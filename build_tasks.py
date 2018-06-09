@@ -247,7 +247,7 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             return self.src_path / 'out32' / 'openssl.exe'
         else:
-            return self.src_path / 'openssl'
+            return self.src_path / 'apps' / 'openssl'
 
 
 class ModernOpenSslBuildConfig(OpenSslBuildConfig):
