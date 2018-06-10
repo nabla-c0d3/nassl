@@ -103,6 +103,7 @@ class OpenSslServer:
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
                 client_ca=self._CLIENT_CA_PATH,
+                extra_args=extra_args,
             )
 
     def __enter__(self):
@@ -120,15 +121,14 @@ class OpenSslServer:
             s_server_out = self._process.stdout.readline()
             logging.warning('s_server output: {}'.format(s_server_out))
 
-        if self._process.poll() is not None:
-            # s_server has terminated early - get the error
-            s_server_out = self._process.stdout.readline()
-            raise RuntimeError('Could not start s_server: {}'.format(s_server_out))
+            if self._process.poll() is not None:
+                # s_server has terminated early - get the error
+                s_server_out = self._process.stdout.readline()
+                raise RuntimeError('Could not start s_server: {}'.format(s_server_out))
 
         # On Travis CI, the server sometimes is still not ready to accept connections when we get here
         # Wait a bit more to make the test suite less flaky
         time.sleep(1)
-
         return self
 
     def __exit__(self, *args):
