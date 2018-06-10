@@ -249,7 +249,7 @@ class SslClient:
         return final_length
 
     def get_early_data_status(self) -> OpenSslEarlyDataStatusEnum:
-        return OpenSslEarlyDataStatusEnum[self._ssl.get_early_data_status()]
+        return OpenSslEarlyDataStatusEnum(self._ssl.get_early_data_status())
 
     def _flush_ssl_engine(self) -> int:
         if self._sock is None:

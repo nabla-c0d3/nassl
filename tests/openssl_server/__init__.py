@@ -6,6 +6,7 @@ from enum import Enum
 
 import logging
 import time
+from typing import Optional
 
 from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM, SupportedPlatformEnum
 
@@ -33,7 +34,7 @@ class OpenSslServer:
     _AVAILABLE_LOCAL_PORTS = set(range(8110, 8150))
 
     _S_SERVER_CMD = '{openssl} s_server -cert {server_cert} -key {server_key} -accept {port} ' \
-                    '-cipher "ALL:COMPLEMENTOFALL" -HTTP'
+                    '-cipher "ALL:COMPLEMENTOFALL" -HTTP {extra_args}'
     _S_SERVER_WITH_OPTIONAL_CLIENT_AUTH_CMD = _S_SERVER_CMD + ' -verify {client_ca}'
     _S_SERVER_WITH_REQUIRED_CLIENT_AUTH_CMD = _S_SERVER_CMD + ' -Verify {client_ca}'
 
@@ -54,13 +55,22 @@ class OpenSslServer:
             self,
             server_version: OpenSslServerVersion,
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+            max_early_data: Optional[int] = None,
 
     ) -> None:
         # Get the path to the OpenSSL executable from the build tasks
         if server_version == OpenSslServerVersion.MODERN:
             openssl_path = ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+            extra_args = '-early_data'
+            if max_early_data is not None:
+                extra_args += f' -max_early_data {max_early_data}'
+
         else:
             openssl_path = LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+            extra_args = ''
+
+            if max_early_data:
+                raise ValueError('Cannot enable early data with legacy OpenSSL')
 
         self.hostname = 'localhost'
         self.ip_address = '127.0.0.1'
@@ -75,6 +85,7 @@ class OpenSslServer:
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
+                extra_args=extra_args,
             )
         elif client_auth_config == ClientAuthConfigEnum.OPTIONAL:
             self._command_line = self._S_SERVER_WITH_OPTIONAL_CLIENT_AUTH_CMD.format(
@@ -83,6 +94,7 @@ class OpenSslServer:
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
                 client_ca=self._CLIENT_CA_PATH,
+                extra_args=extra_args,
             )
         elif client_auth_config == ClientAuthConfigEnum.REQUIRED:
             self._command_line = self._S_SERVER_WITH_REQUIRED_CLIENT_AUTH_CMD.format(
