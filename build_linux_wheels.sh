@@ -10,15 +10,28 @@ make
 make install
 export PATH=$HOME/localperl/bin:$PATH
 
-# Build everything
-cd ../io
+
+cd /io
+
+# First build non-Python dependencies (Zlib, OpenSSL) using Python 3.6
 "/opt/python/cp36-cp36m/bin/pip" install pipenv
 "/opt/python/cp36-cp36m/bin/pipenv" --python "/opt/python/cp36-cp36m/bin/python" install --dev
-"/opt/python/cp36-cp36m/bin/pipenv" run invoke -c build_tasks build-all
-cd ..
+"/opt/python/cp36-cp36m/bin/pipenv" run invoke build.zlib
+"/opt/python/cp36-cp36m/bin/pipenv" run invoke build.legacy-openssl
+"/opt/python/cp36-cp36m/bin/pipenv" run invoke build.modern-openssl
 
-# Compile wheels
-"/opt/python/cp36-cp36m/bin/pip" wheel /io/ -w wheelhouse/
+# Create a requirements file as we won't use pipenv after this point
+"/opt/python/cp36-cp36m/bin/pipenv" lock -r --dev > requirements.txt
+
+# Now build the Python extension and wheel
+for PYBIN in "cp37-cp37m" "cp36-cp36m"; do
+    "/opt/python/${PYBIN}/bin/python" setup.py clean --all
+    "/opt/python/${PYBIN}/bin/python" setup.py build_ext -i
+    "/opt/python/${PYBIN}/bin/pip" install -r requirements.txt
+
+    # Compile wheels
+    "/opt/python/${PYBIN}/bin/pip" wheel /io/ -w wheelhouse/
+done
 
 
 # Bundle external shared libraries into the wheels
