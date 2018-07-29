@@ -267,6 +267,8 @@ class SslClient:
         return final_length
 
     def shutdown(self) -> None:
+        """Close the TLS connection and the underlying network socket.
+        """
         self._is_handshake_completed = False
         try:
             self._flush_ssl_engine()
@@ -280,6 +282,8 @@ class SslClient:
             # Ignore "uninitialized" exception
             if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
                 raise
+        if self._sock:
+            self._sock.close()
 
     def set_tlsext_host_name(self, name_indication: str) -> None:
         """Set the hostname within the Server Name Indication extension in the client SSL Hello.

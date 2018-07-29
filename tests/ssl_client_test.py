@@ -47,7 +47,6 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
                 'Server requested a client certificate',
                 ssl_client.do_handshake
             )
-            sock.close()
 
     @unittest.skipIf(
         CURRENT_PLATFORM not in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32],
@@ -77,7 +76,6 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
                 self.assertTrue(ssl_client)
             finally:
                 ssl_client.shutdown()
-                sock.close()
                 
     @unittest.skipIf(
         CURRENT_PLATFORM not in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32],
@@ -107,7 +105,6 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
                 ssl_client.do_handshake()
             finally:
                 ssl_client.shutdown()
-                sock.close()
 
 
 class ModernSslClientOnlineClientAuthenticationTests(CommonSslClientOnlineClientAuthenticationTests):
@@ -156,7 +153,6 @@ class CommonSslClientOnlineTests(unittest.TestCase):
             self.assertTrue(ssl_client.get_certificate_chain_verify_result()[0])
         finally:
             ssl_client.shutdown()
-            sock.close()
 
 
 class ModernSslClientOnlineTests(CommonSslClientOnlineTests):
@@ -190,7 +186,6 @@ class LegacySslClientOnlineSsl2Tests(unittest.TestCase):
                 self.assertTrue(ssl_client)
             finally:
                 ssl_client.shutdown()
-                sock.close()
 
 
 class ModernSslClientOnlineTls13Tests(unittest.TestCase):
@@ -213,7 +208,6 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
                 self.assertTrue(ssl_client)
             finally:
                 ssl_client.shutdown()
-                sock.close()
 
     @staticmethod
     def _create_tls_1_3_session(server_host: str, server_port: int) -> _nassl.SSL_SESSION:
@@ -235,7 +229,6 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
         finally:
             ssl_client.shutdown()
-            sock.close()
         return session
 
     def test_tls_1_3_write_early_data_does_not_finish_handshake(self):

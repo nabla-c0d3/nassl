@@ -50,7 +50,6 @@ class Common_X509_NAME_ENTRY_Tests_Online(unittest.TestCase):
         ssl_client.do_handshake()
         name_entry = ssl_client.get_peer_certificate().get_subject_name_entries()[0]
         ssl_client.shutdown()
-        sock.close()
 
         self.assertIsNotNone(name_entry.get_data())
         self.assertIsNotNone(name_entry.get_object())
