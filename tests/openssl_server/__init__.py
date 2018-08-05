@@ -69,9 +69,7 @@ class _OpenSslServer(ABC):
     _AVAILABLE_LOCAL_PORTS = set(range(8110, 8150))
 
     _S_SERVER_CMD = '{openssl} s_server -cert {server_cert} -key {server_key} -accept {port}' \
-                    ' -cipher "ALL:COMPLEMENTOFALL" {extra_args}'
-    _S_SERVER_WITH_OPTIONAL_CLIENT_AUTH_CMD = _S_SERVER_CMD + ' -verify {client_ca}'
-    _S_SERVER_WITH_REQUIRED_CLIENT_AUTH_CMD = _S_SERVER_CMD + ' -Verify {client_ca}'
+                    ' -cipher "ALL:COMPLEMENTOFALL" {verify_arg} {extra_args}'
 
     # Client authentication - files generated using https://gist.github.com/nabla-c0d3/c2c5799a84a4867e5cbae42a5c43f89a
     _CLIENT_CA_PATH = os.path.join(os.path.dirname(__file__), 'client-ca.pem')
@@ -91,7 +89,12 @@ class _OpenSslServer(ABC):
 
     @classmethod
     @abstractmethod
-    def get_openssl_path(cls):
+    def get_openssl_path(cls) -> str:
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
         pass
 
     def __init__(
@@ -107,32 +110,14 @@ class _OpenSslServer(ABC):
         self._process = None
         self._server_io_manager = None
 
-        if client_auth_config == ClientAuthConfigEnum.DISABLED:
-            self._command_line = self._S_SERVER_CMD.format(
-                openssl=self.get_openssl_path(),
-                server_key=self._SERVER_KEY_PATH,
-                server_cert=self._SERVER_CERT_PATH,
-                port=self.port,
-                extra_args=extra_openssl_args,
-            )
-        elif client_auth_config == ClientAuthConfigEnum.OPTIONAL:
-            self._command_line = self._S_SERVER_WITH_OPTIONAL_CLIENT_AUTH_CMD.format(
-                openssl=self.get_openssl_path(),
-                server_key=self._SERVER_KEY_PATH,
-                server_cert=self._SERVER_CERT_PATH,
-                port=self.port,
-                client_ca=self._CLIENT_CA_PATH,
-                extra_args=extra_openssl_args,
-            )
-        elif client_auth_config == ClientAuthConfigEnum.REQUIRED:
-            self._command_line = self._S_SERVER_WITH_REQUIRED_CLIENT_AUTH_CMD.format(
-                openssl=self.get_openssl_path(),
-                server_key=self._SERVER_KEY_PATH,
-                server_cert=self._SERVER_CERT_PATH,
-                port=self.port,
-                client_ca=self._CLIENT_CA_PATH,
-                extra_args=extra_openssl_args,
-            )
+        self._command_line = self._S_SERVER_CMD.format(
+            openssl=self.get_openssl_path(),
+            server_key=self._SERVER_KEY_PATH,
+            server_cert=self._SERVER_CERT_PATH,
+            port=self.port,
+            verify_arg=self.get_verify_argument(client_auth_config),
+            extra_args=extra_openssl_args,
+        )
 
     def __enter__(self):
         logging.warning(f'Running s_server: "{self._command_line}"')
@@ -166,7 +151,7 @@ class _OpenSslServer(ABC):
         self._terminate_process()
         return False
 
-    def _terminate_process(self):
+    def _terminate_process(self) -> None:
         if self._server_io_manager:
             self._server_io_manager.close()
         self._server_io_manager = None
@@ -188,6 +173,15 @@ class LegacyOpenSslServer(_OpenSslServer):
     def get_openssl_path(cls):
         return LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
 
+    @classmethod
+    def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
+        options = {
+            ClientAuthConfigEnum.DISABLED: '',
+            ClientAuthConfigEnum.OPTIONAL: f'-verify {cls._CLIENT_CA_PATH}',
+            ClientAuthConfigEnum.REQUIRED: f'-Verify {cls._CLIENT_CA_PATH}',
+        }
+        return options[client_auth_config]
+
 
 class ModernOpenSslServer(_OpenSslServer):
     """A wrapper around the OpenSSL 1.1.1-pre5 s_server binary.
@@ -196,6 +190,15 @@ class ModernOpenSslServer(_OpenSslServer):
     @classmethod
     def get_openssl_path(cls):
         return ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+
+    def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
+        # The verify argument has subtly changed in OpenSSL 1.1.1
+        options = {
+            ClientAuthConfigEnum.DISABLED: '',
+            ClientAuthConfigEnum.OPTIONAL: f'-verify 1 {cls._CLIENT_CA_PATH}',
+            ClientAuthConfigEnum.REQUIRED: f'-Verify 1 {cls._CLIENT_CA_PATH}',
+        }
+        return options[client_auth_config]
 
     def __init__(
             self,
