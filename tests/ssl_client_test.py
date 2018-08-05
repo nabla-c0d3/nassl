@@ -6,7 +6,7 @@ from build_tasks import CURRENT_PLATFORM, SupportedPlatformEnum
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, \
     OpenSSLError, OpenSslEarlyDataStatusEnum
-from tests.openssl_server import OpenSslServer, ClientAuthConfigEnum, OpenSslServerVersion
+from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
 class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
@@ -27,10 +27,7 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
     )
     def test_client_authentication_no_certificate_supplied(self):
         # Given a server that requires client authentication
-        with OpenSslServer(
-            server_version=OpenSslServerVersion.MODERN,
-            client_auth_config=ClientAuthConfigEnum.REQUIRED
-        ) as server:
+        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client does NOT provide a client certificate
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -54,10 +51,7 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
     )
     def test_client_authentication_no_certificate_supplied_but_ignore(self):
         # Given a server that accepts optional client authentication
-        with OpenSslServer(
-            server_version=OpenSslServerVersion.MODERN,
-            client_auth_config=ClientAuthConfigEnum.OPTIONAL
-        ) as server:
+        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.OPTIONAL) as server:
             # And the client does NOT provide a client cert but is configured to ignore the client auth request
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -83,10 +77,7 @@ class CommonSslClientOnlineClientAuthenticationTests(unittest.TestCase):
     )
     def test_client_authentication_succeeds(self):
         # Given a server that requires client authentication
-        with OpenSslServer(
-            server_version=OpenSslServerVersion.MODERN,
-            client_auth_config=ClientAuthConfigEnum.REQUIRED
-        ) as server:
+        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides a client certificate
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -169,7 +160,7 @@ class LegacySslClientOnlineSsl2Tests(unittest.TestCase):
 
     def test_ssl_2(self):
         # Given a server that supports SSL 2.0
-        with OpenSslServer(server_version=OpenSslServerVersion.LEGACY) as server:
+        with LegacyOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -192,7 +183,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
     def test_tls_1_3(self):
         # Given a server that supports TLS 1.3
-        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+        with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -223,7 +214,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
         try:
             ssl_client.do_handshake()
-            ssl_client.write(OpenSslServer.HELLO_MSG)
+            ssl_client.write(ModernOpenSslServer.HELLO_MSG)
             ssl_client.read(2048)
             session = ssl_client.get_session()
 
@@ -233,7 +224,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
     def test_tls_1_3_write_early_data_does_not_finish_handshake(self):
         # Given a server that supports TLS 1.3
-        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+        with ModernOpenSslServer() as server:
             # That has a previous TLS 1.3 session with the server
             session = self._create_tls_1_3_session(server.hostname, server.port)
             self.assertTrue(session)
@@ -270,7 +261,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
     def test_tls_1_3_write_early_data_fail_when_used_on_non_reused_session(self):
         # Given a server that supports TLS 1.3
-        with OpenSslServer(server_version=OpenSslServerVersion.MODERN) as server:
+        with ModernOpenSslServer() as server:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.settimeout(5)
                 sock.connect((server.hostname, server.port))
@@ -293,7 +284,7 @@ class ModernSslClientOnlineTls13Tests(unittest.TestCase):
 
     def test_tls_1_3_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self):
         # Given a server that supports TLS 1.3
-        with OpenSslServer(server_version=OpenSslServerVersion.MODERN, max_early_data=1) as server:
+        with ModernOpenSslServer(max_early_data=1) as server:
             # That has a previous TLS 1.3 session with the server
             session = self._create_tls_1_3_session(server.hostname, server.port)
             self.assertTrue(session)

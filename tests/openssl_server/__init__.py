@@ -2,11 +2,11 @@ import os
 import shlex
 
 import subprocess
+from abc import ABC, abstractmethod
 from enum import Enum
 
 import logging
 import time
-from queue import Queue, Empty
 from threading import Thread
 from typing import Optional
 
@@ -19,11 +19,6 @@ class ClientAuthConfigEnum(Enum):
     DISABLED = 1
     OPTIONAL = 2
     REQUIRED = 3
-
-
-class OpenSslServerVersion(Enum):
-    LEGACY = 1
-    MODERN = 2
 
 
 class _OpenSslServerIOManager:
@@ -45,7 +40,7 @@ class _OpenSslServerIOManager:
                         # S_server is ready to receive connections
                         self.is_server_ready = True
 
-                    if OpenSslServer.HELLO_MSG in s_server_out:
+                    if _OpenSslServer.HELLO_MSG in s_server_out:
                         # When receiving the special message, we want s_server to reply
                         self.s_server_stdin.write(b'Hey there')
                         self.s_server_stdin.flush()
@@ -64,7 +59,7 @@ class _OpenSslServerIOManager:
         #self.thread.join()
 
 
-class OpenSslServer:
+class _OpenSslServer(ABC):
     """A wrapper around OpenSSL's s_server CLI.
     """
 
@@ -94,81 +89,88 @@ class OpenSslServer:
     def get_client_key_path(cls) -> str:
         return cls._CLIENT_KEY_PATH
 
+    @classmethod
+    @abstractmethod
+    def get_openssl_path(cls):
+        pass
+
     def __init__(
             self,
-            server_version: OpenSslServerVersion,
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            max_early_data: Optional[int] = None,
-
+            extra_openssl_args: str = ''
     ) -> None:
-        # Get the path to the OpenSSL executable from the build tasks
-        if server_version == OpenSslServerVersion.MODERN:
-            openssl_path = ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
-            extra_args = '-early_data'
-            if max_early_data is not None:
-                extra_args += f' -max_early_data {max_early_data}'
-
-        else:
-            openssl_path = LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
-            extra_args = ''
-
-            if max_early_data:
-                raise ValueError('Cannot enable early data with legacy OpenSSL')
-
         self.hostname = 'localhost'
         self.ip_address = '127.0.0.1'
 
         # Retrieve one of the available local ports; set.pop() is thread safe
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
         self._process = None
+        self._server_io_manager = None
 
         if client_auth_config == ClientAuthConfigEnum.DISABLED:
             self._command_line = self._S_SERVER_CMD.format(
-                openssl=openssl_path,
+                openssl=self.get_openssl_path(),
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
-                extra_args=extra_args,
+                extra_args=extra_openssl_args,
             )
         elif client_auth_config == ClientAuthConfigEnum.OPTIONAL:
             self._command_line = self._S_SERVER_WITH_OPTIONAL_CLIENT_AUTH_CMD.format(
-                openssl=openssl_path,
+                openssl=self.get_openssl_path(),
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
                 client_ca=self._CLIENT_CA_PATH,
-                extra_args=extra_args,
+                extra_args=extra_openssl_args,
             )
         elif client_auth_config == ClientAuthConfigEnum.REQUIRED:
             self._command_line = self._S_SERVER_WITH_REQUIRED_CLIENT_AUTH_CMD.format(
-                openssl=openssl_path,
+                openssl=self.get_openssl_path(),
                 server_key=self._SERVER_KEY_PATH,
                 server_cert=self._SERVER_CERT_PATH,
                 port=self.port,
                 client_ca=self._CLIENT_CA_PATH,
-                extra_args=extra_args,
+                extra_args=extra_openssl_args,
             )
 
     def __enter__(self):
-        logging.warning('Running s_server: "{}"'.format(self._command_line))
+        logging.warning(f'Running s_server: "{self._command_line}"')
         if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32]:
             args = self._command_line
         else:
             args = shlex.split(self._command_line)
-        self._process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
+        try:
+            self._process = subprocess.Popen(
+                args,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+            self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
 
-        # Block until s_server is ready to accept requests
-        while not self._server_io_manager.is_server_ready:
-            time.sleep(1)
-            if self._process.poll() is not None:
-                # s_server has terminated early
-                raise RuntimeError('Could not start s_server')
+            # Block until s_server is ready to accept requests
+            while not self._server_io_manager.is_server_ready:
+                time.sleep(1)
+                if self._process.poll() is not None:
+                    # s_server has terminated early
+                    raise RuntimeError('Could not start s_server')
+
+        except Exception:
+            self._terminate_process()
+            raise
 
         return self
 
     def __exit__(self, *args):
-        self._server_io_manager.close()
+        self._terminate_process()
+        return False
+
+    def _terminate_process(self):
+        if self._server_io_manager:
+            self._server_io_manager.close()
+        self._server_io_manager = None
+
         if self._process and self._process.poll() is None:
             self._process.terminate()
             self._process.wait()
@@ -176,4 +178,33 @@ class OpenSslServer:
 
         # Free the port that was used; not thread safe but should be fine
         self._AVAILABLE_LOCAL_PORTS.add(self.port)
-        return False
+
+
+class LegacyOpenSslServer(_OpenSslServer):
+    """A wrapper around the OpenSSL 1.0.0e s_server binary.
+    """
+
+    @classmethod
+    def get_openssl_path(cls):
+        return LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+
+
+class ModernOpenSslServer(_OpenSslServer):
+    """A wrapper around the OpenSSL 1.1.1-pre5 s_server binary.
+    """
+
+    @classmethod
+    def get_openssl_path(cls):
+        return ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+
+    def __init__(
+            self,
+            client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+            max_early_data: Optional[int] = None
+    ) -> None:
+        # Enable TLS 1.3 early data on the server
+        extra_args = '-early_data'
+        if max_early_data is not None:
+            extra_args += f' -max_early_data {max_early_data}'
+
+        super().__init__(client_auth_config, extra_args)
