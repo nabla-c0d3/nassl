@@ -25,7 +25,7 @@ If you want to setup a local environment where you can work on SSLyze, you will 
 
     $ cd nassl
     $ pipenv install --dev
-    $ pivenv shell
+    $ pipenv shell
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
