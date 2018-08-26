@@ -3,25 +3,24 @@ image: Visual Studio 2017
 environment:
   matrix:
     - PYTHON: "C:\\Python36"
-      VC_VARS: "vcvars32.bat"
+    - PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python36-x64"
-      VC_VARS: "vcvars64.bat"
       PYTHON_ARCH: "64"
 
     - PYTHON: "C:\\Python37"
-      VC_VARS: "vcvars32.bat"
+    - PYTHON_ARCH: "32"
 
     - PYTHON: "C:\\Python37-x64"
-      VC_VARS: "vcvars64.bat"
+      PYTHON_ARCH: "64"
 
 init:
   - "ECHO %PYTHON% %PYTHON_VERSION% %PYTHON_ARCH%"
-  - '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\%VC_VARS%"'
+  - '"C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars%PYTHON_ARCH%.bat"'
 
 install:
   - "%PYTHON%\\python.exe -m pip install wheel pipenv"
-  - "%PYTHON%/Scripts/pipenv.exe install --dev"
+  - "%PYTHON%/Scripts/pipenv.exe install --dev --python %PYTHON%\\python.exe"
   - "%PYTHON%/Scripts/pipenv.exe run invoke build.all"
 
 test_script:
