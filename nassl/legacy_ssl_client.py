@@ -152,5 +152,5 @@ class LegacySslClient(SslClient):
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
-    def set_ciphersuites(self, cipher_suites: str):
+    def set_ciphersuites(self, cipher_suites: str) -> None:
         raise NotImplementedError('Only available in the modern SSL client')
