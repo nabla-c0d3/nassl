@@ -377,3 +377,9 @@ class SslClient:
 
     def disable_stateless_session_resumption(self) -> None:
         self._ssl.set_options(self._SSL_OP_NO_TICKET)
+
+    def set_ciphersuites(self, cipher_suites: str):
+        """https://github.com/openssl/openssl/pull/5392
+        ."""
+        # TODO(AD): Eventually merge this method with get/set_cipher_list()
+        self._ssl.set_ciphersuites(cipher_suites)

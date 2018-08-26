@@ -151,3 +151,6 @@ class LegacySslClient(SslClient):
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
+
+    def set_ciphersuites(self, cipher_suites: str):
+        raise NotImplementedError('Only available in the modern SSL client')

@@ -150,6 +150,24 @@ class ModernSslClientOnlineTests(CommonSslClientOnlineTests):
 
     _SSL_CLIENT_CLS = SslClient
 
+    def test_set_ciphersuites(self):
+        # Given an SslClient for TLS 1.3
+        ssl_client = SslClient(
+            ssl_version=OpenSslVersionEnum.TLSV1_3,
+            ssl_verify=OpenSslVerifyEnum.NONE,
+            ignore_client_authentication_requests=True,
+        )
+
+        # With the default list of cipher disabled
+        ssl_client.set_cipher_list('')
+
+        # When setting a specific TLS 1.3 cipher suite as the list of supported ciphers
+        ssl_client.set_ciphersuites('TLS_CHACHA20_POLY1305_SHA256')
+
+        # That one cipher suite is the only one enabled
+        ciphers = ssl_client.get_cipher_list()
+        self.assertEqual(['TLS_CHACHA20_POLY1305_SHA256'], ciphers)
+
 
 class LegacySslClientOnlineTests(CommonSslClientOnlineTests):
 

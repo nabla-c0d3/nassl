@@ -769,6 +769,26 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
 }
 
 
+#ifndef LEGACY_OPENSSL
+// SSL_set_ciphersuites() is only available in OpenSSL 1.1.1
+static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *args)
+{
+    char *cipherList;
+    if (!PyArg_ParseTuple(args, "s", &cipherList))
+    {
+        return NULL;
+    }
+
+    if (!SSL_set_ciphersuites(self->ssl, cipherList))
+    {
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+#endif
+
+
 static PyMethodDef nassl_SSL_Object_methods[] =
 {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
@@ -801,6 +821,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"get_max_early_data", (PyCFunction)nassl_SSL_get_max_early_data, METH_VARARGS,
      "OpenSSL's SSL_get_max_early_data()."
+    },
+    {"set_ciphersuites", (PyCFunction)nassl_SSL_set_ciphersuites, METH_VARARGS,
+     "OpenSSL's SSL_set_ciphersuites()."
     },
 #endif
     {"pending", (PyCFunction)nassl_SSL_pending, METH_NOARGS,

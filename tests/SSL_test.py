@@ -136,6 +136,24 @@ class Common_SSL_Tests(unittest.TestCase):
 class Modern_SSL_Tests(Common_SSL_Tests):
     _NASSL_MODULE = _nassl
 
+    def test_set_ciphersuites(self):
+        # Given an SSL object for TLS 1.3
+        test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.TLSV1_3.value))
+        # With the default list of cipher disabled
+        test_ssl.set_cipher_list('')
+
+        # When setting a specific TLS 1.3 cipher suite as the list of supported ciphers
+        test_ssl.set_ciphersuites('TLS_CHACHA20_POLY1305_SHA256')
+
+        # That one cipher suite is the only one enabled
+        ciphers = test_ssl.get_cipher_list()
+        self.assertEqual(['TLS_CHACHA20_POLY1305_SHA256'], ciphers)
+
+    def test_set_ciphersuites_bad_string(self):
+        # Invalid cipher string
+        test_ssl = self._NASSL_MODULE.SSL(self._NASSL_MODULE.SSL_CTX(OpenSslVersionEnum.TLSV1_2.value))
+        self.assertRaisesRegexp(_nassl.OpenSSLError, 'no cipher match', test_ssl.set_ciphersuites, 'lol')
+
 
 class Legacy_SSL_Tests(Common_SSL_Tests):
     _NASSL_MODULE = _nassl_legacy
