@@ -1,5 +1,6 @@
-import unittest
 import socket
+
+import pytest
 
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
@@ -7,19 +8,11 @@ from nassl import _nassl
 from nassl import _nassl_legacy
 
 
-class Common_X509_Tests(unittest.TestCase):
-
-    # To be set in subclasses
-    _NASSL_MODULE = None
-
-    @classmethod
-    def setUpClass(cls):
-        if cls is Common_X509_Tests:
-            raise unittest.SkipTest("Skip tests, it's a base class")
-        super(Common_X509_Tests, cls).setUpClass()
-
-    def setUp(self):
-        pem_cert = """
+@pytest.fixture()
+def pem_certificate():
+    """Return a sample PEM-formatted certificate.
+    """
+    return """
 -----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkGA1UEBhMCQkUx
 GTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jvb3QgQ0ExGzAZBgNVBAMTEkds
@@ -39,89 +32,44 @@ hm4qxFYxldBniYUr+WymXUadDKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveC
 X4XSQRjbgbMEHMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 -----END CERTIFICATE-----"""
 
-        self.cert = self._NASSL_MODULE.X509(pem_cert)
 
-    def test_from_pem(self):
-        self.assertIsNotNone(self.cert.as_text())
+@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+class TestX509:
 
-    def test_from_pem_bad(self):
+    def test_from_pem(self, nassl_module, pem_certificate):
+        certificate = nassl_module.X509(pem_certificate)
+
+        assert certificate
+        assert certificate.get_version()
+        assert certificate.get_notBefore()
+        assert certificate.get_notAfter()
+        assert certificate.digest()
+        assert certificate.as_pem()
+        assert certificate.get_extensions()
+        assert certificate.get_issuer_name_entries()
+        assert certificate.get_subject_name_entries()
+        assert certificate.get_spki_bytes()
+
+    def test_from_pem_bad(self, nassl_module):
         pem_cert = '123123'
-        with self.assertRaises(ValueError):
-            cert = _nassl.X509(pem_cert)
+        with pytest.raises(ValueError):
+            nassl_module.X509(pem_cert)
 
-    def test_get_version(self):
-        self.assertIsNotNone(self.cert.get_version())
-
-    def test_get_notBefore(self):
-        self.assertIsNotNone(self.cert.get_notBefore())
-
-    def test_get_notAfter(self):
-        self.assertIsNotNone(self.cert.get_notAfter())
-
-    def test_digest(self):
-        self.assertIsNotNone(self.cert.digest())
-
-    def test_as_pem(self):
-        self.assertIsNotNone(self.cert.as_pem())
-
-    def test_get_extensions(self):
-        self.assertIsNotNone(self.cert.get_extensions())
-
-    def test_get_issuer_name_entries(self):
-        self.assertIsNotNone(self.cert.get_issuer_name_entries())
-
-    def test_get_subject_name_entries(self):
-        self.assertIsNotNone(self.cert.get_subject_name_entries())
-
-    def test_get_spki_bytes(self):
-        self.assertIsNotNone(self.cert.get_spki_bytes())
+    def test_verify_cert_error_string(self, nassl_module):
+        assert nassl_module.X509.verify_cert_error_string(1)
 
 
-class Legacy_X509_Tests(Common_X509_Tests):
-    _NASSL_MODULE = _nassl_legacy
+@pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
+class TestOnlineX509:
 
-
-class Modern_X509_Tests(Common_X509_Tests):
-    _NASSL_MODULE = _nassl
-
-
-class Common_X509_Tests_Online(unittest.TestCase):
-
-    # To be set in subclasses
-    _SSL_CLIENT_CLS = None
-
-    @classmethod
-    def setUpClass(cls):
-        if cls is Common_X509_Tests_Online:
-            raise unittest.SkipTest("Skip tests, it's a base class")
-        super(Common_X509_Tests_Online, cls).setUpClass()
-
-    def test(self):
+    def test(self, ssl_client_cls):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(('www.google.com', 443))
 
-        ssl_client = self._SSL_CLIENT_CLS(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = ssl_client_cls(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.do_handshake()
         cert = ssl_client.get_peer_certificate()
         ssl_client.shutdown()
 
-        self.assertIsNotNone(cert.as_text())
-
-    def test_verify_cert_error_string(self):
-        self.assertEqual('unspecified certificate verification error', _nassl.X509.verify_cert_error_string(1))
-
-
-class Legacy_X509_Tests_Online(Common_X509_Tests_Online):
-    _SSL_CLIENT_CLS = LegacySslClient
-
-
-class Modern_X509_Tests_Online(Common_X509_Tests_Online):
-    _SSL_CLIENT_CLS = SslClient
-
-
-def main():
-    unittest.main()
-
-if __name__ == '__main__':
-    main()
+        assert cert.as_text()

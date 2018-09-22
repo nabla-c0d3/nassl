@@ -1,4 +1,4 @@
-import unittest
+import pytest
 
 from nassl import _nassl
 import socket
@@ -9,38 +9,29 @@ from nassl.ocsp_response import OcspResponseNotTrustedError, OcspResponseStatusE
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
-class OcspResponseTests(unittest.TestCase):
+class TestOcspResponse:
 
     def test_new_bad(self):
-        self.assertRaises(NotImplementedError, _nassl.OCSP_RESPONSE, (None))
+        with pytest.raises(NotImplementedError):
+            _nassl.OCSP_RESPONSE()
 
 
-class CommonOcspResponseOnlineTests(unittest.TestCase):
+@pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
+class TestCommonOcspResponseOnline:
 
-    # To be defined in subclasses
-    _SSL_CLIENT_CLS = None
-
-    @classmethod
-    def setUpClass(cls):
-        if cls is CommonOcspResponseOnlineTests:
-            raise unittest.SkipTest("Skip tests, it's a base class")
-        super(CommonOcspResponseOnlineTests, cls).setUpClass()
-
-    def test(self):
+    def test(self, ssl_client_cls):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(('www.cloudflare.com', 443))
 
-        ssl_client = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = ssl_client_cls(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
         ssl_client.shutdown()
 
-        self.assertEqual(ocsp_response.status, OcspResponseStatusEnum.SUCCESSFUL)
-
-        # Test as_text()
-        self.assertIsNotNone(ocsp_response.as_text())
+        assert ocsp_response.status == OcspResponseStatusEnum.SUCCESSFUL
+        assert ocsp_response.as_text()
 
         # Test verify with a wrong certificate
         test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
@@ -64,35 +55,21 @@ dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----""")
         test_file.close()
-        self.assertRaises(OcspResponseNotTrustedError, ocsp_response.verify, test_file.name)
+        with pytest.raises(OcspResponseNotTrustedError):
+            ocsp_response.verify(test_file.name)
 
         # No SCT extension
-        self.assertFalse('singleExtensions' in ocsp_response.as_dict()['responses'][0].keys())
+        assert 'singleExtensions' not in ocsp_response.as_dict()['responses'][0].keys()
 
-    def test_sct_parsing(self):
+    def test_sct_parsing(self, ssl_client_cls):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect(('sslanalyzer.comodoca.com', 443))
 
-        ssl_client = SslClient(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
+        ssl_client = ssl_client_cls(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
         ssl_client.do_handshake()
         ocsp_response = ssl_client.get_tlsext_status_ocsp_resp()
         ssl_client.shutdown()
 
-        self.assertIsNotNone(ocsp_response.as_dict()['responses'][0]['singleExtensions']['ctCertificateScts'])
-
-
-class ModernSslClientOcspResponseOnlineTests(CommonOcspResponseOnlineTests):
-    _SSL_CLIENT_CLS = SslClient
-
-
-class LegacySslClientOcspResponseOnlineTests(CommonOcspResponseOnlineTests):
-    _SSL_CLIENT_CLS = LegacySslClient
-
-
-def main():
-    unittest.main()
-
-if __name__ == '__main__':
-    main()
+        assert ocsp_response.as_dict()['responses'][0]['singleExtensions']['ctCertificateScts']
