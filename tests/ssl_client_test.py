@@ -275,5 +275,5 @@ class TestModernSslClientOnlineTls13:
                 # It fails
                 with pytest.raises(OpenSSLError, match='too much early data'):
                     ssl_client_early_data.write_early_data(
-                        bytes('GET / HTTP/1.1\r\nData: {}\r\n\r\n'.format('*' * max_early))
+                        'GET / HTTP/1.1\r\nData: {}\r\n\r\n'.format('*' * max_early).encode('ascii')
                     )
