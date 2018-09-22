@@ -254,7 +254,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
     def _openssl_git_tag(self) -> str:
-        return 'OpenSSL_1_1_1-pre9'
+        return 'OpenSSL_1_1_1'
 
     _OPENSSL_CONF_CMD = (
         'perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost '
