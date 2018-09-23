@@ -2,7 +2,7 @@
 set -e -x
 
 # Update perl as OpenSSL 1.1.x requires 5.10; there's probably a better/Docker way to do this
-wget http://www.cpan.org/src/perl-5.10.1.tar.gz
+curl http://www.cpan.org/src/perl-5.10.1.tar.gz -o perl-5.10.1.tar.gz
 tar -xzf perl-5.10.1.tar.gz
 cd perl-5.10.1
 ./Configure -des -Dprefix=$HOME/localperl
