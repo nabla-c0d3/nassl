@@ -1,7 +1,9 @@
 import socket
+import time
 
 import pytest
 
+from build_tasks import CURRENT_PLATFORM, SupportedPlatformEnum
 from nassl import _nassl
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, \
@@ -9,21 +11,20 @@ from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, Ope
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
+# TODO(AD): Switch to lefacy server and add a TODO; skip tests for TLS 1.3
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestSslClientClientAuthentication:
 
     def test_client_authentication_no_certificate_supplied(self, ssl_client_cls):
         # Given a server that requires client authentication
-        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+        with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client does NOT provide a client certificate
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
-            print(server.hostname)
-            print(server.port)
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.SSLV23,
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -31,16 +32,18 @@ class TestSslClientClientAuthentication:
             with pytest.raises(ClientCertificateRequested):
                 ssl_client.do_handshake()
 
+            ssl_client.shutdown()
+
     def test_client_authentication_no_certificate_supplied_but_ignore(self, ssl_client_cls):
         # Given a server that accepts optional client authentication
-        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.OPTIONAL) as server:
+        with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.OPTIONAL) as server:
             # And the client does NOT provide a client cert but is configured to ignore the client auth request
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.SSLV23,
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
                 ignore_client_authentication_requests=True,
@@ -53,14 +56,14 @@ class TestSslClientClientAuthentication:
 
     def test_client_authentication_succeeds(self, ssl_client_cls):
         # Given a server that requires client authentication
-        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+        with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides a client certificate
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.SSLV23,
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
                 client_certchain_file=server.get_client_certificate_path(),
@@ -129,6 +132,10 @@ class TestLegacySslClientOnlineSsl2:
                 ssl_client.shutdown()
 
 
+@pytest.mark.skipif(
+    CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32],
+    reason='ModernOpenSslServer does not seem to work on Windows; fix it and remove this mark'
+)
 class TestModernSslClientOnlineTls13:
 
     def test_set_ciphersuites(self):
@@ -201,49 +208,53 @@ class TestModernSslClientOnlineTls13:
             assert max_early > 0
 
             # When creating a new connection
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_early_data:
-                sock_early_data.settimeout(5)
-                sock_early_data.connect((server.hostname, server.port))
+            sock_early_data = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_early_data.settimeout(5)
+            sock_early_data.connect((server.hostname, server.port))
 
-                ssl_client_early_data = SslClient(
-                    ssl_version=OpenSslVersionEnum.TLSV1_3,
-                    underlying_socket=sock_early_data,
-                    ssl_verify=OpenSslVerifyEnum.NONE
-                )
+            ssl_client_early_data = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock_early_data,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
 
-                # That re-uses the previous TLS 1.3 session
-                ssl_client_early_data.set_session(session)
-                assert OpenSslEarlyDataStatusEnum.NOT_SENT == ssl_client_early_data.get_early_data_status()
+            # That re-uses the previous TLS 1.3 session
+            ssl_client_early_data.set_session(session)
+            assert OpenSslEarlyDataStatusEnum.NOT_SENT == ssl_client_early_data.get_early_data_status()
 
-                # When sending early data
-                ssl_client_early_data.write_early_data(b'EARLY DATA')
+            # When sending early data
+            ssl_client_early_data.write_early_data(b'EARLY DATA')
 
-                # It succeeds
-                assert not ssl_client_early_data.is_handshake_completed()
-                assert OpenSslEarlyDataStatusEnum.REJECTED == ssl_client_early_data.get_early_data_status()
+            # It succeeds
+            assert not ssl_client_early_data.is_handshake_completed()
+            assert OpenSslEarlyDataStatusEnum.REJECTED == ssl_client_early_data.get_early_data_status()
 
-                # And after completing the handshake, the early data was accepted
-                ssl_client_early_data.do_handshake()
-                assert OpenSslEarlyDataStatusEnum.ACCEPTED == ssl_client_early_data.get_early_data_status()
+            # And after completing the handshake, the early data was accepted
+            ssl_client_early_data.do_handshake()
+            assert OpenSslEarlyDataStatusEnum.ACCEPTED == ssl_client_early_data.get_early_data_status()
+
+            ssl_client_early_data.shutdown()
 
     def test_tls_1_3_write_early_data_fail_when_used_on_non_reused_session(self):
         # Given a server that supports TLS 1.3
         with ModernOpenSslServer() as server:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(5)
-                sock.connect((server.hostname, server.port))
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
 
-                # That does NOT have a previous session with the server
-                ssl_client = SslClient(
-                    ssl_version=OpenSslVersionEnum.TLSV1_3,
-                    underlying_socket=sock,
-                    ssl_verify=OpenSslVerifyEnum.NONE
-                )
+            # That does NOT have a previous session with the server
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
 
-                # When sending early data
-                # It fails
-                with pytest.raises(OpenSSLError, match='you should not call'):
-                    ssl_client.write_early_data(b'EARLY DATA')
+            # When sending early data
+            # It fails
+            with pytest.raises(OpenSSLError, match='you should not call'):
+                ssl_client.write_early_data(b'EARLY DATA')
+
+            ssl_client.shutdown()
 
     def test_tls_1_3_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self):
         # Given a server that supports TLS 1.3
@@ -257,23 +268,25 @@ class TestModernSslClientOnlineTls13:
             assert 1 == max_early
 
             # When creating a new connection
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock_early_data:
-                sock_early_data.settimeout(5)
-                sock_early_data.connect((server.hostname, server.port))
+            sock_early_data = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_early_data.settimeout(5)
+            sock_early_data.connect((server.hostname, server.port))
 
-                ssl_client_early_data = SslClient(
-                    ssl_version=OpenSslVersionEnum.TLSV1_3,
-                    underlying_socket=sock_early_data,
-                    ssl_verify=OpenSslVerifyEnum.NONE
+            ssl_client_early_data = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock_early_data,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            # That re-uses the previous TLS 1.3 session
+            ssl_client_early_data.set_session(session)
+            assert OpenSslEarlyDataStatusEnum.NOT_SENT == ssl_client_early_data.get_early_data_status()
+
+            # When sending too much early data
+            # It fails
+            with pytest.raises(OpenSSLError, match='too much early data'):
+                ssl_client_early_data.write_early_data(
+                    'GET / HTTP/1.1\r\nData: {}\r\n\r\n'.format('*' * max_early).encode('ascii')
                 )
 
-                # That re-uses the previous TLS 1.3 session
-                ssl_client_early_data.set_session(session)
-                assert OpenSslEarlyDataStatusEnum.NOT_SENT == ssl_client_early_data.get_early_data_status()
-
-                # When sending too much early data
-                # It fails
-                with pytest.raises(OpenSSLError, match='too much early data'):
-                    ssl_client_early_data.write_early_data(
-                        'GET / HTTP/1.1\r\nData: {}\r\n\r\n'.format('*' * max_early).encode('ascii')
-                    )
+            ssl_client_early_data.shutdown()

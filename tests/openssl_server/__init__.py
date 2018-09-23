@@ -135,9 +135,12 @@ class _OpenSslServer(ABC):
             self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
 
             # Block until s_server is ready to accept requests
+            attempts_count = 0
             while not self._server_io_manager.is_server_ready:
                 time.sleep(1)
-                if self._process.poll() is not None:
+                attempts_count += 1
+
+                if self._process.poll() is not None or attempts_count > 2:
                     # s_server has terminated early
                     raise RuntimeError('Could not start s_server')
 
@@ -184,7 +187,7 @@ class LegacyOpenSslServer(_OpenSslServer):
 
 
 class ModernOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.1.1-pre5 s_server binary.
+    """A wrapper around the OpenSSL 1.1.1 s_server binary.
     """
 
     @classmethod
@@ -205,9 +208,9 @@ class ModernOpenSslServer(_OpenSslServer):
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
             max_early_data: Optional[int] = None
     ) -> None:
-        # Enable TLS 1.3 early data on the server
-        extra_args = '-early_data'
+        extra_args = ''
         if max_early_data is not None:
-            extra_args += f' -max_early_data {max_early_data}'
+            # Enable TLS 1.3 early data on the server
+            extra_args = f'-early_data -max_early_data {max_early_data}'
 
         super().__init__(client_auth_config, extra_args)
