@@ -197,8 +197,8 @@ class TestModernSslClientOnlineTls13:
         return session
 
     def test_tls_1_3_write_early_data_does_not_finish_handshake(self):
-        # Given a server that supports TLS 1.3
-        with ModernOpenSslServer() as server:
+        # Given a server that supports TLS 1.3 and early data
+        with ModernOpenSslServer(max_early_data=512) as server:
             # That has a previous TLS 1.3 session with the server
             session = self._create_tls_1_3_session(server.hostname, server.port)
             assert session
@@ -236,8 +236,8 @@ class TestModernSslClientOnlineTls13:
             ssl_client_early_data.shutdown()
 
     def test_tls_1_3_write_early_data_fail_when_used_on_non_reused_session(self):
-        # Given a server that supports TLS 1.3
-        with ModernOpenSslServer() as server:
+        # Given a server that supports TLS 1.3 and early data
+        with ModernOpenSslServer(max_early_data=512) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -257,7 +257,7 @@ class TestModernSslClientOnlineTls13:
             ssl_client.shutdown()
 
     def test_tls_1_3_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self):
-        # Given a server that supports TLS 1.3
+        # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=1) as server:
             # That has a previous TLS 1.3 session with the server
             session = self._create_tls_1_3_session(server.hostname, server.port)
