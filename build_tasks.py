@@ -346,7 +346,7 @@ class ZlibBuildConfig(BuildConfig):
 def build_zlib(ctx, do_not_clean=False):
     print('ZLIB: Starting...')
     zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
-    if do_not_clean:
+    if not do_not_clean:
         zlib_cfg.clean()
         zlib_cfg.fetch_source()
     zlib_cfg.build(ctx)
@@ -357,7 +357,7 @@ def build_zlib(ctx, do_not_clean=False):
 def build_legacy_openssl(ctx, do_not_clean=False):
     print('OPENSSL LEGACY: Starting...')
     ssl_legacy_cfg = LegacyOpenSslBuildConfig(CURRENT_PLATFORM)
-    if do_not_clean:
+    if not do_not_clean:
         ssl_legacy_cfg.clean()
         ssl_legacy_cfg.fetch_source()
     zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
@@ -369,7 +369,7 @@ def build_legacy_openssl(ctx, do_not_clean=False):
 def build_modern_openssl(ctx, do_not_clean=False):
     print('OPENSSL MODERN: Starting...')
     ssl_modern_cfg = ModernOpenSslBuildConfig(CURRENT_PLATFORM)
-    if do_not_clean:
+    if not do_not_clean:
         ssl_modern_cfg.clean()
         ssl_modern_cfg.fetch_source()
     zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
