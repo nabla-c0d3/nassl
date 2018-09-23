@@ -20,15 +20,25 @@ def test(ctx):
 
 @task
 def package_linux_wheels(ctx):
-    # Build the Linux 32 and 64 bit wheels using Docker
+    """Build the Linux 32 and 64 bit wheels using Docker.
+    """
     ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh')
     ctx.run(f'docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh')
 
 
 @task
 def package_wheel(ctx):
-    # Works on Windows anc macOS
+    """Build the binary wheel for the current system; works on Windows anc macOS.
+    """
     ctx.run('python setup.py bdist_wheel')
+
+
+@task
+def package_windows_wheels(ctx):
+    """Build the binary wheels for Windows; this expects Python to be installed at specific locations.
+    """
+    for python_exe in ['D:\Python36\python.exe', 'D:\Python37\python.exe']:
+        ctx.run(f'{python_exe} setup.py bdist_wheel')
 
 
 @task
@@ -61,6 +71,7 @@ ns.add_task(test)
 
 package = Collection('package')
 package.add_task(package_linux_wheels, 'linux_wheels')
+package.add_task(package_windows_wheels, 'windows_wheels')
 package.add_task(package_wheel, 'wheel')
 ns.add_collection(package)
 
