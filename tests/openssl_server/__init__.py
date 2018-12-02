@@ -7,6 +7,7 @@ from enum import Enum
 
 import logging
 import time
+from pathlib import Path
 from threading import Thread
 from typing import Optional
 
@@ -63,33 +64,38 @@ class _OpenSslServer(ABC):
     """A wrapper around OpenSSL's s_server CLI.
     """
 
-    _SERVER_CERT_PATH = os.path.join(os.path.dirname(__file__), 'server-self-signed-cert.pem')
-    _SERVER_KEY_PATH = os.path.join(os.path.dirname(__file__), 'server-self-signed-key.pem')
-
     _AVAILABLE_LOCAL_PORTS = set(range(8110, 8150))
 
     _S_SERVER_CMD = '{openssl} s_server -cert {server_cert} -key {server_key} -accept {port}' \
                     ' -cipher "ALL:COMPLEMENTOFALL" {verify_arg} {extra_args}'
 
+    _ROOT_PATH = Path(__file__).parent.absolute()
+
     # Client authentication - files generated using https://gist.github.com/nabla-c0d3/c2c5799a84a4867e5cbae42a5c43f89a
-    _CLIENT_CA_PATH = os.path.join(os.path.dirname(__file__), 'client-ca.pem')
-    _CLIENT_CERT_PATH = os.path.join(os.path.dirname(__file__), 'client-cert.pem')
-    _CLIENT_KEY_PATH = os.path.join(os.path.dirname(__file__), 'client-key.pem')
+    _CLIENT_CA_PATH = _ROOT_PATH / 'client-ca.pem'
 
     # A special message clients can send to get a reply from s_server
     HELLO_MSG = b'Hello\r\n'
 
     @classmethod
-    def get_client_certificate_path(cls) -> str:
-        return cls._CLIENT_CERT_PATH
+    def get_server_certificate_path(cls) -> Path:
+        return cls._ROOT_PATH / 'server-self-signed-cert.pem'
 
     @classmethod
-    def get_client_key_path(cls) -> str:
-        return cls._CLIENT_KEY_PATH
+    def get_server_key_path(cls) -> Path:
+        return cls._ROOT_PATH / 'server-self-signed-key.pem'
+
+    @classmethod
+    def get_client_certificate_path(cls) -> Path:
+        return cls._ROOT_PATH / 'client-cert.pem'
+
+    @classmethod
+    def get_client_key_path(cls) -> Path:
+        return cls._ROOT_PATH / 'client-key.pem'
 
     @classmethod
     @abstractmethod
-    def get_openssl_path(cls) -> str:
+    def get_openssl_path(cls) -> Path:
         pass
 
     @classmethod
@@ -112,8 +118,8 @@ class _OpenSslServer(ABC):
 
         self._command_line = self._S_SERVER_CMD.format(
             openssl=self.get_openssl_path(),
-            server_key=self._SERVER_KEY_PATH,
-            server_cert=self._SERVER_CERT_PATH,
+            server_key=self.get_server_key_path(),
+            server_cert=self.get_server_certificate_path(),
             port=self.port,
             verify_arg=self.get_verify_argument(client_auth_config),
             extra_args=extra_openssl_args,

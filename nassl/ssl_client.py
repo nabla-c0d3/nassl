@@ -188,6 +188,13 @@ class SslClient:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
+            except OpenSSLError as e:
+                if 'alert bad certificate' in e.args[0]:
+                    # Bad certificate alert (https://github.com/nabla-c0d3/sslyze/issues/313 )
+                    raise ClientCertificateRequested(self.get_client_CA_list())
+                else:
+                    raise
+
     def is_handshake_completed(self) -> bool:
         return self._is_handshake_completed
 
@@ -218,6 +225,12 @@ class SslClient:
                 # The SSL engine needs more data
                 # before it can decrypt the whole message
                 pass
+
+            except OpenSSLError as e:
+                if 'tlsv13 alert certificate required' in str(e):
+                    raise ClientCertificateRequested(self.get_client_CA_list())
+                else:
+                    raise
 
     def write(self, data: bytes) -> int:
         """Returns the number of (encrypted) bytes sent.

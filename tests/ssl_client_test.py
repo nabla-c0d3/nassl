@@ -11,7 +11,7 @@ from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, Ope
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
-# TODO(AD): Switch to lefacy server and add a TODO; skip tests for TLS 1.3
+# TODO(AD): Switch to legacy server and add a TODO; skip tests for TLS 1.3
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestSslClientClientAuthentication:
 
@@ -290,3 +290,21 @@ class TestModernSslClientOnlineTls13:
                 )
 
             ssl_client_early_data.shutdown()
+
+    def test_client_authentication_tls_1_3(self):
+        # Given a server that requires client authentication
+        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+            # And the client provides an invalid client certificate (actually the server cert)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+
+            # When doing the handshake the right error is returned
+            with pytest.raises(ClientCertificateRequested):
+                ssl_client.do_handshake()
