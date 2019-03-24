@@ -12,8 +12,8 @@ matrix:
     - choco install python3
     - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
     - choco install visualstudio2017-workload-vctools
-    - export PATH=$MSBUILD_PATH:$PATH
     - '"c:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"'
+    - ml64
 
 install:
   - pip install pipenv
