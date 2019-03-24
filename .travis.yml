@@ -11,9 +11,10 @@ matrix:
     before_install:
     - choco install python3
     - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-    - choco install visualstudio2017-workload-vctools --package-parameters "--includeOptional"
+    - choco install visualstudio2017-workload-vctools
     - '"c:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"'
-    - dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Tools\MSVC\14.16.27023\bin\Hostx64\x64\"
+    - cl
+    - dir "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Tools\MSVC\14.16.27023\bin\Hostx64"
     - ml64.exe
 
 install:
