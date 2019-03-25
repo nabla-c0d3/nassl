@@ -21,6 +21,8 @@ init:
 install:
   - "%PYTHON%\\python.exe -m pip install wheel pipenv"
   - "%PYTHON%/Scripts/pipenv.exe install --dev --python %PYTHON%\\python.exe"
+
+build_script:
   - "%PYTHON%/Scripts/pipenv.exe run invoke build.all"
 
 test_script:
