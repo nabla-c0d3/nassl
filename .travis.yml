@@ -1,23 +1,17 @@
 language: python
 python:
   - 3.7
+
 matrix:
   include:
   - os: linux
     dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
     sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
-  - os: windows
-    language: sh
-    before_install:
-    - choco install python3
-    - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-    - choco install visualstudio2017-workload-vctools
-    - choco install strawberryperl  # The built-in perl causes OpenSSL to return an error
 
 install:
   - pip install pipenv
   - pipenv install --dev
-  - if [[ "$TRAVIS_OS_NAME" == "windows" ]]; then cmd.exe /C '"C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat" && pipenv run invoke -c build_tasks build-all' ; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pipenv run invoke -c build_tasks build-all ; fi
+  - pipenv run invoke -c build_tasks build-all
+
 script:
   - pipenv run invoke test
