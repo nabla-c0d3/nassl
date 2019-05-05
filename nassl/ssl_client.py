@@ -1,4 +1,6 @@
 import socket
+from abc import ABC
+from types import ModuleType
 
 from nassl import _nassl
 from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
@@ -38,14 +40,6 @@ class OpenSslFileTypeEnum(IntEnum):
     ASN1 = 2
 
 
-class OpenSslEarlyDataStatusEnum(IntEnum):
-    """Early data status constants.
-    """
-    NOT_SENT = 0
-    REJECTED = 1
-    ACCEPTED = 2
-
-
 class ClientCertificateRequested(IOError):
     ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
     ERROR_MSG = 'Server requested a client certificate.'
@@ -62,21 +56,14 @@ class ClientCertificateRequested(IOError):
         return exc_msg
 
 
-class CouldNotBuildVerifiedChain(Exception):
-    pass
-
-
-class SslClient:
-    """High level API implementing an SSL client.
-
-    Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the
-    server's certificate.
+class BaseSslClient(ABC):
+    """Common code and methods to the modern and legacy SSL clients.
     """
 
     _DEFAULT_BUFFER_SIZE = 4096
 
-    # The default client uses the modern OpenSSL
-    _NASSL_MODULE = _nassl
+    # The version of OpenSSL/nassl to use (modern VS legacy)
+    _NASSL_MODULE: ModuleType
 
     def __init__(
             self,
@@ -252,22 +239,6 @@ class SslClient:
 
         return final_length
 
-    def write_early_data(self, data: bytes) -> int:
-        """Returns the number of (encrypted) bytes sent.
-        """
-        if self._is_handshake_completed:
-            raise IOError('SSL Handshake was completed; cannot send early data.')
-
-        # Pass the cleartext data to the SSL engine
-        self._ssl.write_early_data(data)
-
-        # Recover the corresponding encrypted data
-        final_length = self._flush_ssl_engine()
-        return final_length
-
-    def get_early_data_status(self) -> OpenSslEarlyDataStatusEnum:
-        return OpenSslEarlyDataStatusEnum(self._ssl.get_early_data_status())
-
     def _flush_ssl_engine(self) -> int:
         if self._sock is None:
             raise IOError('Internal socket set to None; cannot perform handshake.')
@@ -386,12 +357,6 @@ class SslClient:
     def disable_stateless_session_resumption(self) -> None:
         self._ssl.set_options(self._SSL_OP_NO_TICKET)
 
-    def set_ciphersuites(self, cipher_suites: str) -> None:
-        """https://github.com/openssl/openssl/pull/5392
-        ."""
-        # TODO(AD): Eventually merge this method with get/set_cipher_list()
-        self._ssl.set_ciphersuites(cipher_suites)
-
     def get_received_chain(self) -> List[str]:
         """Returns the PEM-formatted certificate chain as sent by the server.
 
@@ -399,6 +364,51 @@ class SslClient:
         Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
         """
         return [x509.as_pem() for x509 in self._ssl.get_peer_cert_chain()]
+
+
+class OpenSslEarlyDataStatusEnum(IntEnum):
+    """Early data status constants.
+    """
+    NOT_SENT = 0
+    REJECTED = 1
+    ACCEPTED = 2
+
+
+class CouldNotBuildVerifiedChain(Exception):
+    pass
+
+
+class SslClient(BaseSslClient):
+    """High level API implementing an SSL client.
+
+    Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the
+    server's certificate.
+    """
+
+    # The default client uses the modern OpenSSL
+    _NASSL_MODULE = _nassl
+
+    def write_early_data(self, data: bytes) -> int:
+        """Returns the number of (encrypted) bytes sent.
+        """
+        if self._is_handshake_completed:
+            raise IOError('SSL Handshake was completed; cannot send early data.')
+
+        # Pass the cleartext data to the SSL engine
+        self._ssl.write_early_data(data)
+
+        # Recover the corresponding encrypted data
+        final_length = self._flush_ssl_engine()
+        return final_length
+
+    def get_early_data_status(self) -> OpenSslEarlyDataStatusEnum:
+        return OpenSslEarlyDataStatusEnum(self._ssl.get_early_data_status())
+
+    def set_ciphersuites(self, cipher_suites: str) -> None:
+        """https://github.com/openssl/openssl/pull/5392
+        ."""
+        # TODO(AD): Eventually merge this method with get/set_cipher_list()
+        self._ssl.set_ciphersuites(cipher_suites)
 
     def get_verified_chain(self) -> List[str]:
         """Returns the verified PEM-formatted certificate chain.

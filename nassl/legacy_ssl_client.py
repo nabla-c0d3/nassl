@@ -2,8 +2,8 @@ import socket
 
 from nassl._nassl import WantReadError, WantX509LookupError
 
-from nassl.ssl_client import SslClient, ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, \
-    OpenSslFileTypeEnum
+from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, \
+    OpenSslFileTypeEnum, BaseSslClient
 from typing import List
 from typing import Optional
 import sys
@@ -12,7 +12,7 @@ import sys
 from nassl import _nassl_legacy  # type: ignore
 
 
-class LegacySslClient(SslClient):
+class LegacySslClient(BaseSslClient):
     """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
     """
 
@@ -31,20 +31,10 @@ class LegacySslClient(SslClient):
             client_key_password: str = '',
             ignore_client_authentication_requests: bool = False
     ) -> None:
-        self._init_base_objects(ssl_version, underlying_socket)
-
-        # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
-        # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
-        self._init_server_authentication(ssl_verify, ssl_verify_locations)
-        self._init_client_authentication(
-            client_certchain_file,
-            client_key_file,
-            client_key_type,
-            client_key_password,
-            ignore_client_authentication_requests
+        super().__init__(
+            underlying_socket, ssl_version, ssl_verify, ssl_verify_locations, client_certchain_file,
+            client_key_file, client_key_type, client_key_password, ignore_client_authentication_requests
         )
-        # Now create the SSL object
-        self._init_ssl_objects()
 
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
@@ -151,9 +141,3 @@ class LegacySslClient(SslClient):
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
-
-    def set_ciphersuites(self, cipher_suites: str) -> None:
-        raise NotImplementedError('Only available in the modern SSL client')
-
-    def get_verified_chain(self) -> List[str]:
-        raise NotImplementedError('Only available in the modern SSL client')
