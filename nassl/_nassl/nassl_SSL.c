@@ -761,6 +761,56 @@ static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *ar
 
     Py_RETURN_NONE;
 }
+
+static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject *args)
+{
+    STACK_OF(X509) *verifiedCertChain = NULL;
+    PyObject* certChainPyList = NULL;
+    int certChainCount = 0, i = 0;
+
+    // Get the peer's certificate chain
+    verifiedCertChain = SSL_get_peer_cert_chain(self->ssl); // automatically freed
+    if (verifiedCertChain == NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "Error getting the peer's verified certificate chain.");
+        return NULL;
+    }
+
+    // We'll return a Python list containing each certificate
+    certChainCount = sk_X509_num(verifiedCertChain);
+    certChainPyList = PyList_New(certChainCount);
+    if (certChainPyList == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+
+    for (i=0; i<certChainCount; i++)
+    {
+        nassl_X509_Object *x509_Object = NULL;
+        // Copy the certificate as the cert chain is freed automatically
+        X509 *cert = X509_dup(sk_X509_value(verifiedCertChain, i));
+        if (cert == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
+            return NULL;
+        }
+
+        // Store the cert in an _nassl.X509 object
+        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
+        if (x509_Object == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            return PyErr_NoMemory();
+        }
+        x509_Object->x509 = cert;
+
+        // Add the X509 object to the final list
+        PyList_SET_ITEM(certChainPyList, i,  (PyObject *)x509_Object);
+    }
+
+    return certChainPyList;
+}
 #endif
 
 
@@ -860,6 +910,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"set_ciphersuites", (PyCFunction)nassl_SSL_set_ciphersuites, METH_VARARGS,
      "OpenSSL's SSL_set_ciphersuites()."
+    },
+    {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
+     "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,

@@ -154,3 +154,6 @@ class LegacySslClient(SslClient):
 
     def set_ciphersuites(self, cipher_suites: str) -> None:
         raise NotImplementedError('Only available in the modern SSL client')
+
+    def get_verified_chain(self) -> List[str]:
+        raise NotImplementedError('Only available in the modern SSL client')

@@ -1,5 +1,6 @@
 import socket
 import time
+from pathlib import Path
 
 import pytest
 
@@ -7,7 +8,7 @@ from build_tasks import CURRENT_PLATFORM, SupportedPlatformEnum
 from nassl import _nassl
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, \
-    OpenSSLError, OpenSslEarlyDataStatusEnum
+    OpenSSLError, OpenSslEarlyDataStatusEnum, CouldNotBuildVerifiedChain
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
@@ -103,8 +104,60 @@ class TestSslClientOnline:
             assert b'google' in ssl_client.read(1024)
 
             # And when requesting the server certificate, it returns it
-            assert ssl_client.get_peer_cert_chain()
+            assert ssl_client.get_received_chain()
             assert ssl_client.get_certificate_chain_verify_result()[0]
+        finally:
+            ssl_client.shutdown()
+
+
+class TestModernSslClientOnline:
+
+    def test_get_verified_chain(self):
+        # Given an SslClient connecting to Google
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(('www.yahoo.com', 443))
+        print(str(Path(__file__).absolute().parent / 'google_roots.pem'))
+        ssl_client = SslClient(
+            ssl_version=OpenSslVersionEnum.TLSV1_2,
+            underlying_socket=sock,
+
+            # That is configured to properly validate certificates
+            ssl_verify=OpenSslVerifyEnum.PEER,
+            ssl_verify_locations=str(Path(__file__).absolute().parent / 'mozilla.pem')
+        )
+
+        # When doing a TLS handshake, it succeeds
+        try:
+            ssl_client.do_handshake()
+
+            # And when requesting the verified certificate chain, it returns it
+            assert ssl_client.get_verified_chain()
+        finally:
+            ssl_client.shutdown()
+
+    def test_get_verified_chain_but_validation_failed(self):
+        # Given an SslClient connecting to Google
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(5)
+        sock.connect(('www.google.com', 443))
+
+        ssl_client = SslClient(
+            ssl_version=OpenSslVersionEnum.TLSV1_2,
+            underlying_socket=sock,
+
+            # That is configured to silently fail validation
+            ssl_verify=OpenSslVerifyEnum.NONE
+        )
+
+        # When doing a TLS handshake, it succeeds
+        try:
+            ssl_client.do_handshake()
+
+            # And when requesting the verified certificate chain
+            with pytest.raises(CouldNotBuildVerifiedChain):
+                # It fails because certificate validation failed
+                ssl_client.get_verified_chain()
         finally:
             ssl_client.shutdown()
 

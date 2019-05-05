@@ -1,28 +1,27 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import unicode_literals
-
-from nassl.ssl_client import OpenSslVersionEnum, SslClient
+from nassl.ssl_client import OpenSslVersionEnum, SslClient, OpenSslVerifyEnum
 import socket
 
+mozilla_store = 'tests/mozilla.pem'
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(5)
 sock.connect(('www.yahoo.com', 443))
 
-ssl_client = SslClient(ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock,
-                       ssl_verify_locations=u'mozilla.pem')
+ssl_client = SslClient(
+    ssl_version=OpenSslVersionEnum.TLSV1_2,
+    underlying_socket=sock,
+    ssl_verify=OpenSslVerifyEnum.PEER,
+    ssl_verify_locations=mozilla_store,
+)
 ssl_client.set_tlsext_status_ocsp()
 ssl_client.do_handshake()
 
-print('Certificate chain')
-for cert in ssl_client.get_peer_cert_chain():
-    print(cert.as_pem())
+print('Received certificate chain')
+for pem_cert in ssl_client.get_received_chain():
+    print(pem_cert)
 
 print('OCSP Stapling')
 ocsp_resp = ssl_client.get_tlsext_status_ocsp_resp()
-ocsp_resp.verify('mozilla.pem')
+ocsp_resp.verify(mozilla_store)
 print(ocsp_resp.as_dict())
 
 print('\nCipher suite')

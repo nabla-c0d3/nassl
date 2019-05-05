@@ -62,6 +62,10 @@ class ClientCertificateRequested(IOError):
         return exc_msg
 
 
+class CouldNotBuildVerifiedChain(Exception):
+    pass
+
+
 class SslClient:
     """High level API implementing an SSL client.
 
@@ -303,9 +307,6 @@ class SslClient:
         """
         self._ssl.set_tlsext_host_name(name_indication)
 
-    def get_peer_cert_chain(self) -> List[X509]:
-        return self._ssl.get_peer_cert_chain()
-
     def set_cipher_list(self, cipher_list: str) -> None:
         self._ssl.set_cipher_list(cipher_list)
 
@@ -390,3 +391,24 @@ class SslClient:
         ."""
         # TODO(AD): Eventually merge this method with get/set_cipher_list()
         self._ssl.set_ciphersuites(cipher_suites)
+
+    def get_received_chain(self) ->  List[str]:
+        """Returns the PEM-formatted certificate chain as sent by the server.
+
+        The leaf certificate is at index 0.
+        Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
+        """
+        return [x509.as_pem() for x509 in self._ssl.get_peer_cert_chain()]
+
+    def get_verified_chain(self) -> List[str]:
+        """Returns the verified PEM-formatted certificate chain.
+
+        If certificate validation failed, CouldNotBuildVerifiedChain will be raised.
+        The leaf certificate is at index 0.
+        Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
+        """
+        verify_code, verify_str = self.get_certificate_chain_verify_result()
+        if verify_code != 0:  # X509_V_OK
+            raise CouldNotBuildVerifiedChain(f'Certificate validation failed: "{verify_str}"')
+
+        return [x509.as_pem() for x509 in self._ssl.get0_verified_chain()]
