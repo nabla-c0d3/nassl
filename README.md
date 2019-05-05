@@ -2,8 +2,8 @@ nassl
 =====
 
 
-[![Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
-[![Build status](https://ci.appveyor.com/api/projects/status/w4571k2gq2lxu1ku?svg=true)](https://ci.appveyor.com/project/nabla-c0d3/nassl)
+[![Linux Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
+[![Windows Build status](https://ci.appveyor.com/api/projects/status/w4571k2gq2lxu1ku?svg=true)](https://ci.appveyor.com/project/nabla-c0d3/nassl)
 [![PyPI version](https://badge.fury.io/py/nassl.svg)](https://badge.fury.io/py/nassl)
 
 Experimental OpenSSL wrapper for Python 3.6+ and SSLyze. **Do NOT use for anything serious**. This code has not
