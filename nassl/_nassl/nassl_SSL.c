@@ -769,7 +769,7 @@ static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject 
     int certChainCount = 0, i = 0;
 
     // Get the peer's certificate chain
-    verifiedCertChain = SSL_get_peer_cert_chain(self->ssl); // automatically freed
+    verifiedCertChain = SSL_get0_verified_chain(self->ssl); // automatically freed
     if (verifiedCertChain == NULL)
     {
         PyErr_SetString(PyExc_ValueError, "Error getting the peer's verified certificate chain.");
