@@ -38,7 +38,7 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
 
     BASE_NASSL_EXT_SETUP.update({
         'library_dirs': [str(PYTHON_LIBS_PATH)],
-        'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32', 'crypt32',]
+        'libraries': ['user32', 'kernel32', 'Gdi32', 'Advapi32', 'Ws2_32', 'crypt32']
     })
 else:
     BASE_NASSL_EXT_SETUP['extra_compile_args'].append('-Wall')

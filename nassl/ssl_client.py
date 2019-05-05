@@ -6,7 +6,7 @@ from nassl import _nassl
 from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
 
 from enum import IntEnum
-from typing import List
+from typing import List, Any
 from typing import Optional
 from typing import Tuple
 from nassl.ocsp_response import OcspResponse
@@ -56,6 +56,14 @@ class ClientCertificateRequested(IOError):
         return exc_msg
 
 
+# TODO(AD): Create a proper typing stub for the C modules
+class NasslModuleType(ModuleType):
+
+    SSL_CTX: Any
+    SSL: Any
+    BIO: Any
+
+
 class BaseSslClient(ABC):
     """Common code and methods to the modern and legacy SSL clients.
     """
@@ -63,7 +71,7 @@ class BaseSslClient(ABC):
     _DEFAULT_BUFFER_SIZE = 4096
 
     # The version of OpenSSL/nassl to use (modern VS legacy)
-    _NASSL_MODULE: ModuleType
+    _NASSL_MODULE: NasslModuleType
 
     def __init__(
             self,

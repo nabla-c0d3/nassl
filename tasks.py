@@ -14,8 +14,8 @@ def test(ctx):
     ctx.run('pytest')
 
     # Run linters
-    ctx.run('mypy nassl')
-    ctx.run('flake8 nassl')
+    ctx.run('mypy sample_client.py')
+    ctx.run('flake8')
 
 
 @task
@@ -37,7 +37,7 @@ def package_wheel(ctx):
 def package_windows_wheels(ctx):
     """Build the binary wheels for Windows; this expects Python to be installed at specific locations.
     """
-    for python_exe in ['D:\Python36\python.exe', 'D:\Python37\python.exe']:
+    for python_exe in ['D:\\Python36\\python.exe', 'D:\\Python37\\python.exe']:
         ctx.run(f'{python_exe} setup.py bdist_wheel')
 
 
@@ -57,10 +57,10 @@ def release(ctx):
     ctx.run('git push --tags')
 
     # Build the Windows wheel
-    build_wheel(ctx)
+    package_wheel(ctx)
 
     # Build the Linux wheels
-    build_linux_wheel(ctx)
+    package_linux_wheels(ctx)
 
 
 # Setup all the tasks

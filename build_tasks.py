@@ -319,7 +319,7 @@ class ZlibBuildConfig(BuildConfig):
             masm_path = self.src_path / 'contrib' / f'masm{arch}'
             with ctx.cd(str(masm_path)):
                 ctx.run(build_script)
-                ctx.run( f'msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}')
+                ctx.run(f'msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}')
 
         else:
             # Linux/macOS build
