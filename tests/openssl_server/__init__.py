@@ -1,4 +1,3 @@
-import os
 import shlex
 
 import subprocess
@@ -55,9 +54,9 @@ class _OpenSslServerIOManager:
     def close(self):
         pass
         # TODO(AD): This hangs on Linux; figure it out
-        #self.s_server_stdout.close()
-        #self.s_server_stdin.close()
-        #self.thread.join()
+        # self.s_server_stdout.close()
+        # self.s_server_stdin.close()
+        # self.thread.join()
 
 
 class _OpenSslServer(ABC):

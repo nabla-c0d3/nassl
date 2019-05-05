@@ -17,7 +17,7 @@ class TestCommonSSL_CTX:
         with pytest.raises(ValueError):
             nassl_module.SSL_CTX(1234)
 
-    def test_set_verify(self,nassl_module):
+    def test_set_verify(self, nassl_module):
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
         test_ssl_ctx.set_verify(OpenSslVerifyEnum.PEER.value)
 

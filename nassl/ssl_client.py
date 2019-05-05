@@ -392,7 +392,7 @@ class SslClient:
         # TODO(AD): Eventually merge this method with get/set_cipher_list()
         self._ssl.set_ciphersuites(cipher_suites)
 
-    def get_received_chain(self) ->  List[str]:
+    def get_received_chain(self) -> List[str]:
         """Returns the PEM-formatted certificate chain as sent by the server.
 
         The leaf certificate is at index 0.
