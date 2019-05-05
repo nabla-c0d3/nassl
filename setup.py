@@ -28,7 +28,6 @@ BASE_NASSL_EXT_SETUP = {
     'extra_link_args': [],
     'sources': ["nassl/_nassl/nassl.c", "nassl/_nassl/nassl_SSL_CTX.c", "nassl/_nassl/nassl_SSL.c",
                 "nassl/_nassl/nassl_X509.c", "nassl/_nassl/nassl_errors.c", "nassl/_nassl/nassl_BIO.c",
-                "nassl/_nassl/nassl_X509_EXTENSION.c", "nassl/_nassl/nassl_X509_NAME_ENTRY.c",
                 "nassl/_nassl/nassl_SSL_SESSION.c", "nassl/_nassl/openssl_utils.c",
                 "nassl/_nassl/nassl_OCSP_RESPONSE.c", "nassl/_nassl/python_utils.c"],
 }

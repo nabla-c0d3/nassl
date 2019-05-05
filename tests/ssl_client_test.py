@@ -103,7 +103,6 @@ class TestSslClientOnline:
             assert b'google' in ssl_client.read(1024)
 
             # And when requesting the server certificate, it returns it
-            assert ssl_client.get_peer_certificate()
             assert ssl_client.get_peer_cert_chain()
             assert ssl_client.get_certificate_chain_verify_result()[0]
         finally:

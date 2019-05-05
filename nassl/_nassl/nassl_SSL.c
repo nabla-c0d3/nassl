@@ -391,31 +391,6 @@ static PyObject* nassl_SSL_set_tlsext_host_name(nassl_SSL_Object *self, PyObject
 }
 
 
-static PyObject* nassl_SSL_get_peer_certificate(nassl_SSL_Object *self, PyObject *args)
-{
-    X509 *cert;
-    cert = SSL_get_peer_certificate(self->ssl);
-    if (cert == NULL)
-    {
-        // Anonymous cipher suite ?
-        Py_RETURN_NONE;
-    }
-    else
-    {
-        // Return an _nassl.X509 object
-        nassl_X509_Object *x509_Object;
-        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
-        if (x509_Object == NULL)
-        {
-            return PyErr_NoMemory();
-        }
-
-        x509_Object->x509 = cert;
-        return (PyObject *) x509_Object;
-    }
-}
-
-
 static PyObject* nassl_SSL_set_cipher_list(nassl_SSL_Object *self, PyObject *args)
 {
     char *cipherList;
@@ -812,20 +787,6 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"write", (PyCFunction)nassl_SSL_write, METH_VARARGS,
      "OpenSSL's SSL_write()."
     },
-#ifndef LEGACY_OPENSSL
-    {"write_early_data", (PyCFunction)nassl_SSL_write_early_data, METH_VARARGS,
-     "OpenSSL's SSL_write_early_data()."
-    },
-    {"get_early_data_status", (PyCFunction)nassl_SSL_get_early_data_status, METH_VARARGS,
-     "OpenSSL's SSL_get_early_data_status()."
-    },
-    {"get_max_early_data", (PyCFunction)nassl_SSL_get_max_early_data, METH_VARARGS,
-     "OpenSSL's SSL_get_max_early_data()."
-    },
-    {"set_ciphersuites", (PyCFunction)nassl_SSL_set_ciphersuites, METH_VARARGS,
-     "OpenSSL's SSL_set_ciphersuites()."
-    },
-#endif
     {"pending", (PyCFunction)nassl_SSL_pending, METH_NOARGS,
      "OpenSSL's SSL_pending()."
     },
@@ -846,9 +807,6 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"set_tlsext_host_name", (PyCFunction)nassl_SSL_set_tlsext_host_name, METH_VARARGS,
      "OpenSSL's SSL_set_tlsext_host_name()."
-    },
-    {"get_peer_certificate", (PyCFunction)nassl_SSL_get_peer_certificate, METH_NOARGS,
-     "OpenSSL's SSL_get_peer_certificate(). Returns an _nassl.X509 object."
     },
     {"set_cipher_list", (PyCFunction)nassl_SSL_set_cipher_list, METH_VARARGS,
      "OpenSSL's SSL_set_cipher_list()."
@@ -889,6 +847,19 @@ static PyMethodDef nassl_SSL_Object_methods[] =
 #ifdef LEGACY_OPENSSL
     {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
      "OpenSSL's SSL_state_string_long()."
+    },
+#else
+    {"write_early_data", (PyCFunction)nassl_SSL_write_early_data, METH_VARARGS,
+     "OpenSSL's SSL_write_early_data()."
+    },
+    {"get_early_data_status", (PyCFunction)nassl_SSL_get_early_data_status, METH_VARARGS,
+     "OpenSSL's SSL_get_early_data_status()."
+    },
+    {"get_max_early_data", (PyCFunction)nassl_SSL_get_max_early_data, METH_VARARGS,
+     "OpenSSL's SSL_get_max_early_data()."
+    },
+    {"set_ciphersuites", (PyCFunction)nassl_SSL_set_ciphersuites, METH_VARARGS,
+     "OpenSSL's SSL_set_ciphersuites()."
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,

@@ -74,10 +74,6 @@ class TestCommonSSL:
         with pytest.raises(TypeError):
             test_ssl.set_tlsext_host_name(None)
 
-    def test_get_peer_certificate_bad(self, nassl_module):
-        test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        assert None is test_ssl.get_peer_certificate()
-
     def test_set_cipher_list(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_cipher_list('HIGH')

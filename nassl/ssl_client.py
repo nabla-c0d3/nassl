@@ -66,7 +66,7 @@ class SslClient:
     """High level API implementing an SSL client.
 
     Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the
-    server's certificate, available via get_peer_certificate().
+    server's certificate.
     """
 
     _DEFAULT_BUFFER_SIZE = 4096
@@ -303,13 +303,7 @@ class SslClient:
         """
         self._ssl.set_tlsext_host_name(name_indication)
 
-    def get_peer_certificate(self) -> Optional[X509]:
-        return self._ssl.get_peer_certificate()
-
     def get_peer_cert_chain(self) -> List[X509]:
-        """See the OpenSSL documentation for differences between get_peer_cert_chain() and get_peer_certificate().
-        https://www.openssl.org/docs/ssl/SSL_get_peer_cert_chain.html
-        """
         return self._ssl.get_peer_cert_chain()
 
     def set_cipher_list(self, cipher_list: str) -> None:

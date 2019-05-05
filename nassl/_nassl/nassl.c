@@ -14,8 +14,6 @@
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
 #include "nassl_X509.h"
-#include "nassl_X509_EXTENSION.h"
-#include "nassl_X509_NAME_ENTRY.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
 
@@ -146,8 +144,6 @@ PyMODINIT_FUNC init_nassl(void)
     module_add_SSL(module);
     module_add_BIO(module);
     module_add_X509(module);
-    module_add_X509_EXTENSION(module);
-    module_add_X509_NAME_ENTRY(module);
     module_add_SSL_SESSION(module);
     module_add_OCSP_RESPONSE(module);
 
