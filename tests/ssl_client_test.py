@@ -160,6 +160,87 @@ class TestModernSslClientOnline:
         finally:
             ssl_client.shutdown()
 
+    def test_get_dh_info_ecdh_p256(self):
+
+        with ModernOpenSslServer(cipher='ECDHE-RSA-AES256-SHA', groups='P-256') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is not None
+            assert dh_info["type"] == 'ECDH'
+            assert dh_info["curve"] == "prime256v1"
+            assert 'size' in dh_info.keys()
+            assert 'x' in dh_info.keys()
+            assert 'y' in dh_info.keys()
+            assert 'public_key' in dh_info.keys()
+
+    def test_get_dh_info_ecdh_x25519(self):
+
+        with ModernOpenSslServer(cipher='ECDHE-RSA-AES256-SHA', groups='X25519') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is not None
+            assert dh_info["type"] == 'ECDH'
+            assert dh_info["curve"] == "X25519"
+            assert 'size' in dh_info.keys()
+            assert 'public_key' in dh_info.keys()
+
+    def test_get_dh_info_dh(self):
+
+        with ModernOpenSslServer(cipher='DHE-RSA-AES256-SHA') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is not None
+            assert dh_info["type"] == 'DH'
+            assert 'size' in dh_info.keys()
+            assert 'prime' in dh_info.keys()
+            assert 'generator' in dh_info.keys()
+            assert 'public_key' in dh_info.keys()
+
 
 class TestLegacySslClientOnlineSsl2:
 
@@ -181,6 +262,60 @@ class TestLegacySslClientOnlineSsl2:
                 ssl_client.do_handshake()
             finally:
                 ssl_client.shutdown()
+
+    def test_get_dh_info_ecdh(self):
+
+        with LegacyOpenSslServer(cipher='ECDHE-RSA-AES256-SHA') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = LegacySslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is not None
+            assert dh_info["type"] == 'ECDH'
+            assert 'size' in dh_info.keys()
+            assert 'x' in dh_info.keys()
+            assert 'y' in dh_info.keys()
+            assert 'public_key' in dh_info.keys()
+
+    def test_get_dh_info_dh(self):
+
+        with LegacyOpenSslServer(cipher='DHE-RSA-AES256-SHA') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = LegacySslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is not None
+            assert dh_info["type"] == 'DH'
+            assert 'size' in dh_info.keys()
+            assert 'prime' in dh_info.keys()
+            assert 'generator' in dh_info.keys()
+            assert 'public_key' in dh_info.keys()
 
 
 @pytest.mark.skipif(

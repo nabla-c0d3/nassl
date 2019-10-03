@@ -298,6 +298,9 @@ class BaseSslClient(ABC):
     def get_current_cipher_bits(self) -> int:
         return self._ssl.get_cipher_bits()
 
+    def get_dh_info(self) -> dict:
+        return self._ssl.get_dh_info()
+
     def _use_private_key(
             self,
             client_certchain_file: str,

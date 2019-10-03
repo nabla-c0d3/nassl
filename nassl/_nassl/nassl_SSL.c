@@ -9,7 +9,8 @@
 
 #include <openssl/ssl.h>
 #include <openssl/ocsp.h>
-
+#include <openssl/ossl_typ.h>
+#include <openssl/ec.h>
 
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
@@ -813,6 +814,191 @@ static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject 
 }
 #endif
 
+static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
+{
+    // Try to get the ECDH/DH key from the connection 
+    EVP_PKEY *key;
+    if (!SSL_get_server_tmp_key(self->ssl, &key))
+    {
+        PyErr_SetString(PyExc_TypeError, "Unable to get server temporary key");
+        return NULL;
+    }
+
+    int key_id = EVP_PKEY_id(key);
+    if (key_id == EVP_PKEY_DH)
+    {
+        // If the connection uses DH
+#ifdef LEGACY_OPENSSL
+        
+        // Get the DH params from the pkey directly in legacy OpenSSL
+        DH *dh = key->pkey.dh;
+        char *p_str = BN_bn2hex(dh->p);
+        char *g_str = BN_bn2hex(dh->g);
+        char *pub_key_str = BN_bn2hex(dh->pub_key);
+
+#else
+
+        // Use the newer API for modern OpenSSL
+        DH *dh = EVP_PKEY_get0_DH(key);
+        const BIGNUM *p, *g, *pub_key;
+        DH_get0_pqg(dh, &p, NULL, &g);
+        DH_get0_key(dh, &pub_key, NULL);
+        char *p_str = BN_bn2hex(p);
+        char *g_str = BN_bn2hex(g);
+        char *pub_key_str = BN_bn2hex(pub_key);
+
+#endif
+        // Format the relevant params into a dictionary
+        PyObject *return_dict = PyDict_New();
+        PyDict_SetItemString(return_dict, "type", PyUnicode_FromString("DH"));
+        PyDict_SetItemString(return_dict, "prime", PyUnicode_FromString(p_str));
+        PyDict_SetItemString(return_dict, "generator", PyUnicode_FromString(g_str));
+        PyDict_SetItemString(return_dict, "public_key", PyUnicode_FromString(pub_key_str));
+        PyDict_SetItemString(return_dict, "size", Py_BuildValue("I", EVP_PKEY_bits(key)));
+        
+        EVP_PKEY_free(key);
+        return return_dict;
+    }
+    else if (key_id == EVP_PKEY_EC)
+    {
+        // If the connection uses ECDH
+
+        // Get the EC key
+        EC_KEY *ec = EVP_PKEY_get1_EC_KEY(key);
+        if(ec == NULL){
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to get server EC key");
+            return NULL;
+        }
+
+        // Get the group from the key
+        const EC_GROUP *ec_group = EC_KEY_get0_group(ec);
+
+        // Get the curve numeric ID from the group
+        int nid = EC_GROUP_get_curve_name(ec_group);
+
+        // Get the public point from the key and extract the x and y coords
+        const EC_POINT *point = EC_KEY_get0_public_key(ec);
+
+        BN_CTX *ctx = BN_CTX_new();
+        if(ctx == NULL){
+            EC_KEY_free(ec);
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to allocate BN_CTX");
+            return NULL;
+        }
+
+        char* pub_key_str = EC_POINT_point2hex(ec_group, point, POINT_CONVERSION_UNCOMPRESSED, ctx);
+        BN_CTX_free(ctx);
+        
+        BIGNUM *x = BN_new();
+        BIGNUM *y = BN_new();
+
+        if(x == NULL || y == NULL){
+            EC_KEY_free(ec);
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to allocate BN");
+            return NULL;
+        }
+        
+        if(!EC_POINT_get_affine_coordinates_GFp(ec_group, point, x, y, NULL)){
+            BN_free(x);
+            BN_free(y);
+            EC_KEY_free(ec);
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to get server public key coordinates");
+            return NULL;
+        };
+        
+        // Convert the x and y coords to a hex string
+        char *x_str = BN_bn2hex(x);
+        char *y_str = BN_bn2hex(y);
+
+        // Free resources that can be freed according to OpenSSL docs
+        BN_free(x);
+        BN_free(y);
+        EC_KEY_free(ec);
+
+        // Return a dictionary of relevant parameters
+        PyObject *return_dict = PyDict_New();
+        PyDict_SetItemString(return_dict, "type", PyUnicode_FromString("ECDH"));
+        PyDict_SetItemString(return_dict, "size", Py_BuildValue("I", EVP_PKEY_bits(key)));
+        PyDict_SetItemString(return_dict, "curve", PyUnicode_FromString(OBJ_nid2sn(nid)));
+        PyDict_SetItemString(return_dict, "nist_curve", PyUnicode_FromString(EC_curve_nid2nist(nid)));
+        PyDict_SetItemString(return_dict, "x", PyUnicode_FromString(x_str));
+        PyDict_SetItemString(return_dict, "y", PyUnicode_FromString(y_str));
+        PyDict_SetItemString(return_dict, "public_key", PyUnicode_FromString(pub_key_str));
+
+        
+        EVP_PKEY_free(key);
+        return return_dict;
+    }
+#ifndef LEGACY_OPENSSL
+    else if(key_id == EVP_PKEY_X25519 || key_id == EVP_PKEY_X448){
+        
+        // If the connection uses X25519 or X448
+
+        unsigned char* public_key_bytes = NULL;
+        size_t len;
+
+        // Get the length of the public key
+        if(EVP_PKEY_get_raw_public_key(key, public_key_bytes, &len) < 0){
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to determine public key size");
+            return NULL;
+        }
+
+        // Allocate a buffer for the public key
+        public_key_bytes = (unsigned char*) malloc(len);
+        if(public_key_bytes == NULL){
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to allocate buffer for public key");
+            return NULL;
+        }
+
+        // Get the public key
+        if(EVP_PKEY_get_raw_public_key(key, public_key_bytes, &len) < 0){
+            free(public_key_bytes);
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to get public key");
+            return NULL;
+        }
+
+        // Allocate a buffer for a hex string representation of the public key
+        char* public_key_hex = (char*) malloc((len * 2) + 1);
+        if(public_key_hex == NULL){
+            free(public_key_bytes);
+            EVP_PKEY_free(key);
+            PyErr_SetString(PyExc_TypeError, "Unable to allocate buffer for public key string");
+            return NULL;
+        }
+
+        // Convert the public key to hex format
+        char* pos = public_key_hex;
+        for(int i = 0; i < len; i++){
+            pos += sprintf(pos, "%02X", public_key_bytes[i]);
+        }
+
+        // Return a dictionary of relevant parameters
+        PyObject *return_dict = PyDict_New();
+        PyDict_SetItemString(return_dict, "type", PyUnicode_FromString("ECDH"));
+        PyDict_SetItemString(return_dict, "curve", PyUnicode_FromString(OBJ_nid2sn(EVP_PKEY_id(key))));
+        PyDict_SetItemString(return_dict, "size", Py_BuildValue("I", EVP_PKEY_bits(key)));
+        PyDict_SetItemString(return_dict, "public_key", PyUnicode_FromString(public_key_hex));
+
+        free(public_key_bytes);
+        EVP_PKEY_free(key);
+        return return_dict;        
+    }
+#endif
+    else
+    {
+        // Otherwise, raise an exception
+        EVP_PKEY_free(key);
+        PyErr_SetString(PyExc_TypeError, "Unsupported key exchange type");
+        return NULL;
+    }
+}
 
 static PyMethodDef nassl_SSL_Object_methods[] =
 {
@@ -917,6 +1103,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,
      "OpenSSL's SSL_get_peer_cert_chain(). Returns an array of _nassl.X509 objects."
+    },
+    {"get_dh_info", (PyCFunction)nassl_SSL_get_dh_info, METH_NOARGS,
+     "Returns Diffie-Hellman / Elliptic curve Diffie-Hellman parameters as a dictionary."
     },
     {NULL}  // Sentinel
 };
