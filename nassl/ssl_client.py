@@ -10,6 +10,7 @@ from typing import List, Any
 from typing import Optional
 from typing import Tuple
 from nassl.ocsp_response import OcspResponse
+from nassl.temp_key_info import OpenSslEvpPkeyEnum, TempKeyInfo, DHTempKeyInfo, ECDHTempKeyInfo, NistECDHTempKeyInfo
 
 
 class OpenSslVerifyEnum(IntEnum):
@@ -298,8 +299,20 @@ class BaseSslClient(ABC):
     def get_current_cipher_bits(self) -> int:
         return self._ssl.get_cipher_bits()
 
-    def get_dh_info(self) -> dict:
-        return self._ssl.get_dh_info()
+    def get_dh_info(self) -> Optional[TempKeyInfo]:
+        try:
+            dh_info = self._ssl.get_dh_info()
+        except TypeError:
+            return None
+
+        if dh_info["key_type"] == OpenSslEvpPkeyEnum.DH:
+            return DHTempKeyInfo(**dh_info)
+        elif dh_info["key_type"] == OpenSslEvpPkeyEnum.EC:
+            return NistECDHTempKeyInfo(**dh_info)
+        elif dh_info["key_type"] == OpenSslEvpPkeyEnum.X25519 or dh_info["key_type"] == OpenSslEvpPkeyEnum.X448:
+            return ECDHTempKeyInfo(**dh_info)
+        else:
+            return None
 
     def _use_private_key(
             self,

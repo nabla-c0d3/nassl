@@ -8,6 +8,7 @@ from nassl import _nassl
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, \
     OpenSSLError, OpenSslEarlyDataStatusEnum, CouldNotBuildVerifiedChain
+from nassl.temp_key_info import OpenSslEvpPkeyEnum, OpenSslEcNidEnum, TempKeyInfo, DHTempKeyInfo, NistECDHTempKeyInfo
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
@@ -180,13 +181,13 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert dh_info is not None
-            assert dh_info["type"] == 'ECDH'
-            assert dh_info["curve"] == "prime256v1"
-            assert 'size' in dh_info.keys()
-            assert 'x' in dh_info.keys()
-            assert 'y' in dh_info.keys()
-            assert 'public_key' in dh_info.keys()
+            assert isinstance(dh_info, NistECDHTempKeyInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
+            assert dh_info.key_size == 256
+            assert dh_info.curve == OpenSslEcNidEnum.PRIME256V1
+            assert len(dh_info.public_key) == 65
+            assert len(dh_info.x) == 32
+            assert len(dh_info.y) == 32
 
     def test_get_dh_info_ecdh_x25519(self):
 
@@ -208,11 +209,37 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert dh_info is not None
-            assert dh_info["type"] == 'ECDH'
-            assert dh_info["curve"] == "X25519"
-            assert 'size' in dh_info.keys()
-            assert 'public_key' in dh_info.keys()
+            assert isinstance(dh_info, TempKeyInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.X25519
+            assert dh_info.key_size == 253
+            assert dh_info.curve == OpenSslEcNidEnum.X25519
+            assert len(dh_info.public_key) == 32
+
+    def test_get_dh_info_ecdh_x448(self):
+
+        with ModernOpenSslServer(cipher='ECDHE-RSA-AES256-SHA', groups='X448') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert isinstance(dh_info, TempKeyInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.X448
+            assert dh_info.key_size == 448
+            assert dh_info.curve == OpenSslEcNidEnum.X448
+            assert len(dh_info.public_key) == 56
 
     def test_get_dh_info_dh(self):
 
@@ -234,12 +261,34 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert dh_info is not None
-            assert dh_info["type"] == 'DH'
-            assert 'size' in dh_info.keys()
-            assert 'prime' in dh_info.keys()
-            assert 'generator' in dh_info.keys()
-            assert 'public_key' in dh_info.keys()
+            assert isinstance(dh_info, DHTempKeyInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.DH
+            assert dh_info.key_size > 0
+            assert len(dh_info.public_key) > 0
+            assert len(dh_info.prime) > 0
+            assert len(dh_info.generator) > 0
+
+    def test_get_dh_info_no_dh(self):
+
+        with ModernOpenSslServer(cipher='AES256-SHA') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is None
 
 
 class TestLegacySslClientOnlineSsl2:
@@ -283,12 +332,12 @@ class TestLegacySslClientOnlineSsl2:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert dh_info is not None
-            assert dh_info["type"] == 'ECDH'
-            assert 'size' in dh_info.keys()
-            assert 'x' in dh_info.keys()
-            assert 'y' in dh_info.keys()
-            assert 'public_key' in dh_info.keys()
+            assert isinstance(dh_info, NistECDHTempKeyInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
+            assert dh_info.key_size > 0
+            assert len(dh_info.public_key) > 0
+            assert len(dh_info.x) > 0
+            assert len(dh_info.y) > 0
 
     def test_get_dh_info_dh(self):
 
@@ -310,12 +359,34 @@ class TestLegacySslClientOnlineSsl2:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert dh_info is not None
-            assert dh_info["type"] == 'DH'
-            assert 'size' in dh_info.keys()
-            assert 'prime' in dh_info.keys()
-            assert 'generator' in dh_info.keys()
-            assert 'public_key' in dh_info.keys()
+            assert isinstance(dh_info, DHTempKeyInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.DH
+            assert dh_info.key_size > 0
+            assert len(dh_info.public_key) > 0
+            assert len(dh_info.prime) > 0
+            assert len(dh_info.generator) > 0
+
+    def test_get_dh_info_no_dh(self):
+
+        with LegacyOpenSslServer(cipher='AES256-SHA') as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = LegacySslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert dh_info is None
 
 
 @pytest.mark.skipif(

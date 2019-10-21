@@ -107,7 +107,7 @@ class _OpenSslServer(ABC):
     def __init__(
             self,
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            extra_openssl_args: Optional[List[str]] = [],
+            extra_openssl_args: List[str] = [],
             cipher: str = CIPHER
     ) -> None:
         self.hostname = 'localhost'
@@ -188,7 +188,7 @@ class LegacyOpenSslServer(_OpenSslServer):
             self,
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
             cipher: Optional[str] = None,
-            prefer_server_order: Optional[bool] = False
+            prefer_server_order: bool = False
     ) -> None:
 
         extra_args = []
@@ -234,7 +234,7 @@ class ModernOpenSslServer(_OpenSslServer):
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
             max_early_data: Optional[int] = None,
             cipher: Optional[str] = None,
-            prefer_server_order: Optional[bool] = False,
+            prefer_server_order: bool = False,
             groups: Optional[str] = None
 
     ) -> None:
