@@ -24,6 +24,19 @@ NASSL_SETUP = {
     "author_email": "nabla.c0d3@gmail.com",
     "url": "https://github.com/nabla-c0d3/nassl",
     "python_requires": ">=3.7",
+    "classifiers": [
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Developers",
+        "Intended Audience :: System Administrators",
+        "Natural Language :: French",
+        "License :: OSI Approved :: GNU Affero General Public License v3",
+        "Programming Language :: Python :: 3.7",
+        "Topic :: System :: Networking",
+        "Topic :: System :: Monitoring",
+        "Topic :: System :: Networking :: Monitoring",
+        "Topic :: Security",
+    ],
+    "keywords": "ssl tls scan security library",
 }
 
 # There are two native extensions: the "legacy" OpenSSL one and the "modern" OpenSSL one
