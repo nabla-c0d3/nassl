@@ -19,12 +19,11 @@ NASSL_SETUP = {
     "version": __version__,
     "package_dir": {"nassl": "nassl"},
     "py_modules": ["nassl.__init__", "nassl.ssl_client", "nassl.legacy_ssl_client", "nassl.ocsp_response"],
-    "description": "Experimental OpenSSL wrapper for Python 3.6+ and SSLyze.",
+    "description": "Experimental OpenSSL wrapper for Python 3.7+ and SSLyze.",
     "author": __author__,
     "author_email": "nabla.c0d3@gmail.com",
     "url": "https://github.com/nabla-c0d3/nassl",
-    "python_requires": ">=3.6",
-    "install_requires": "dataclasses ; python_version<'3.7'",
+    "python_requires": ">=3.7",
 }
 
 # There are two native extensions: the "legacy" OpenSSL one and the "modern" OpenSSL one
