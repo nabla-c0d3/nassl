@@ -343,7 +343,7 @@ class BaseSslClient(ABC):
         """
         ocsp_response = self._ssl.get_tlsext_status_ocsp_resp()
         if ocsp_response:
-            return OcspResponse(ocsp_response)
+            return OcspResponse.from_openssl(ocsp_response)
         else:
             return None
 

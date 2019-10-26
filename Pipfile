@@ -1,17 +1,26 @@
 [[source]]
+
 url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+
 [packages]
 
+dataclasses = "*"
+
+
 [dev-packages]
+
 mypy = "*"
 "flake8" = "*"
 pytest = "*"
 twine = "*"
 invoke = "*"
 requests = "*"
+black = "*"
+
 
 [requires]
+
 python_version = "3.7"

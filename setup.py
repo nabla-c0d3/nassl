@@ -20,6 +20,7 @@ NASSL_SETUP = {
     'author_email': 'nabla.c0d3@gmail.com',
     'url': 'https://github.com/nabla-c0d3/nassl',
     'python_requires': '>=3.6',
+    'install_requires': "dataclasses ; python_version<'3.7'",
 }
 
 # There are two native extensions: the "legacy" OpenSSL one and the "modern" OpenSSL one
