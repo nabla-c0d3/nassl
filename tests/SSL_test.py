@@ -7,7 +7,6 @@ from nassl.ssl_client import SslClient, OpenSslVersionEnum, OpenSslVerifyEnum
 
 @pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
 class TestCommonSSL:
-
     def test_new(self, nassl_module):
         nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
 
@@ -45,7 +44,7 @@ class TestCommonSSL:
     def test_do_handshake_bad(self, nassl_module):
         # Connection type not set
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError, match='connection type not set'):
+        with pytest.raises(_nassl.OpenSSLError, match="connection type not set"):
             test_ssl.do_handshake()
 
     def test_pending(self, nassl_module):
@@ -63,11 +62,11 @@ class TestCommonSSL:
 
     def test_get_available_compression_methods_has_zlib(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        assert ['zlib compression'] == test_ssl.get_available_compression_methods()
+        assert ["zlib compression"] == test_ssl.get_available_compression_methods()
 
     def test_set_tlsext_host_name(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        test_ssl.set_tlsext_host_name('tests')
+        test_ssl.set_tlsext_host_name("tests")
 
     def test_set_tlsext_host_name_bad(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
@@ -76,11 +75,11 @@ class TestCommonSSL:
 
     def test_set_cipher_list(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        test_ssl.set_cipher_list('HIGH')
+        test_ssl.set_cipher_list("HIGH")
 
     def test_shutdown_bad(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError, match='uninitialized'):
+        with pytest.raises(_nassl.OpenSSLError, match="uninitialized"):
             test_ssl.shutdown()
 
     def test_get_cipher_list(self, nassl_module):
@@ -130,25 +129,24 @@ class TestCommonSSL:
 
 
 class TestModernSSL:
-
     def test_set_ciphersuites(self):
         # Given an SSL object for TLS 1.3
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3.value))
         # With the default list of cipher disabled
-        test_ssl.set_cipher_list('')
+        test_ssl.set_cipher_list("")
 
         # When setting a specific TLS 1.3 cipher suite as the list of supported ciphers
-        test_ssl.set_ciphersuites('TLS_CHACHA20_POLY1305_SHA256')
+        test_ssl.set_ciphersuites("TLS_CHACHA20_POLY1305_SHA256")
 
         # That one cipher suite is the only one enabled
         ciphers = test_ssl.get_cipher_list()
-        assert ['TLS_CHACHA20_POLY1305_SHA256'] == ciphers
+        assert ["TLS_CHACHA20_POLY1305_SHA256"] == ciphers
 
     def test_set_ciphersuites_bad_string(self):
         # Invalid cipher string
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_2.value))
-        with pytest.raises(_nassl.OpenSSLError, match='no cipher match'):
-            test_ssl.set_ciphersuites('lol')
+        with pytest.raises(_nassl.OpenSSLError, match="no cipher match"):
+            test_ssl.set_ciphersuites("lol")
 
 
 class TestLegacySSL:
@@ -158,25 +156,25 @@ class TestLegacySSL:
         # Invalid cipher string
         test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         with pytest.raises(_nassl.OpenSSLError):
-            test_ssl.set_cipher_list('badcipherstring')
+            test_ssl.set_cipher_list("badcipherstring")
 
     def test_do_handshake_bad_eof(self):
         # No BIO attached to the SSL object
         test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        with pytest.raises(_nassl.SslError, match='An EOF was observed that violates the protocol'):
+        with pytest.raises(_nassl.SslError, match="An EOF was observed that violates the protocol"):
             test_ssl.do_handshake()
 
     def test_read_bad(self):
         # No BIO attached to the SSL object
         test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        with pytest.raises(_nassl.OpenSSLError, match='ssl handshake failure'):
+        with pytest.raises(_nassl.OpenSSLError, match="ssl handshake failure"):
             test_ssl.read(128)
 
     def test_write_bad(self):
         # No BIO attached to the SSL object
         test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        with pytest.raises(_nassl.OpenSSLError, match='ssl handshake failure'):
-            test_ssl.write('tests')
+        with pytest.raises(_nassl.OpenSSLError, match="ssl handshake failure"):
+            test_ssl.write("tests")

@@ -16,6 +16,7 @@ from nassl.temp_key_info import OpenSslEvpPkeyEnum, TempKeyInfo, DHTempKeyInfo, 
 class OpenSslVerifyEnum(IntEnum):
     """SSL validation options which map to the SSL_VERIFY_XXX OpenSSL constants.
     """
+
     NONE = 0
     PEER = 1
     FAIL_IF_NO_PEER_CERT = 2
@@ -25,6 +26,7 @@ class OpenSslVerifyEnum(IntEnum):
 class OpenSslVersionEnum(IntEnum):
     """SSL version constants.
     """
+
     SSLV23 = 0
     SSLV2 = 1
     SSLV3 = 2
@@ -37,13 +39,14 @@ class OpenSslVersionEnum(IntEnum):
 class OpenSslFileTypeEnum(IntEnum):
     """Certificate and private key format constants which map to the SSL_FILETYPE_XXX OpenSSL constants.
     """
+
     PEM = 1
     ASN1 = 2
 
 
 class ClientCertificateRequested(IOError):
-    ERROR_MSG_CAS = 'Server requested a client certificate issued by one of the following CAs: {0}.'
-    ERROR_MSG = 'Server requested a client certificate.'
+    ERROR_MSG_CAS = "Server requested a client certificate issued by one of the following CAs: {0}."
+    ERROR_MSG = "Server requested a client certificate."
 
     def __init__(self, ca_list: List[str]) -> None:
         self._ca_list = ca_list
@@ -52,7 +55,7 @@ class ClientCertificateRequested(IOError):
         exc_msg = self.ERROR_MSG
 
         if len(self._ca_list) > 0:
-            exc_msg = self.ERROR_MSG_CAS.format(', '.join(self._ca_list))
+            exc_msg = self.ERROR_MSG_CAS.format(", ".join(self._ca_list))
 
         return exc_msg
 
@@ -75,16 +78,16 @@ class BaseSslClient(ABC):
     _NASSL_MODULE: NasslModuleType
 
     def __init__(
-            self,
-            underlying_socket: Optional[socket.socket] = None,
-            ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
-            ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
-            ssl_verify_locations: Optional[str] = None,
-            client_certchain_file: Optional[str] = None,
-            client_key_file: Optional[str] = None,
-            client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
-            client_key_password: str = '',
-            ignore_client_authentication_requests: bool = False
+        self,
+        underlying_socket: Optional[socket.socket] = None,
+        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+        ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
+        ssl_verify_locations: Optional[str] = None,
+        client_certchain_file: Optional[str] = None,
+        client_key_file: Optional[str] = None,
+        client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
+        client_key_password: str = "",
+        ignore_client_authentication_requests: bool = False,
     ) -> None:
         self._init_base_objects(ssl_version, underlying_socket)
 
@@ -96,7 +99,7 @@ class BaseSslClient(ABC):
             client_key_file,
             client_key_type,
             client_key_password,
-            ignore_client_authentication_requests
+            ignore_client_authentication_requests,
         )
         # Now create the SSL object
         self._init_ssl_objects()
@@ -122,12 +125,12 @@ class BaseSslClient(ABC):
             self._ssl_ctx.load_verify_locations(ssl_verify_locations)
 
     def _init_client_authentication(
-            self,
-            client_certchain_file: Optional[str],
-            client_key_file: Optional[str],
-            client_key_type: OpenSslFileTypeEnum,
-            client_key_password: str,
-            ignore_client_authentication_requests: bool
+        self,
+        client_certchain_file: Optional[str],
+        client_key_file: Optional[str],
+        client_key_type: OpenSslFileTypeEnum,
+        client_key_password: str,
+        ignore_client_authentication_requests: bool,
     ) -> None:
         """Setup client authentication using the supplied certificate and key.
         """
@@ -136,7 +139,7 @@ class BaseSslClient(ABC):
 
         if ignore_client_authentication_requests:
             if client_certchain_file:
-                raise ValueError('Cannot enable both client_certchain_file and ignore_client_authentication_requests')
+                raise ValueError("Cannot enable both client_certchain_file and ignore_client_authentication_requests")
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
@@ -154,7 +157,7 @@ class BaseSslClient(ABC):
 
     def set_underlying_socket(self, sock: socket.socket) -> None:
         if self._sock:
-            raise RuntimeError('A socket was already set')
+            raise RuntimeError("A socket was already set")
         self._sock = sock
 
     def get_underlying_socket(self) -> Optional[socket.socket]:
@@ -163,7 +166,7 @@ class BaseSslClient(ABC):
     def do_handshake(self) -> None:
         if self._sock is None:
             # TODO: Auto create a socket ?
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError("Internal socket set to None; cannot perform handshake.")
 
         while True:
             try:
@@ -180,7 +183,7 @@ class BaseSslClient(ABC):
                 # Recover the peer's encrypted response
                 handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
-                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                    raise IOError("Nassl SSL handshake failed: peer did not send data back.")
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 
@@ -189,7 +192,7 @@ class BaseSslClient(ABC):
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
             except OpenSSLError as e:
-                if 'alert bad certificate' in e.args[0]:
+                if "alert bad certificate" in e.args[0]:
                     # Bad certificate alert (https://github.com/nabla-c0d3/sslyze/issues/313 )
                     raise ClientCertificateRequested(self.get_client_CA_list())
                 else:
@@ -202,16 +205,16 @@ class BaseSslClient(ABC):
     # finished yet
     def read(self, size: int, handshake_must_be_completed: bool = True) -> bytes:
         if self._sock is None:
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError("Internal socket set to None; cannot perform handshake.")
         if handshake_must_be_completed and not self._is_handshake_completed:
-            raise IOError('SSL Handshake was not completed; cannot receive data.')
+            raise IOError("SSL Handshake was not completed; cannot receive data.")
 
         while True:
             # Receive available encrypted data from the peer
             encrypted_data = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
 
             if len(encrypted_data) == 0:
-                raise IOError('Could not read() - peer closed the connection.')
+                raise IOError("Could not read() - peer closed the connection.")
 
             # Pass it to the SSL engine
             self._network_bio.write(encrypted_data)
@@ -227,7 +230,7 @@ class BaseSslClient(ABC):
                 pass
 
             except OpenSSLError as e:
-                if 'tlsv13 alert certificate required' in str(e):
+                if "tlsv13 alert certificate required" in str(e):
                     raise ClientCertificateRequested(self.get_client_CA_list())
                 else:
                     raise
@@ -236,9 +239,9 @@ class BaseSslClient(ABC):
         """Returns the number of (encrypted) bytes sent.
         """
         if self._sock is None:
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError("Internal socket set to None; cannot perform handshake.")
         if not self._is_handshake_completed:
-            raise IOError('SSL Handshake was not completed; cannot send data.')
+            raise IOError("SSL Handshake was not completed; cannot send data.")
 
         # Pass the cleartext data to the SSL engine
         self._ssl.write(data)
@@ -250,7 +253,7 @@ class BaseSslClient(ABC):
 
     def _flush_ssl_engine(self) -> int:
         if self._sock is None:
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError("Internal socket set to None; cannot perform handshake.")
 
         length_to_read = self._network_bio.pending()
         final_length = length_to_read
@@ -277,7 +280,7 @@ class BaseSslClient(ABC):
             self._ssl.shutdown()
         except OpenSSLError as e:
             # Ignore "uninitialized" exception
-            if 'SSL_shutdown:uninitialized' not in str(e) and 'shutdown while in init' not in str(e):
+            if "SSL_shutdown:uninitialized" not in str(e) and "shutdown while in init" not in str(e):
                 raise
         if self._sock:
             self._sock.close()
@@ -315,11 +318,11 @@ class BaseSslClient(ABC):
             return None
 
     def _use_private_key(
-            self,
-            client_certchain_file: str,
-            client_key_file: str,
-            client_key_type: OpenSslFileTypeEnum,
-            client_key_password: str
+        self,
+        client_certchain_file: str,
+        client_key_file: str,
+        client_key_type: OpenSslFileTypeEnum,
+        client_key_password: str,
     ) -> None:
         """The certificate chain file must be in PEM format. Private method because it should be set via the
         constructor.
@@ -335,8 +338,8 @@ class BaseSslClient(ABC):
         try:
             self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type.value)
         except OpenSSLError as e:
-            if 'bad password read' in str(e) or 'bad decrypt' in str(e):
-                raise ValueError('Invalid Private Key')
+            if "bad password read" in str(e) or "bad decrypt" in str(e):
+                raise ValueError("Invalid Private Key")
             else:
                 raise
 
@@ -393,6 +396,7 @@ class BaseSslClient(ABC):
 class OpenSslEarlyDataStatusEnum(IntEnum):
     """Early data status constants.
     """
+
     NOT_SENT = 0
     REJECTED = 1
     ACCEPTED = 2
@@ -416,7 +420,7 @@ class SslClient(BaseSslClient):
         """Returns the number of (encrypted) bytes sent.
         """
         if self._is_handshake_completed:
-            raise IOError('SSL Handshake was completed; cannot send early data.')
+            raise IOError("SSL Handshake was completed; cannot send early data.")
 
         # Pass the cleartext data to the SSL engine
         self._ssl.write_early_data(data)

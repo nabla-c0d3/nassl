@@ -2,8 +2,13 @@ import socket
 
 from nassl._nassl import WantReadError, WantX509LookupError
 
-from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, \
-    OpenSslFileTypeEnum, BaseSslClient
+from nassl.ssl_client import (
+    ClientCertificateRequested,
+    OpenSslVersionEnum,
+    OpenSslVerifyEnum,
+    OpenSslFileTypeEnum,
+    BaseSslClient,
+)
 from typing import List
 from typing import Optional
 import sys
@@ -20,27 +25,34 @@ class LegacySslClient(BaseSslClient):
     _NASSL_MODULE = _nassl_legacy
 
     def __init__(
-            self,
-            underlying_socket: Optional[socket.socket] = None,
-            ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
-            ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
-            ssl_verify_locations: Optional[str] = None,
-            client_certchain_file: Optional[str] = None,
-            client_key_file: Optional[str] = None,
-            client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
-            client_key_password: str = '',
-            ignore_client_authentication_requests: bool = False
+        self,
+        underlying_socket: Optional[socket.socket] = None,
+        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+        ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
+        ssl_verify_locations: Optional[str] = None,
+        client_certchain_file: Optional[str] = None,
+        client_key_file: Optional[str] = None,
+        client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
+        client_key_password: str = "",
+        ignore_client_authentication_requests: bool = False,
     ) -> None:
         super().__init__(
-            underlying_socket, ssl_version, ssl_verify, ssl_verify_locations, client_certchain_file,
-            client_key_file, client_key_type, client_key_password, ignore_client_authentication_requests
+            underlying_socket,
+            ssl_version,
+            ssl_verify,
+            ssl_verify_locations,
+            client_certchain_file,
+            client_key_file,
+            client_key_type,
+            client_key_password,
+            ignore_client_authentication_requests,
         )
 
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
         if ssl_version != OpenSslVersionEnum.SSLV2:  # This makes SSLv2 fail
-            self._ssl.set_cipher_list('HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA')
+            self._ssl.set_cipher_list("HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA")
         else:
             # Handshake workaround for SSL2 + IIS 7
             # TODO(AD): Provide a built-in mechansim for overriding the handshake logic
@@ -62,7 +74,7 @@ class LegacySslClient(BaseSslClient):
         """Initiate an SSL renegotiation.
         """
         if not self._is_handshake_completed:
-            raise IOError('SSL Handshake was not completed; cannot renegotiate.')
+            raise IOError("SSL Handshake was not completed; cannot renegotiate.")
 
         self._ssl.renegotiate()
         self.do_handshake()
@@ -76,7 +88,7 @@ class LegacySslClient(BaseSslClient):
     def do_ssl2_iis_handshake(self) -> None:
         if self._sock is None:
             # TODO: Auto create a socket ?
-            raise IOError('Internal socket set to None; cannot perform handshake.')
+            raise IOError("Internal socket set to None; cannot perform handshake.")
 
         while True:
             try:
@@ -93,7 +105,7 @@ class LegacySslClient(BaseSslClient):
                     # Get the data from the SSL engine
                     handshake_data_out = self._network_bio.read(lengh_to_read)
 
-                    if 'SSLv2 read server verify A' in self._ssl.state_string_long():
+                    if "SSLv2 read server verify A" in self._ssl.state_string_long():
                         # Awful h4ck for SSLv2 when connecting to IIS7 (like in the 90s)
                         # OpenSSL sends the client's CMK and data message in the same packet without
                         # waiting for the server's response, causing IIS 7 to hang on the connection.
@@ -113,17 +125,17 @@ class LegacySslClient(BaseSslClient):
                             else:
                                 first_byte = int(handshake_data_out[0])
                                 second_byte = int(handshake_data_out[1])
-                            first_byte = (first_byte & 0x7f) << 8
+                            first_byte = (first_byte & 0x7F) << 8
                             size = first_byte + second_byte
                             # Manually split the two records to force them to be sent separately
-                            cmk_packet = handshake_data_out[0:size+2]
-                            data_packet = handshake_data_out[size+2::]
+                            cmk_packet = handshake_data_out[0 : size + 2]
+                            data_packet = handshake_data_out[size + 2 : :]
                             self._sock.send(cmk_packet)
 
                             handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                             # print repr(handshake_data_in)
                             if len(handshake_data_in) == 0:
-                                raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                                raise IOError("Nassl SSL handshake failed: peer did not send data back.")
                             # Pass the data to the SSL engine
                             self._network_bio.write(handshake_data_in)
                             handshake_data_out = data_packet
@@ -134,7 +146,7 @@ class LegacySslClient(BaseSslClient):
 
                 handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)
                 if len(handshake_data_in) == 0:
-                    raise IOError('Nassl SSL handshake failed: peer did not send data back.')
+                    raise IOError("Nassl SSL handshake failed: peer did not send data back.")
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 

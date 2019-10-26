@@ -6,7 +6,6 @@ from nassl import _nassl_legacy
 
 @pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
 class TestX509:
-
     def test_from_pem(self, nassl_module):
         # Given a PEM-formatted certificate
         pem_cert = """-----BEGIN CERTIFICATE-----
@@ -43,7 +42,7 @@ HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
         assert pem_cert == certificate.as_pem()
 
     def test_from_pem_bad(self, nassl_module):
-        pem_cert = '123123'
+        pem_cert = "123123"
         with pytest.raises(ValueError):
             nassl_module.X509(pem_cert)
 

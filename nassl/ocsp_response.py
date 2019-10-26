@@ -11,7 +11,6 @@ from typing import Dict
 
 
 class OcspResponseNotTrustedError(Exception):
-
     def __init__(self, trust_store_path: str) -> None:
         self.trust_store_path = trust_store_path
 
@@ -39,7 +38,7 @@ class SignedCertificateTimestampsExtension:
     @classmethod
     def from_openssl(cls, openssl_ocsp_response: _nassl.OCSP_RESPONSE) -> "SignedCertificateTimestampsExtension":
         response_text = _openssl_response_to_text(openssl_ocsp_response)
-        scts_text_list = response_text.split('Signed Certificate Timestamp')
+        scts_text_list = response_text.split("Signed Certificate Timestamp")
         if len(scts_text_list) < 2:
             raise ValueError("No SCTs in the OCSP response")
 
@@ -88,7 +87,7 @@ class OcspResponse:
         try:
             self._openssl_ocsp_response.basic_verify(str(verify_locations))
         except _nassl.OpenSSLError as e:
-            if 'certificate verify error' in str(e):
+            if "certificate verify error" in str(e):
                 raise OcspResponseNotTrustedError(str(verify_locations))
             raise
 
@@ -99,23 +98,24 @@ class OcspResponse:
 
         response_dict = dict(
             status=response_status,
-            version=int(_get_value_from_text_output_no_p('Version:', response_text)),
-            type=_get_value_from_text_output('Response Type:', response_text),
-            responder_id=_get_value_from_text_output('Responder Id:', response_text),
-            produced_at=_get_datetime_from_text_output('Produced At:', response_text),
+            version=int(_get_value_from_text_output_no_p("Version:", response_text)),
+            type=_get_value_from_text_output("Response Type:", response_text),
+            responder_id=_get_value_from_text_output("Responder Id:", response_text),
+            produced_at=_get_datetime_from_text_output("Produced At:", response_text),
             _openssl_ocsp_response=openssl_ocsp_response,
         )
 
         if response_status == OcspResponseStatusEnum.SUCCESSFUL:
             # A successful OCSP response will contain more data - let's parse it
-            response_dict.update(dict(
-                hash_algorithm=_get_value_from_text_output('Hash Algorithm:', response_text),
-                issuer_name_hash=_get_value_from_text_output('Issuer Name Hash:', response_text),
-                issuer_key_hash=_get_value_from_text_output('Issuer Key Hash:', response_text),
-                serial_number=_get_value_from_text_output('Serial Number:', response_text),
-                certificate_status=_get_value_from_text_output('Cert Status:', response_text),
-                this_update=_get_datetime_from_text_output('This Update:', response_text),
-                next_update=_get_datetime_from_text_output('Next Update:', response_text),
+            response_dict.update(
+                dict(
+                    hash_algorithm=_get_value_from_text_output("Hash Algorithm:", response_text),
+                    issuer_name_hash=_get_value_from_text_output("Issuer Name Hash:", response_text),
+                    issuer_key_hash=_get_value_from_text_output("Issuer Key Hash:", response_text),
+                    serial_number=_get_value_from_text_output("Serial Number:", response_text),
+                    certificate_status=_get_value_from_text_output("Cert Status:", response_text),
+                    this_update=_get_datetime_from_text_output("This Update:", response_text),
+                    next_update=_get_datetime_from_text_output("Next Update:", response_text),
                 )
             )
 
@@ -132,16 +132,16 @@ class OcspResponse:
 # Text parsing
 def _get_value_from_text_output(key: str, text_output: str) -> Optional[str]:
     value = text_output.split(key)
-    return None if len(value) < 2 else value[1].split('\n')[0].strip()
+    return None if len(value) < 2 else value[1].split("\n")[0].strip()
 
 
 def _get_value_from_text_output_no_p(key: str, text_output: str) -> Optional[str]:
     value = _get_value_from_text_output(key, text_output)
-    return None if value is None else value.split('(')[0].strip()
+    return None if value is None else value.split("(")[0].strip()
 
 
 def _parse_sct_text_line(text_output: str) -> str:
-    text_output_split = text_output.split(':', 1)
+    text_output_split = text_output.split(":", 1)
     value = text_output_split[1].strip()
     return value
 
@@ -149,10 +149,10 @@ def _parse_sct_text_line(text_output: str) -> str:
 def _parse_single_sct(sct_text_output: str) -> Dict[str, Any]:
     parsed_sct = {}
     # We ignore the Extensions: line
-    for line in sct_text_output.split('\n'):
-        if 'Version' in line:
+    for line in sct_text_output.split("\n"):
+        if "Version" in line:
             parsed_sct["version"] = _parse_sct_text_line(line)
-        elif 'Timestamp' in line:
+        elif "Timestamp" in line:
             value_as_str = _parse_sct_text_line(line)
             # The SCT timestamp has an extra microseconds field that we remove so we can parse the datetime like any
             # other OpenSSL datetime field
@@ -161,12 +161,12 @@ def _parse_single_sct(sct_text_output: str) -> Dict[str, Any]:
             year_and_tz = value_split[1][3::]
             sanitized_value = f"{date_and_time.strip()} {year_and_tz.strip()}"
             parsed_sct["timestamp"] = _parse_openssl_time(sanitized_value)
-        elif 'Log ID' in line:
-            log_id_text = sct_text_output.split('Log ID    :')[1].split('Timestamp')[0]
-            final_log_id = ''
+        elif "Log ID" in line:
+            log_id_text = sct_text_output.split("Log ID    :")[1].split("Timestamp")[0]
+            final_log_id = ""
             for line in log_id_text:
-                final_log_id += line.strip(' ').replace('\n', '')
-            parsed_sct['log_id'] = final_log_id
+                final_log_id += line.strip(" ").replace("\n", "")
+            parsed_sct["log_id"] = final_log_id
 
     return parsed_sct
 
@@ -176,8 +176,8 @@ def _openssl_response_to_text(openssl_ocsp_response: _nassl.OCSP_RESPONSE) -> st
     ocsp_resp_bytes = openssl_ocsp_response.as_text()
     # The response may contain certificates, which then may contain non-utf8 characters - get rid of them
     # TODO(AD): However this means we only parse the very first response
-    ocsp_first_resp = ocsp_resp_bytes.split(b'Certificate:')[0]
-    response_text = ocsp_first_resp.decode('utf-8')
+    ocsp_first_resp = ocsp_resp_bytes.split(b"Certificate:")[0]
+    response_text = ocsp_first_resp.decode("utf-8")
     return response_text
 
 

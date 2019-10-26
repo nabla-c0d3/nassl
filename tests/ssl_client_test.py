@@ -6,8 +6,15 @@ import pytest
 from build_tasks import CURRENT_PLATFORM, SupportedPlatformEnum
 from nassl import _nassl
 from nassl.legacy_ssl_client import LegacySslClient
-from nassl.ssl_client import ClientCertificateRequested, OpenSslVersionEnum, OpenSslVerifyEnum, SslClient, \
-    OpenSSLError, OpenSslEarlyDataStatusEnum, CouldNotBuildVerifiedChain
+from nassl.ssl_client import (
+    ClientCertificateRequested,
+    OpenSslVersionEnum,
+    OpenSslVerifyEnum,
+    SslClient,
+    OpenSSLError,
+    OpenSslEarlyDataStatusEnum,
+    CouldNotBuildVerifiedChain,
+)
 from nassl.temp_key_info import OpenSslEvpPkeyEnum, OpenSslEcNidEnum, TempKeyInfo, DHTempKeyInfo, NistECDHTempKeyInfo
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
@@ -15,7 +22,6 @@ from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, Lega
 # TODO(AD): Switch to legacy server and add a TODO; skip tests for TLS 1.3
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestSslClientClientAuthentication:
-
     def test_client_authentication_no_certificate_supplied(self, ssl_client_cls):
         # Given a server that requires client authentication
         with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
@@ -25,9 +31,7 @@ class TestSslClientClientAuthentication:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE,
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
             # When doing the handshake the right error is returned
             with pytest.raises(ClientCertificateRequested):
@@ -80,17 +84,14 @@ class TestSslClientClientAuthentication:
 
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestSslClientOnline:
-
     def test(self, ssl_client_cls):
         # Given an SslClient connecting to Google
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(('www.google.com', 443))
+        sock.connect(("www.google.com", 443))
 
         ssl_client = ssl_client_cls(
-            ssl_version=OpenSslVersionEnum.SSLV23,
-            underlying_socket=sock,
-            ssl_verify=OpenSslVerifyEnum.NONE
+            ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
         )
 
         # When doing a TLS handshake, it succeeds
@@ -98,10 +99,10 @@ class TestSslClientOnline:
             ssl_client.do_handshake()
 
             # When sending a GET request
-            ssl_client.write(b'GET / HTTP/1.0\r\n\r\n')
+            ssl_client.write(b"GET / HTTP/1.0\r\n\r\n")
 
             # It gets a response
-            assert b'google' in ssl_client.read(1024)
+            assert b"google" in ssl_client.read(1024)
 
             # And when requesting the server certificate, it returns it
             assert ssl_client.get_received_chain()
@@ -111,20 +112,18 @@ class TestSslClientOnline:
 
 
 class TestModernSslClientOnline:
-
     def test_get_verified_chain(self):
         # Given an SslClient connecting to Google
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(('www.yahoo.com', 443))
-        print(str(Path(__file__).absolute().parent / 'google_roots.pem'))
+        sock.connect(("www.yahoo.com", 443))
+        print(str(Path(__file__).absolute().parent / "google_roots.pem"))
         ssl_client = SslClient(
             ssl_version=OpenSslVersionEnum.TLSV1_2,
             underlying_socket=sock,
-
             # That is configured to properly validate certificates
             ssl_verify=OpenSslVerifyEnum.PEER,
-            ssl_verify_locations=str(Path(__file__).absolute().parent / 'mozilla.pem')
+            ssl_verify_locations=str(Path(__file__).absolute().parent / "mozilla.pem"),
         )
 
         # When doing a TLS handshake, it succeeds
@@ -140,14 +139,13 @@ class TestModernSslClientOnline:
         # Given an SslClient connecting to Google
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(('www.google.com', 443))
+        sock.connect(("www.google.com", 443))
 
         ssl_client = SslClient(
             ssl_version=OpenSslVersionEnum.TLSV1_2,
             underlying_socket=sock,
-
             # That is configured to silently fail validation
-            ssl_verify=OpenSslVerifyEnum.NONE
+            ssl_verify=OpenSslVerifyEnum.NONE,
         )
 
         # When doing a TLS handshake, it succeeds
@@ -163,15 +161,13 @@ class TestModernSslClientOnline:
 
     def test_get_dh_info_ecdh_p256(self):
 
-        with ModernOpenSslServer(cipher='ECDHE-RSA-AES256-SHA', groups='P-256') as server:
+        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="P-256") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -191,15 +187,13 @@ class TestModernSslClientOnline:
 
     def test_get_dh_info_ecdh_x25519(self):
 
-        with ModernOpenSslServer(cipher='ECDHE-RSA-AES256-SHA', groups='X25519') as server:
+        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -217,15 +211,13 @@ class TestModernSslClientOnline:
 
     def test_get_dh_info_ecdh_x448(self):
 
-        with ModernOpenSslServer(cipher='ECDHE-RSA-AES256-SHA', groups='X448') as server:
+        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X448") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -243,15 +235,13 @@ class TestModernSslClientOnline:
 
     def test_get_dh_info_dh(self):
 
-        with ModernOpenSslServer(cipher='DHE-RSA-AES256-SHA') as server:
+        with ModernOpenSslServer(cipher="DHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -270,15 +260,13 @@ class TestModernSslClientOnline:
 
     def test_get_dh_info_no_dh(self):
 
-        with ModernOpenSslServer(cipher='AES256-SHA') as server:
+        with ModernOpenSslServer(cipher="AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -292,7 +280,6 @@ class TestModernSslClientOnline:
 
 
 class TestLegacySslClientOnlineSsl2:
-
     def test_ssl_2(self):
         # Given a server that supports SSL 2.0
         with LegacyOpenSslServer() as server:
@@ -314,15 +301,13 @@ class TestLegacySslClientOnlineSsl2:
 
     def test_get_dh_info_ecdh(self):
 
-        with LegacyOpenSslServer(cipher='ECDHE-RSA-AES256-SHA') as server:
+        with LegacyOpenSslServer(cipher="ECDHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = LegacySslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -341,15 +326,13 @@ class TestLegacySslClientOnlineSsl2:
 
     def test_get_dh_info_dh(self):
 
-        with LegacyOpenSslServer(cipher='DHE-RSA-AES256-SHA') as server:
+        with LegacyOpenSslServer(cipher="DHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = LegacySslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -368,15 +351,13 @@ class TestLegacySslClientOnlineSsl2:
 
     def test_get_dh_info_no_dh(self):
 
-        with LegacyOpenSslServer(cipher='AES256-SHA') as server:
+        with LegacyOpenSslServer(cipher="AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
             ssl_client = LegacySslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             try:
@@ -391,10 +372,9 @@ class TestLegacySslClientOnlineSsl2:
 
 @pytest.mark.skipif(
     CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32],
-    reason='ModernOpenSslServer does not seem to work on Windows; fix it and remove this mark'
+    reason="ModernOpenSslServer does not seem to work on Windows; fix it and remove this mark",
 )
 class TestModernSslClientOnlineTls13:
-
     def test_set_ciphersuites(self):
         # Given an SslClient for TLS 1.3
         ssl_client = SslClient(
@@ -404,14 +384,14 @@ class TestModernSslClientOnlineTls13:
         )
 
         # With the default list of cipher disabled
-        ssl_client.set_cipher_list('')
+        ssl_client.set_cipher_list("")
 
         # When setting a specific TLS 1.3 cipher suite as the list of supported ciphers
-        ssl_client.set_ciphersuites('TLS_CHACHA20_POLY1305_SHA256')
+        ssl_client.set_ciphersuites("TLS_CHACHA20_POLY1305_SHA256")
 
         # That one cipher suite is the only one enabled
         ciphers = ssl_client.get_cipher_list()
-        assert ['TLS_CHACHA20_POLY1305_SHA256'] == ciphers
+        assert ["TLS_CHACHA20_POLY1305_SHA256"] == ciphers
 
     def test_tls_1_3(self):
         # Given a server that supports TLS 1.3
@@ -421,9 +401,7 @@ class TestModernSslClientOnlineTls13:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
             # When doing the TLS 1.3 handshake, it succeeds
             try:
@@ -438,9 +416,7 @@ class TestModernSslClientOnlineTls13:
         sock.connect((server_host, server_port))
 
         ssl_client = SslClient(
-            ssl_version=OpenSslVersionEnum.TLSV1_3,
-            underlying_socket=sock,
-            ssl_verify=OpenSslVerifyEnum.NONE
+            ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
         )
 
         try:
@@ -472,7 +448,7 @@ class TestModernSslClientOnlineTls13:
             ssl_client_early_data = SslClient(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock_early_data,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             # That re-uses the previous TLS 1.3 session
@@ -480,7 +456,7 @@ class TestModernSslClientOnlineTls13:
             assert OpenSslEarlyDataStatusEnum.NOT_SENT == ssl_client_early_data.get_early_data_status()
 
             # When sending early data
-            ssl_client_early_data.write_early_data(b'EARLY DATA')
+            ssl_client_early_data.write_early_data(b"EARLY DATA")
 
             # It succeeds
             assert not ssl_client_early_data.is_handshake_completed()
@@ -501,15 +477,13 @@ class TestModernSslClientOnlineTls13:
 
             # That does NOT have a previous session with the server
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             # When sending early data
             # It fails
-            with pytest.raises(OpenSSLError, match='you should not call'):
-                ssl_client.write_early_data(b'EARLY DATA')
+            with pytest.raises(OpenSSLError, match="you should not call"):
+                ssl_client.write_early_data(b"EARLY DATA")
 
             ssl_client.shutdown()
 
@@ -532,7 +506,7 @@ class TestModernSslClientOnlineTls13:
             ssl_client_early_data = SslClient(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock_early_data,
-                ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             # That re-uses the previous TLS 1.3 session
@@ -541,9 +515,9 @@ class TestModernSslClientOnlineTls13:
 
             # When sending too much early data
             # It fails
-            with pytest.raises(OpenSSLError, match='too much early data'):
+            with pytest.raises(OpenSSLError, match="too much early data"):
                 ssl_client_early_data.write_early_data(
-                    'GET / HTTP/1.1\r\nData: {}\r\n\r\n'.format('*' * max_early).encode('ascii')
+                    "GET / HTTP/1.1\r\nData: {}\r\n\r\n".format("*" * max_early).encode("ascii")
                 )
 
             ssl_client_early_data.shutdown()
@@ -557,9 +531,7 @@ class TestModernSslClientOnlineTls13:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE,
+                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
             # When doing the handshake the right error is returned

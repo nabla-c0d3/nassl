@@ -12,6 +12,7 @@ def hexlify(byte_array: bytearray) -> str:
 class OpenSslEvpPkeyEnum(IntEnum):
     """Constants which map to the EVP_PKEY_XXX OpenSSL constants (obj_mac.h) used as the temporary key during key exchange
     """
+
     DH = 28
     EC = 408
     X25519 = 1034
@@ -48,9 +49,9 @@ class OpenSslEcNidEnum(IntEnum):
 
     # RFC8422 (current)
     SECP192R1 = 409
-    PRIME192V1 = 409    # Intentional duplicate of SECP192R1
+    PRIME192V1 = 409  # Intentional duplicate of SECP192R1
     SECP256R1 = 415
-    PRIME256V1 = 415    # Intentional duplicate of SECP256R1
+    PRIME256V1 = 415  # Intentional duplicate of SECP256R1
     SECP384R1 = 715
     SECP521R1 = 716
     X25519 = 1034
@@ -81,7 +82,7 @@ OPENSSL_NID_TO_NIST_MAPPING: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECP224R1: "P-224",
     OpenSslEcNidEnum.PRIME256V1: "P-256",
     OpenSslEcNidEnum.SECP384R1: "P-384",
-    OpenSslEcNidEnum.SECP521R1: "P-521"
+    OpenSslEcNidEnum.SECP521R1: "P-521",
 }
 
 # Mapping between the OpenSSL NID_XXX value and the SECG or ANSI X9.62 name (https://tools.ietf.org/html/rfc4492)
@@ -109,12 +110,12 @@ OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECP224K1: "secp224k1",
     OpenSslEcNidEnum.SECP224R1: "secp224r1",
     OpenSslEcNidEnum.SECP256K1: "secp256k1",
-    OpenSslEcNidEnum.PRIME192V1: "prime192v1",   # Also valid for SECP192R1
-    OpenSslEcNidEnum.PRIME256V1: "prime256v1",   # Also valid for SECP256R1
+    OpenSslEcNidEnum.PRIME192V1: "prime192v1",  # Also valid for SECP192R1
+    OpenSslEcNidEnum.PRIME256V1: "prime256v1",  # Also valid for SECP256R1
     OpenSslEcNidEnum.SECP384R1: "secp384r1",
     OpenSslEcNidEnum.SECP521R1: "secp384r1",
     OpenSslEcNidEnum.X25519: "x25519",
-    OpenSslEcNidEnum.X448: "x448"
+    OpenSslEcNidEnum.X448: "x448",
 }
 
 
@@ -126,9 +127,9 @@ class TempKeyInfo:
 
     def as_dict(self) -> Dict[str, str]:
         return {
-                "key_type": OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.key_type],
-                "key_size": str(self.key_size),
-                "public_key": hexlify(self.public_key),
+            "key_type": OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.key_type],
+            "key_size": str(self.key_size),
+            "public_key": hexlify(self.public_key),
         }
 
 

@@ -16,6 +16,7 @@ from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURR
 class ClientAuthConfigEnum(Enum):
     """Whether the server asked for client authentication.
     """
+
     DISABLED = 1
     OPTIONAL = 2
     REQUIRED = 3
@@ -34,15 +35,15 @@ class _OpenSslServerIOManager:
             while True:
                 s_server_out = self.s_server_stdout.readline()
                 if s_server_out:
-                    logging.warning(f's_server output: {s_server_out}')
+                    logging.warning(f"s_server output: {s_server_out}")
 
-                    if b'ACCEPT' in s_server_out:
+                    if b"ACCEPT" in s_server_out:
                         # S_server is ready to receive connections
                         self.is_server_ready = True
 
                     if _OpenSslServer.HELLO_MSG in s_server_out:
                         # When receiving the special message, we want s_server to reply
-                        self.s_server_stdin.write(b'Hey there')
+                        self.s_server_stdin.write(b"Hey there")
                         self.s_server_stdin.flush()
                 else:
                     break
@@ -63,36 +64,38 @@ class _OpenSslServer(ABC):
     """A wrapper around OpenSSL's s_server CLI.
     """
 
-    CIPHER = 'ALL:COMPLEMENTOFALL'
+    CIPHER = "ALL:COMPLEMENTOFALL"
 
     _AVAILABLE_LOCAL_PORTS = set(range(8110, 8150))
 
-    _S_SERVER_CMD = '{openssl} s_server -cert {server_cert} -key {server_key} -accept {port}' \
-                    ' -cipher "{cipher}" {verify_arg} {extra_args}'
+    _S_SERVER_CMD = (
+        "{openssl} s_server -cert {server_cert} -key {server_key} -accept {port}"
+        ' -cipher "{cipher}" {verify_arg} {extra_args}'
+    )
 
     _ROOT_PATH = Path(__file__).parent.absolute()
 
     # Client authentication - files generated using https://gist.github.com/nabla-c0d3/c2c5799a84a4867e5cbae42a5c43f89a
-    _CLIENT_CA_PATH = _ROOT_PATH / 'client-ca.pem'
+    _CLIENT_CA_PATH = _ROOT_PATH / "client-ca.pem"
 
     # A special message clients can send to get a reply from s_server
-    HELLO_MSG = b'Hello\r\n'
+    HELLO_MSG = b"Hello\r\n"
 
     @classmethod
     def get_server_certificate_path(cls) -> Path:
-        return cls._ROOT_PATH / 'server-self-signed-cert.pem'
+        return cls._ROOT_PATH / "server-self-signed-cert.pem"
 
     @classmethod
     def get_server_key_path(cls) -> Path:
-        return cls._ROOT_PATH / 'server-self-signed-key.pem'
+        return cls._ROOT_PATH / "server-self-signed-key.pem"
 
     @classmethod
     def get_client_certificate_path(cls) -> Path:
-        return cls._ROOT_PATH / 'client-cert.pem'
+        return cls._ROOT_PATH / "client-cert.pem"
 
     @classmethod
     def get_client_key_path(cls) -> Path:
-        return cls._ROOT_PATH / 'client-key.pem'
+        return cls._ROOT_PATH / "client-key.pem"
 
     @classmethod
     @abstractmethod
@@ -105,13 +108,13 @@ class _OpenSslServer(ABC):
         pass
 
     def __init__(
-            self,
-            client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            extra_openssl_args: List[str] = [],
-            cipher: str = CIPHER
+        self,
+        client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+        extra_openssl_args: List[str] = [],
+        cipher: str = CIPHER,
     ) -> None:
-        self.hostname = 'localhost'
-        self.ip_address = '127.0.0.1'
+        self.hostname = "localhost"
+        self.ip_address = "127.0.0.1"
 
         # Retrieve one of the available local ports; set.pop() is thread safe
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
@@ -127,8 +130,8 @@ class _OpenSslServer(ABC):
             server_cert=self.get_server_certificate_path(),
             port=self.port,
             verify_arg=self.get_verify_argument(client_auth_config),
-            extra_args=' '.join(extra_openssl_args),
-            cipher=cipher
+            extra_args=" ".join(extra_openssl_args),
+            cipher=cipher,
         )
 
     def __enter__(self):
@@ -139,10 +142,7 @@ class _OpenSslServer(ABC):
             args = shlex.split(self._command_line)
         try:
             self._process = subprocess.Popen(
-                args,
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
+                args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
             self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
 
@@ -154,7 +154,7 @@ class _OpenSslServer(ABC):
 
                 if self._process.poll() is not None or attempts_count > 2:
                     # s_server has terminated early
-                    raise RuntimeError('Could not start s_server')
+                    raise RuntimeError("Could not start s_server")
 
         except Exception:
             self._terminate_process()
@@ -185,16 +185,16 @@ class LegacyOpenSslServer(_OpenSslServer):
     """
 
     def __init__(
-            self,
-            client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            cipher: Optional[str] = None,
-            prefer_server_order: bool = False
+        self,
+        client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+        cipher: Optional[str] = None,
+        prefer_server_order: bool = False,
     ) -> None:
 
         extra_args = []
 
         if prefer_server_order:
-            extra_args.append('-serverpref')
+            extra_args.append("-serverpref")
 
         super().__init__(client_auth_config, extra_args, cipher)
 
@@ -205,9 +205,9 @@ class LegacyOpenSslServer(_OpenSslServer):
     @classmethod
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
         options = {
-            ClientAuthConfigEnum.DISABLED: '',
-            ClientAuthConfigEnum.OPTIONAL: f'-verify {cls._CLIENT_CA_PATH}',
-            ClientAuthConfigEnum.REQUIRED: f'-Verify {cls._CLIENT_CA_PATH}',
+            ClientAuthConfigEnum.DISABLED: "",
+            ClientAuthConfigEnum.OPTIONAL: f"-verify {cls._CLIENT_CA_PATH}",
+            ClientAuthConfigEnum.REQUIRED: f"-Verify {cls._CLIENT_CA_PATH}",
         }
         return options[client_auth_config]
 
@@ -223,31 +223,30 @@ class ModernOpenSslServer(_OpenSslServer):
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
         # The verify argument has subtly changed in OpenSSL 1.1.1
         options = {
-            ClientAuthConfigEnum.DISABLED: '',
-            ClientAuthConfigEnum.OPTIONAL: f'-verify 1 {cls._CLIENT_CA_PATH}',
-            ClientAuthConfigEnum.REQUIRED: f'-Verify 1 {cls._CLIENT_CA_PATH}',
+            ClientAuthConfigEnum.DISABLED: "",
+            ClientAuthConfigEnum.OPTIONAL: f"-verify 1 {cls._CLIENT_CA_PATH}",
+            ClientAuthConfigEnum.REQUIRED: f"-Verify 1 {cls._CLIENT_CA_PATH}",
         }
         return options[client_auth_config]
 
     def __init__(
-            self,
-            client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            max_early_data: Optional[int] = None,
-            cipher: Optional[str] = None,
-            prefer_server_order: bool = False,
-            groups: Optional[str] = None
-
+        self,
+        client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+        max_early_data: Optional[int] = None,
+        cipher: Optional[str] = None,
+        prefer_server_order: bool = False,
+        groups: Optional[str] = None,
     ) -> None:
         extra_args = []
 
         if prefer_server_order:
-            extra_args.append(f'-serverpref')
+            extra_args.append(f"-serverpref")
 
         if groups:
-            extra_args.append(f'-groups {groups}')
+            extra_args.append(f"-groups {groups}")
 
         if max_early_data is not None:
             # Enable TLS 1.3 early data on the server
-            extra_args += ['-early_data', f'-max_early_data {max_early_data}']
+            extra_args += ["-early_data", f"-max_early_data {max_early_data}"]
 
         super().__init__(client_auth_config, extra_args, cipher)

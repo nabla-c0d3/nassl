@@ -13,7 +13,6 @@ from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
 
 class TestOcspResponse:
-
     def test_new_bad(self):
         with pytest.raises(NotImplementedError):
             _nassl.OCSP_RESPONSE()
@@ -80,8 +79,8 @@ OCSP Response Data:
                             12:D0:8E:EF:9A:F2:3D
 """
 
-class TestOcspResponseOpensslOutputParsing:
 
+class TestOcspResponseOpensslOutputParsing:
     def test(self):
         # Given an OCSP response as returned by OpenSSL
         class MockOpenSslOcspResponse:
@@ -116,18 +115,20 @@ class TestOcspResponseOpensslOutputParsing:
         assert len(sct_timestamps) == 2
 
         assert sct_timestamps[0].version == "v1(0)"
-        assert sct_timestamps[0].log_id == "68:F6:98:F8:1F:64:82:BE:3A:8C:EE:B9:28:1D:4C:FC:71:51:5D:67:93:D4:44:D1:0A:67:AC:BB:4F:4F:FB:C4"
+        assert (
+            sct_timestamps[0].log_id
+            == "68:F6:98:F8:1F:64:82:BE:3A:8C:EE:B9:28:1D:4C:FC:71:51:5D:67:93:D4:44:D1:0A:67:AC:BB:4F:4F:FB:C4"
+        )
         assert sct_timestamps[0].timestamp == datetime(2014, 4, 25, 11, 35, 28)
 
 
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestCommonOcspResponseOnline:
-
     def test(self, ssl_client_cls):
         # Given a website that support OCSP stapling
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
-        sock.connect(('www.cloudflare.com', 443))
+        sock.connect(("www.cloudflare.com", 443))
 
         ssl_client = ssl_client_cls(underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE)
         ssl_client.set_tlsext_status_ocsp()
@@ -141,8 +142,9 @@ class TestCommonOcspResponseOnline:
         assert ocsp_response.status == OcspResponseStatusEnum.SUCCESSFUL
 
         # And given a wrong certificate
-        test_file = tempfile.NamedTemporaryFile(delete=False, mode='wt')
-        test_file.write("""-----BEGIN CERTIFICATE-----
+        test_file = tempfile.NamedTemporaryFile(delete=False, mode="wt")
+        test_file.write(
+            """-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
 DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
 ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
@@ -160,7 +162,8 @@ NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
 gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
 dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
 Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----""")
+-----END CERTIFICATE-----"""
+        )
         test_file.close()
         # Trying to verify fails with the right error
         with pytest.raises(OcspResponseNotTrustedError):
