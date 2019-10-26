@@ -1,3 +1,6 @@
+.venv
+bin
+.cache
 requirements.txt
 deps
 .pytest_cache
