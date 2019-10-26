@@ -8,7 +8,7 @@ import logging
 import time
 from pathlib import Path
 from threading import Thread
-from typing import Optional
+from typing import Optional, List
 
 from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM, SupportedPlatformEnum
 
@@ -63,10 +63,12 @@ class _OpenSslServer(ABC):
     """A wrapper around OpenSSL's s_server CLI.
     """
 
+    CIPHER = 'ALL:COMPLEMENTOFALL'
+
     _AVAILABLE_LOCAL_PORTS = set(range(8110, 8150))
 
     _S_SERVER_CMD = '{openssl} s_server -cert {server_cert} -key {server_key} -accept {port}' \
-                    ' -cipher "ALL:COMPLEMENTOFALL" {verify_arg} {extra_args}'
+                    ' -cipher "{cipher}" {verify_arg} {extra_args}'
 
     _ROOT_PATH = Path(__file__).parent.absolute()
 
@@ -105,7 +107,8 @@ class _OpenSslServer(ABC):
     def __init__(
             self,
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            extra_openssl_args: str = ''
+            extra_openssl_args: List[str] = [],
+            cipher: str = CIPHER
     ) -> None:
         self.hostname = 'localhost'
         self.ip_address = '127.0.0.1'
@@ -115,13 +118,17 @@ class _OpenSslServer(ABC):
         self._process = None
         self._server_io_manager = None
 
+        if cipher is None:
+            cipher = self.CIPHER
+
         self._command_line = self._S_SERVER_CMD.format(
             openssl=self.get_openssl_path(),
             server_key=self.get_server_key_path(),
             server_cert=self.get_server_certificate_path(),
             port=self.port,
             verify_arg=self.get_verify_argument(client_auth_config),
-            extra_args=extra_openssl_args,
+            extra_args=' '.join(extra_openssl_args),
+            cipher=cipher
         )
 
     def __enter__(self):
@@ -177,6 +184,20 @@ class LegacyOpenSslServer(_OpenSslServer):
     """A wrapper around the OpenSSL 1.0.0e s_server binary.
     """
 
+    def __init__(
+            self,
+            client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+            cipher: Optional[str] = None,
+            prefer_server_order: bool = False
+    ) -> None:
+
+        extra_args = []
+
+        if prefer_server_order:
+            extra_args.append('-serverpref')
+
+        super().__init__(client_auth_config, extra_args, cipher)
+
     @classmethod
     def get_openssl_path(cls):
         return LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
@@ -211,11 +232,22 @@ class ModernOpenSslServer(_OpenSslServer):
     def __init__(
             self,
             client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
-            max_early_data: Optional[int] = None
+            max_early_data: Optional[int] = None,
+            cipher: Optional[str] = None,
+            prefer_server_order: bool = False,
+            groups: Optional[str] = None
+
     ) -> None:
-        extra_args = ''
+        extra_args = []
+
+        if prefer_server_order:
+            extra_args.append(f'-serverpref')
+
+        if groups:
+            extra_args.append(f'-groups {groups}')
+
         if max_early_data is not None:
             # Enable TLS 1.3 early data on the server
-            extra_args = f'-early_data -max_early_data {max_early_data}'
+            extra_args += ['-early_data', f'-max_early_data {max_early_data}']
 
-        super().__init__(client_auth_config, extra_args)
+        super().__init__(client_auth_config, extra_args, cipher)
