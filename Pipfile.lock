@@ -1,24 +1,24 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a9a0ab636077edd7bb4388463a4c56f38dde894bbf3cdf57fc98df204a6be4dd"
+            "sha256": "aa3d58812087bf972a27f54e5766cc0cbf4dcb0bf971922a11bd8da080463f08"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
-            "implementation_version": "3.6.3",
+            "implementation_version": "3.6.6",
             "os_name": "posix",
             "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
             "platform_release": "19.0.0",
             "platform_system": "Darwin",
             "platform_version": "Darwin Kernel Version 19.0.0: Wed Sep 25 20:18:50 PDT 2019; root:xnu-6153.11.26~2/RELEASE_X86_64",
-            "python_full_version": "3.6.3",
+            "python_full_version": "3.6.6",
             "python_version": "3.6",
             "sys_platform": "darwin"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.7"
+            "python_version": "3.6"
         },
         "sources": [
             {
