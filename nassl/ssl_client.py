@@ -44,7 +44,7 @@ class OpenSslFileTypeEnum(IntEnum):
     ASN1 = 2
 
 
-class ClientCertificateRequested(IOError):
+class ClientCertificateRequested(Exception):
     ERROR_MSG_CAS = "Server requested a client certificate issued by one of the following CAs: {0}."
     ERROR_MSG = "Server requested a client certificate."
 
