@@ -16,7 +16,7 @@ def test(ctx):
     # Run linters
     ctx.run("mypy sample_client.py")
     ctx.run("flake8")
-    ctx.run("black -l 120 . --check")
+    ctx.run("black . --check")
 
 
 @task
