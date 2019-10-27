@@ -13,6 +13,9 @@ from typing import Optional, List
 from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM, SupportedPlatformEnum
 
 
+_logger = logging.getLogger(name="tests.openssl_server")
+
+
 class ClientAuthConfigEnum(Enum):
     """Whether the server asked for client authentication.
     """
@@ -35,11 +38,14 @@ class _OpenSslServerIOManager:
             while True:
                 s_server_out = self.s_server_stdout.readline()
                 if s_server_out:
-                    logging.warning(f"s_server output: {s_server_out}")
+                    _logger.warning(f"s_server output: {s_server_out}")
 
                     if b"ACCEPT" in s_server_out:
                         # S_server is ready to receive connections
                         self.is_server_ready = True
+                        # Send some data to stdin; required on Windows to jump start modern OpenSSL's s_server
+                        self.s_server_stdin.write(b"\n")
+                        self.s_server_stdin.flush()
 
                     if _OpenSslServer.HELLO_MSG in s_server_out:
                         # When receiving the special message, we want s_server to reply
@@ -64,9 +70,8 @@ class _OpenSslServer(ABC):
     """A wrapper around OpenSSL's s_server CLI.
     """
 
-    CIPHER = "ALL:COMPLEMENTOFALL"
-
-    _AVAILABLE_LOCAL_PORTS = set(range(8110, 8150))
+    # On Windows with modern OpenSSL, trying to use ports below 10k will fail for some reason
+    _AVAILABLE_LOCAL_PORTS = set(range(18110, 18150))
 
     _S_SERVER_CMD = (
         "{openssl} s_server -cert {server_cert} -key {server_key} -accept {port}"
@@ -111,7 +116,7 @@ class _OpenSslServer(ABC):
         self,
         client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
         extra_openssl_args: List[str] = [],
-        cipher: str = CIPHER,
+        cipher: Optional[str] = None,
     ) -> None:
         self.hostname = "localhost"
         self.ip_address = "127.0.0.1"
@@ -120,9 +125,7 @@ class _OpenSslServer(ABC):
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
         self._process = None
         self._server_io_manager = None
-
-        if cipher is None:
-            cipher = self.CIPHER
+        final_cipher = cipher if cipher else "ALL:COMPLEMENTOFALL"
 
         self._command_line = self._S_SERVER_CMD.format(
             openssl=self.get_openssl_path(),
@@ -131,11 +134,11 @@ class _OpenSslServer(ABC):
             port=self.port,
             verify_arg=self.get_verify_argument(client_auth_config),
             extra_args=" ".join(extra_openssl_args),
-            cipher=cipher,
+            cipher=final_cipher,
         )
 
     def __enter__(self):
-        logging.warning(f'Running s_server: "{self._command_line}"')
+        _logger.warning(f'Running s_server with command: "{self._command_line}"')
         if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32]:
             args = self._command_line
         else:
