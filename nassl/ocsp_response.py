@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
-from typing import Tuple, Optional, List
+from typing import Tuple, Optional, List, Union
 from typing import Any
 
 from dataclasses import dataclass
@@ -130,14 +130,14 @@ class OcspResponse:
 
 
 # Text parsing
-def _get_value_from_text_output(key: str, text_output: str) -> Optional[str]:
+def _get_value_from_text_output(key: str, text_output: str) -> str:
     value = text_output.split(key)
-    return None if len(value) < 2 else value[1].split("\n")[0].strip()
+    return value[1].split("\n")[0].strip()
 
 
-def _get_value_from_text_output_no_p(key: str, text_output: str) -> Optional[str]:
+def _get_value_from_text_output_no_p(key: str, text_output: str) -> str:
     value = _get_value_from_text_output(key, text_output)
-    return None if value is None else value.split("(")[0].strip()
+    return value.split("(")[0].strip()
 
 
 def _parse_sct_text_line(text_output: str) -> str:
@@ -147,7 +147,7 @@ def _parse_sct_text_line(text_output: str) -> str:
 
 
 def _parse_single_sct(sct_text_output: str) -> Dict[str, Any]:
-    parsed_sct = {}
+    parsed_sct: Dict[str, Any] = {}
     # We ignore the Extensions: line
     for line in sct_text_output.split("\n"):
         if "Version" in line:
