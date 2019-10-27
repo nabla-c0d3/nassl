@@ -1,7 +1,8 @@
 import binascii
+from abc import ABC
 
 from enum import IntEnum
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict
 
 
@@ -59,7 +60,7 @@ class OpenSslEcNidEnum(IntEnum):
 
 
 # Mapping between OpenSSL EVP_PKEY_XXX value and display name
-OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
+_OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
     OpenSslEvpPkeyEnum.DH: "DH",
     OpenSslEvpPkeyEnum.EC: "ECDH",
     OpenSslEvpPkeyEnum.X25519: "ECDH",
@@ -67,7 +68,7 @@ OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
 }
 
 # Mapping between the OpenSSL NID_XXX value and NIST name defined in https://tools.ietf.org/html/rfc4492
-OPENSSL_NID_TO_NIST_MAPPING: Dict[OpenSslEcNidEnum, str] = {
+_OPENSSL_NID_TO_NIST_MAPPING: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECT163R2: "B-163",
     OpenSslEcNidEnum.SECT233R1: "B-233",
     OpenSslEcNidEnum.SECT283R1: "B-283",
@@ -88,7 +89,7 @@ OPENSSL_NID_TO_NIST_MAPPING: Dict[OpenSslEcNidEnum, str] = {
 # Mapping between the OpenSSL NID_XXX value and the SECG or ANSI X9.62 name (https://tools.ietf.org/html/rfc4492)
 # Where a ANSI X9.62 name is available, this is used in preference to the SECG
 # X25519 and X448 also included from https://tools.ietf.org/html/rfc8422
-OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
+_OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECT163K1: "sect163k1",
     OpenSslEcNidEnum.SECT163R1: "sect163r1",
     OpenSslEcNidEnum.SECT163R2: "sect163r2",
@@ -120,48 +121,34 @@ OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
 
 
 @dataclass
-class TempKeyInfo:
+class KeyExchangeInfo(ABC):
+    """Common fields shared by all kinds of TLS key exchanges.
+    """
     key_type: OpenSslEvpPkeyEnum
+    key_type_name: str = field(init=False)
     key_size: int
     public_key: bytearray
 
-    def as_dict(self) -> Dict[str, str]:
-        return {
-            "key_type": OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.key_type],
-            "key_size": str(self.key_size),
-            "public_key": hexlify(self.public_key),
-        }
+    def __post_init__(self) -> None:
+        self.key_type_name = _OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.key_type]
 
 
 @dataclass
-class ECDHTempKeyInfo(TempKeyInfo):
+class EcDhKeyExchangeInfo(KeyExchangeInfo):
     curve: OpenSslEcNidEnum
+    curve_name: str = field(init=False)
 
-    def as_dict(self) -> Dict[str, str]:
-        ret = super().as_dict()
-        ret["curve"] = OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve]
-        return ret
+    def __post_init__(self) -> None:
+        self.curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve]
 
 
 @dataclass
-class NistECDHTempKeyInfo(ECDHTempKeyInfo):
+class NistEcDhKeyExchangeInfo(EcDhKeyExchangeInfo):
     x: bytearray
     y: bytearray
 
-    def as_dict(self) -> Dict[str, str]:
-        ret = super().as_dict()
-        ret["x"] = hexlify(self.x)
-        ret["y"] = hexlify(self.y)
-        return ret
-
 
 @dataclass
-class DHTempKeyInfo(TempKeyInfo):
+class DhKeyExchangeInfo(KeyExchangeInfo):
     prime: bytearray
     generator: bytearray
-
-    def as_dict(self) -> Dict[str, str]:
-        ret = super().as_dict()
-        ret["prime"] = hexlify(self.prime)
-        ret["generator"] = hexlify(self.generator)
-        return ret

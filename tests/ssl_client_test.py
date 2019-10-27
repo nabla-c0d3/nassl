@@ -15,7 +15,7 @@ from nassl.ssl_client import (
     OpenSslEarlyDataStatusEnum,
     CouldNotBuildVerifiedChain,
 )
-from nassl.temp_key_info import OpenSslEvpPkeyEnum, OpenSslEcNidEnum, TempKeyInfo, DHTempKeyInfo, NistECDHTempKeyInfo
+from nassl.temp_key_info import OpenSslEvpPkeyEnum, OpenSslEcNidEnum, KeyExchangeInfo, DhKeyExchangeInfo, NistEcDhKeyExchangeInfo
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
@@ -177,7 +177,7 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert isinstance(dh_info, NistECDHTempKeyInfo)
+            assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
             assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
             assert dh_info.key_size == 256
             assert dh_info.curve == OpenSslEcNidEnum.PRIME256V1
@@ -203,7 +203,7 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert isinstance(dh_info, TempKeyInfo)
+            assert isinstance(dh_info, KeyExchangeInfo)
             assert dh_info.key_type == OpenSslEvpPkeyEnum.X25519
             assert dh_info.key_size == 253
             assert dh_info.curve == OpenSslEcNidEnum.X25519
@@ -227,7 +227,7 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert isinstance(dh_info, TempKeyInfo)
+            assert isinstance(dh_info, KeyExchangeInfo)
             assert dh_info.key_type == OpenSslEvpPkeyEnum.X448
             assert dh_info.key_size == 448
             assert dh_info.curve == OpenSslEcNidEnum.X448
@@ -251,7 +251,7 @@ class TestModernSslClientOnline:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert isinstance(dh_info, DHTempKeyInfo)
+            assert isinstance(dh_info, DhKeyExchangeInfo)
             assert dh_info.key_type == OpenSslEvpPkeyEnum.DH
             assert dh_info.key_size > 0
             assert len(dh_info.public_key) > 0
@@ -317,7 +317,7 @@ class TestLegacySslClientOnlineSsl2:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert isinstance(dh_info, NistECDHTempKeyInfo)
+            assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
             assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
             assert dh_info.key_size > 0
             assert len(dh_info.public_key) > 0
@@ -342,7 +342,7 @@ class TestLegacySslClientOnlineSsl2:
 
             dh_info = ssl_client.get_dh_info()
 
-            assert isinstance(dh_info, DHTempKeyInfo)
+            assert isinstance(dh_info, DhKeyExchangeInfo)
             assert dh_info.key_type == OpenSslEvpPkeyEnum.DH
             assert dh_info.key_size > 0
             assert len(dh_info.public_key) > 0
