@@ -128,8 +128,8 @@ class LegacySslClient(BaseSslClient):
                             first_byte = (first_byte & 0x7F) << 8
                             size = first_byte + second_byte
                             # Manually split the two records to force them to be sent separately
-                            cmk_packet = handshake_data_out[0 : size + 2]
-                            data_packet = handshake_data_out[size + 2 : :]
+                            cmk_packet = handshake_data_out[0: size + 2]
+                            data_packet = handshake_data_out[size + 2::]
                             self._sock.send(cmk_packet)
 
                             handshake_data_in = self._sock.recv(self._DEFAULT_BUFFER_SIZE)

@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
-from typing import Tuple, Optional, List, Union
+from typing import Optional, List
 from typing import Any
 
 from dataclasses import dataclass
