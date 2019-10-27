@@ -124,6 +124,7 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
 class KeyExchangeInfo(ABC):
     """Common fields shared by all kinds of TLS key exchanges.
     """
+
     key_type: OpenSslEvpPkeyEnum
     key_type_name: str = field(init=False)
     key_size: int

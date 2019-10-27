@@ -10,7 +10,13 @@ from typing import List, Any
 from typing import Optional
 from typing import Tuple
 from nassl.ocsp_response import OcspResponse
-from nassl.key_exchange_info import OpenSslEvpPkeyEnum, KeyExchangeInfo, DhKeyExchangeInfo, EcDhKeyExchangeInfo, NistEcDhKeyExchangeInfo
+from nassl.key_exchange_info import (
+    OpenSslEvpPkeyEnum,
+    KeyExchangeInfo,
+    DhKeyExchangeInfo,
+    EcDhKeyExchangeInfo,
+    NistEcDhKeyExchangeInfo,
+)
 
 
 class OpenSslVerifyEnum(IntEnum):
