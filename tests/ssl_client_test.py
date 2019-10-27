@@ -15,7 +15,7 @@ from nassl.ssl_client import (
     OpenSslEarlyDataStatusEnum,
     CouldNotBuildVerifiedChain,
 )
-from nassl.temp_key_info import OpenSslEvpPkeyEnum, OpenSslEcNidEnum, KeyExchangeInfo, DhKeyExchangeInfo, NistEcDhKeyExchangeInfo
+from nassl.key_exchange_info import OpenSslEvpPkeyEnum, OpenSslEcNidEnum, KeyExchangeInfo, DhKeyExchangeInfo, NistEcDhKeyExchangeInfo
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
