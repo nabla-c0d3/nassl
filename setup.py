@@ -1,3 +1,4 @@
+import copy
 import sys
 from pathlib import Path
 
@@ -40,6 +41,7 @@ NASSL_SETUP = {
 }
 
 # There are two native extensions: the "legacy" OpenSSL one and the "modern" OpenSSL one
+# First setup the common settings for both legacy and modern nassl
 BASE_NASSL_EXT_SETUP = {
     "extra_compile_args": [],
     "extra_link_args": [],
@@ -75,12 +77,13 @@ else:
         # https://github.com/nabla-c0d3/nassl/issues/28
         BASE_NASSL_EXT_SETUP["extra_link_args"].append("-Wl,-z,noexecstack")
 
-
-legacy_openssl_config = LegacyOpenSslBuildConfig(CURRENT_PLATFORM)
-modern_openssl_config = ModernOpenSslBuildConfig(CURRENT_PLATFORM)
 zlib_config = ZlibBuildConfig(CURRENT_PLATFORM)
 
-LEGACY_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
+
+# The configure the setup for legacy nassl
+legacy_openssl_config = LegacyOpenSslBuildConfig(CURRENT_PLATFORM)
+
+LEGACY_NASSL_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 LEGACY_NASSL_EXT_SETUP["name"] = "nassl._nassl_legacy"
 LEGACY_NASSL_EXT_SETUP["define_macros"] = [("LEGACY_OPENSSL", "1")]
 LEGACY_NASSL_EXT_SETUP.update(
@@ -95,7 +98,10 @@ LEGACY_NASSL_EXT_SETUP.update(
     }
 )
 
-MODERN_NASSL_EXT_SETUP = BASE_NASSL_EXT_SETUP.copy()
+# The configure the setup for modern nassl
+modern_openssl_config = ModernOpenSslBuildConfig(CURRENT_PLATFORM)
+
+MODERN_NASSL_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 MODERN_NASSL_EXT_SETUP["name"] = "nassl._nassl"
 MODERN_NASSL_EXT_SETUP.update(
     {
@@ -108,6 +114,8 @@ MODERN_NASSL_EXT_SETUP.update(
         ],
     }
 )
+MODERN_NASSL_EXT_SETUP["sources"].append("nassl/_nassl/nassl_X509_STORE_CTX.c")  # API only available in modern nassl
+
 
 if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
     if SHOULD_BUILD_FOR_DEBUG:

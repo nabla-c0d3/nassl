@@ -15,6 +15,10 @@
 #include "nassl_X509.h"
 #include "openssl_utils.h"
 
+#ifndef LEGACY_OPENSSL
+#include "nassl_X509_STORE_CTX.h"
+#endif
+
 
 // nassl.X509.new()
 static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -48,7 +52,6 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
     }
     return (PyObject *)self;
 }
-
 
 
 static void nassl_X509_dealloc(nassl_X509_Object *self)
@@ -88,6 +91,22 @@ static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject
 }
 
 
+#ifndef LEGACY_OPENSSL
+static PyObject* nassl_X509_verify_cert(PyObject *nullPtr, PyObject *args)
+{
+    int verifyReturnValue = 0;
+    nassl_X509_STORE_CTX_Object *x509storeCtx_PyObject = NULL;
+    if (!PyArg_ParseTuple(args, "O!", &nassl_X509_STORE_CTX_Type, &x509storeCtx_PyObject))
+    {
+        return NULL;
+    }
+
+    verifyReturnValue = X509_verify_cert(x509storeCtx_PyObject->x509storeCtx);
+    return Py_BuildValue("I", verifyReturnValue);
+}
+#endif
+
+
 static PyMethodDef nassl_X509_Object_methods[] =
 {
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
@@ -99,6 +118,11 @@ static PyMethodDef nassl_X509_Object_methods[] =
     {"verify_cert_error_string", (PyCFunction)nassl_X509_verify_cert_error_string, METH_VARARGS | METH_STATIC,
      "OpenSSL's X509_verify_cert_error_string()."
     },
+#ifndef LEGACY_OPENSSL
+    {"verify_cert", (PyCFunction)nassl_X509_verify_cert, METH_VARARGS | METH_STATIC,
+     "OpenSSL's X509_verify_cert()."
+    },
+#endif
 
     {NULL}  // Sentinel
 };
