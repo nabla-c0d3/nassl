@@ -18,7 +18,7 @@ NASSL_SETUP = {
     "name": "nassl",
     "version": __version__,
     "package_dir": {"nassl": "nassl"},
-    "py_modules": ["nassl.__init__", "nassl.ssl_client", "nassl.legacy_ssl_client", "nassl.ocsp_response"],
+    "py_modules": ["nassl.__init__", "nassl.ssl_client", "nassl.key_exchange_info", "nassl.legacy_ssl_client", "nassl.ocsp_response"],
     "description": "Experimental OpenSSL wrapper for Python 3.7+ and SSLyze.",
     "author": __author__,
     "author_email": "nabla.c0d3@gmail.com",
