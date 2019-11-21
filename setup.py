@@ -23,8 +23,8 @@ NASSL_SETUP = {
         "nassl.ssl_client",
         "nassl.key_exchange_info",
         "nassl.legacy_ssl_client",
-        "nassl.ocsp_response"
-        ],
+        "nassl.ocsp_response",
+    ],
     "description": "Experimental OpenSSL wrapper for Python 3.7+ and SSLyze.",
     "author": __author__,
     "author_email": "nabla.c0d3@gmail.com",
