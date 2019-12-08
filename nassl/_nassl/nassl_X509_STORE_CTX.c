@@ -29,6 +29,7 @@ static PyObject* nassl_X509_STORE_CTX_new(PyTypeObject *type, PyObject *args, Py
         PyErr_SetString(PyExc_ValueError, "Could not initialize context");
         return NULL;
     }
+    X509_STORE_CTX_init(self->x509storeCtx, NULL, NULL, NULL);
     return (PyObject *)self;
 }
 
@@ -110,6 +111,40 @@ static PyObject* nassl_X509_STORE_CTX_set_cert(nassl_X509_STORE_CTX_Object *self
 }
 
 
+
+static PyObject* nassl_X509_STORE_CTX_get_error(nassl_X509_STORE_CTX_Object *self, PyObject *args)
+{
+    int errorValue = X509_STORE_CTX_get_error(self->x509storeCtx);
+    return Py_BuildValue("i", errorValue);
+}
+
+
+static PyObject* nassl_X509_STORE_CTX_get1_chain(nassl_X509_STORE_CTX_Object *self, PyObject *args)
+{
+    STACK_OF(X509) *verifiedCertChain = NULL;
+    PyObject* certChainPyList = NULL;
+
+    verifiedCertChain = X509_STORE_CTX_get1_chain(self->x509storeCtx); // NOT automatically freed
+    if (verifiedCertChain == NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "Error getting the verified certificate chain.");
+        return NULL;
+    }
+
+    // We'll return a Python list containing each certificate
+    certChainPyList = stackOfX509ToPyList(verifiedCertChain);
+
+    // Manually free the chain returned by get1_chain()
+    sk_X509_pop_free(verifiedCertChain, X509_free);
+
+    if (certChainPyList == NULL)
+    {
+        return NULL;
+    }
+    return certChainPyList;
+}
+
+
 static PyMethodDef nassl_X509_STORE_CTX_Object_methods[] =
 {
     {"set0_trusted_stack", (PyCFunction)nassl_X509_STORE_CTX_set0_trusted_stack, METH_VARARGS,
@@ -120,6 +155,12 @@ static PyMethodDef nassl_X509_STORE_CTX_Object_methods[] =
     },
     {"set_cert", (PyCFunction)nassl_X509_STORE_CTX_set_cert, METH_VARARGS,
      "OpenSSL's 509_STORE_CTX_set_cert()."
+    },
+    {"get_error", (PyCFunction)nassl_X509_STORE_CTX_get_error, METH_NOARGS,
+     "OpenSSL's X509_STORE_CTX_get_error()."
+    },
+    {"get1_chain", (PyCFunction)nassl_X509_STORE_CTX_get1_chain, METH_NOARGS,
+     "OpenSSL's X509_STORE_CTX_get1_chain()."
     },
     {NULL}  // Sentinel
 };
