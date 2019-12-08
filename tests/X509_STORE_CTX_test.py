@@ -34,10 +34,22 @@ class TestX509_STORE_CTX:
         ctx = X509_STORE_CTX()
         ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
 
+        # When calling it a second time it fails
+        with pytest.raises(ValueError):
+            ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
+
     def test_set0_untrusted(self, certificate_as_x509):
         ctx = X509_STORE_CTX()
         ctx.set0_untrusted([certificate_as_x509, certificate_as_x509])
 
+        # When calling it a second time it fails
+        with pytest.raises(ValueError):
+            ctx.set0_untrusted([certificate_as_x509, certificate_as_x509])
+
     def test_set_cert(self, certificate_as_x509):
         ctx = X509_STORE_CTX()
         ctx.set_cert(certificate_as_x509)
+
+        # When calling it a second time it fails
+        with pytest.raises(ValueError):
+            ctx.set_cert(certificate_as_x509)

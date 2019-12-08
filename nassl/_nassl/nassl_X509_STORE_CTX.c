@@ -30,6 +30,11 @@ static PyObject* nassl_X509_STORE_CTX_new(PyTypeObject *type, PyObject *args, Py
         return NULL;
     }
     X509_STORE_CTX_init(self->x509storeCtx, NULL, NULL, NULL);
+
+    self->trustedCertificates = NULL;
+    self->untrustedCertificates = NULL;
+    self->leafCertificate = NULL;
+
     return (PyObject *)self;
 }
 
@@ -38,6 +43,26 @@ static void nassl_X509_STORE_CTX_dealloc(nassl_X509_STORE_CTX_Object *self)
 {
  	if (self->x509storeCtx != NULL)
  	{
+ 	    // First free the "related" OpenSSL structures
+ 	    if (self->trustedCertificates != NULL)
+        {
+            sk_X509_pop_free(self->trustedCertificates, X509_free);
+            self->trustedCertificates = NULL;
+        }
+
+        if (self->untrustedCertificates != NULL)
+        {
+            sk_X509_pop_free(self->untrustedCertificates, X509_free);
+            self->untrustedCertificates = NULL;
+        }
+
+        if (self->leafCertificate != NULL)
+        {
+            X509_free(self->leafCertificate);
+            self->leafCertificate = NULL;
+        }
+
+ 	    // Then free the actual object
   		X509_STORE_CTX_free(self->x509storeCtx);
   		self->x509storeCtx = NULL;
   	}
@@ -62,7 +87,7 @@ static STACK_OF(X509) *parseCertificateList(PyObject *args)
     certsCount = PyList_Size(pyListOfX509Objects);
     for (i=0; i<certsCount; i++)
     {
-        // TODO: Memory mgmt / free
+        // We get a borrowed reference here
         x509Object = (nassl_X509_Object *) PyList_GetItem(pyListOfX509Objects, i);
         if (x509Object == NULL)
         {
@@ -76,11 +101,22 @@ static STACK_OF(X509) *parseCertificateList(PyObject *args)
 
 static PyObject* nassl_X509_STORE_CTX_set0_trusted_stack(nassl_X509_STORE_CTX_Object *self, PyObject *args)
 {
-    STACK_OF(X509) *trustedCerts = parseCertificateList(args);
+    STACK_OF(X509) *trustedCerts = NULL;
+    if (self->trustedCertificates != NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "set0_trusted_stack() has already been called.");
+        return NULL;
+    }
+
+    trustedCerts = parseCertificateList(args);
     if (trustedCerts == NULL)
     {
         return NULL;
     }
+
+    // Increase the OpenSSL ref count of each certificate in the chain; it get decreased in nassl_X509_STORE_CTX_dealloc()
+    self->trustedCertificates = X509_chain_up_ref(trustedCerts);
+
     X509_STORE_CTX_set0_trusted_stack(self->x509storeCtx, trustedCerts);
     Py_RETURN_NONE;
 }
@@ -88,11 +124,22 @@ static PyObject* nassl_X509_STORE_CTX_set0_trusted_stack(nassl_X509_STORE_CTX_Ob
 
 static PyObject* nassl_X509_STORE_CTX_set0_untrusted(nassl_X509_STORE_CTX_Object *self, PyObject *args)
 {
-    STACK_OF(X509) *untrustedCerts = parseCertificateList(args);
+    STACK_OF(X509) *untrustedCerts = NULL;
+    if (self->untrustedCertificates != NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "set0_untrusted() has already been called.");
+        return NULL;
+    }
+
+    untrustedCerts = parseCertificateList(args);
     if (untrustedCerts == NULL)
     {
         return NULL;
     }
+
+    // Increase the OpenSSL ref count of each certificate in the chain; it get decreased in nassl_X509_STORE_CTX_dealloc()
+    self->untrustedCertificates = X509_chain_up_ref(untrustedCerts);
+
     X509_STORE_CTX_set0_untrusted(self->x509storeCtx, untrustedCerts);
     Py_RETURN_NONE;
 }
@@ -101,15 +148,23 @@ static PyObject* nassl_X509_STORE_CTX_set0_untrusted(nassl_X509_STORE_CTX_Object
 static PyObject* nassl_X509_STORE_CTX_set_cert(nassl_X509_STORE_CTX_Object *self, PyObject *args)
 {
     nassl_X509_Object* x509Object;
+    if (self->leafCertificate != NULL)
+    {
+        PyErr_SetString(PyExc_ValueError, "set_cert() has already been called.");
+        return NULL;
+    }
+
     if (!PyArg_ParseTuple(args, "O!", &nassl_X509_Type, &x509Object))
     {
         return NULL;
     }
-       // TODO: Memory mgmt / free
+    // Increase the OpenSSL ref count of the cert; it get decreased in nassl_X509_STORE_CTX_dealloc()
+    X509_up_ref(x509Object->x509);
+    self->leafCertificate = x509Object->x509;
+
     X509_STORE_CTX_set_cert(self->x509storeCtx, x509Object->x509);
     Py_RETURN_NONE;
 }
-
 
 
 static PyObject* nassl_X509_STORE_CTX_get_error(nassl_X509_STORE_CTX_Object *self, PyObject *args)
