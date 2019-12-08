@@ -48,7 +48,6 @@ static STACK_OF(X509) *parseCertificateList(PyObject *args)
 {
     int i = 0;
     Py_ssize_t certsCount = 0;
-    PyObject *tmpObj;
     PyObject *pyListOfX509Objects;
     nassl_X509_Object *x509Object;
     STACK_OF(X509) *parsedCertificates = sk_X509_new_null();
@@ -63,13 +62,11 @@ static STACK_OF(X509) *parseCertificateList(PyObject *args)
     for (i=0; i<certsCount; i++)
     {
         // TODO: Memory mgmt / free
-        tmpObj = PyList_GetItem(pyListOfX509Objects, i);
-        if (tmpObj == NULL)
+        x509Object = (nassl_X509_Object *) PyList_GetItem(pyListOfX509Objects, i);
+        if (x509Object == NULL)
         {
             return NULL;
         }
-
-        x509Object = PyObject_Type(tmpObj);
         sk_X509_push(parsedCertificates, x509Object->x509);
     }
     return parsedCertificates;
