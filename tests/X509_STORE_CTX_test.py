@@ -30,7 +30,6 @@ HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 
 
 class TestX509_STORE_CTX:
-
     def test_set0_trusted_stack(self, certificate_as_x509):
         ctx = X509_STORE_CTX()
         ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
