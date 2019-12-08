@@ -111,7 +111,6 @@ class TestSslClientOnline:
 
             # And when requesting the server certificate, it returns it
             assert ssl_client.get_received_chain()
-            assert ssl_client.get_certificate_chain_verify_result()[0]
         finally:
             ssl_client.shutdown()
 

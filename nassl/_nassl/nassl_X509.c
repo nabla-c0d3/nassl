@@ -185,3 +185,43 @@ void module_add_X509(PyObject* m)
 
 }
 
+
+// Utility function to to convert a stack of OpenSSL X509s to a Python list of nassl.X509
+PyObject* stackOfX509ToPyList(STACK_OF(X509) *certChain)
+{
+    PyObject* certChainPyList = NULL;
+    int certChainCount = 0, i = 0;
+
+    certChainCount = sk_X509_num(certChain);
+    certChainPyList = PyList_New(certChainCount);
+    if (certChainPyList == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+
+    for (i=0; i<certChainCount; i++)
+    {
+        nassl_X509_Object *x509_Object = NULL;
+        // Copy the certificate as the cert chain is freed automatically
+        X509 *cert = X509_dup(sk_X509_value(certChain, i));
+        if (cert == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
+            return NULL;
+        }
+
+        // Store the cert in an _nassl.X509 object
+        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
+        if (x509_Object == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            return PyErr_NoMemory();
+        }
+        x509_Object->x509 = cert;
+
+        // Add the X509 object to the final list
+        PyList_SET_ITEM(certChainPyList, i,  (PyObject *)x509_Object);
+    }
+    return certChainPyList;
+}

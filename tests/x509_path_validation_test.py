@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from nassl.x509_path_validation import CertificatePathValidator
+from nassl.x509_path_validation import CertificateChainVerifier
 from nassl._nassl import X509
 
 
@@ -94,5 +94,5 @@ ujxS43/jQPQMQSBmhxjaMmng9tyPKPK9
 class TestCertificatePathValidator:
 
     def test(self, certificate_chain_as_x509):
-        path_validator = CertificatePathValidator.from_file(Path(__file__).absolute().parent / "mozilla.pem")
-        path_validator.validate(certificate_chain_as_x509)
+        path_validator = CertificateChainVerifier.from_file(Path(__file__).absolute().parent / "mozilla.pem")
+        path_validator.verify(certificate_chain_as_x509)
