@@ -4,12 +4,11 @@ from nassl._nassl import X509, X509_STORE_CTX
 
 
 class CertificateChainVerificationFailed(Exception):
-
     def __init__(self, openssl_error_code: int) -> None:
         self.openssl_error_code = openssl_error_code
         self.openssl_error_string = X509.verify_cert_error_string(self.openssl_error_code)
         super().__init__(
-            f"Path validation failed with OpenSSL error code {self.openssl_error_code}: {self.openssl_error_string}"
+            f'Verification failed with OpenSSL error code {self.openssl_error_code}: "{self.openssl_error_string}"'
         )
 
 
