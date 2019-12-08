@@ -3,12 +3,11 @@ from abc import ABC
 from types import ModuleType
 
 from nassl import _nassl
-from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
+from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
 
 from enum import IntEnum
 from typing import List, Any
 from typing import Optional
-from typing import Tuple
 from nassl.ocsp_response import OcspResponse
 from nassl.key_exchange_info import (
     OpenSslEvpPkeyEnum,
@@ -17,7 +16,7 @@ from nassl.key_exchange_info import (
     EcDhKeyExchangeInfo,
     NistEcDhKeyExchangeInfo,
 )
-from nassl.x509_path_validation import CertificateChainVerificationFailed
+from nassl.cert_chain_verifier import CertificateChainVerificationFailed
 
 
 class OpenSslVerifyEnum(IntEnum):

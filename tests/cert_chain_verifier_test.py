@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from nassl.x509_path_validation import CertificateChainVerifier
+from nassl.cert_chain_verifier import CertificateChainVerifier
 from nassl._nassl import X509
 
 
