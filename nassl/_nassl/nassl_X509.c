@@ -102,7 +102,7 @@ static PyObject* nassl_X509_verify_cert(PyObject *nullPtr, PyObject *args)
     }
 
     verifyReturnValue = X509_verify_cert(x509storeCtx_PyObject->x509storeCtx);
-    return Py_BuildValue("I", verifyReturnValue);
+    return Py_BuildValue("i", verifyReturnValue);
 }
 #endif
 

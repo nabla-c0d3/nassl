@@ -549,7 +549,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
 static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *args)
 {
     long returnValue = SSL_get_verify_result(self->ssl);
-    return Py_BuildValue("I", returnValue);
+    return Py_BuildValue("l", returnValue);
 }
 
 

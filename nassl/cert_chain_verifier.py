@@ -68,4 +68,4 @@ class CertificateChainVerifier:
         elif result < 0:
             raise RuntimeError("X509_verify_cert() was invoked incorrectly")
         else:
-            raise RuntimeError("Should never happen according to the OpenSSL documentation")
+            raise RuntimeError(f"Result {result}; should never happen according to the OpenSSL documentation")
