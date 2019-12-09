@@ -38,6 +38,7 @@ NASSL_SETUP = {
         "Natural Language :: French",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: System :: Networking",
         "Topic :: System :: Monitoring",
         "Topic :: System :: Networking :: Monitoring",
