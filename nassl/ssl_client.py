@@ -3,12 +3,11 @@ from abc import ABC
 from types import ModuleType
 
 from nassl import _nassl
-from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
+from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
 
 from enum import IntEnum
 from typing import List, Any
 from typing import Optional
-from typing import Tuple
 from nassl.ocsp_response import OcspResponse
 from nassl.key_exchange_info import (
     OpenSslEvpPkeyEnum,
@@ -17,6 +16,7 @@ from nassl.key_exchange_info import (
     EcDhKeyExchangeInfo,
     NistEcDhKeyExchangeInfo,
 )
+from nassl.cert_chain_verifier import CertificateChainVerificationFailed
 
 
 class OpenSslVerifyEnum(IntEnum):
@@ -351,11 +351,6 @@ class BaseSslClient(ABC):
 
         self._ssl_ctx.check_private_key()
 
-    def get_certificate_chain_verify_result(self) -> Tuple[int, str]:
-        verify_result = self._ssl.get_verify_result()
-        verify_result_str = X509.verify_cert_error_string(verify_result)
-        return verify_result, verify_result_str
-
     _TLSEXT_STATUSTYPE_ocsp = 1
 
     def set_tlsext_status_ocsp(self) -> None:
@@ -408,10 +403,6 @@ class OpenSslEarlyDataStatusEnum(IntEnum):
     ACCEPTED = 2
 
 
-class CouldNotBuildVerifiedChain(Exception):
-    pass
-
-
 class SslClient(BaseSslClient):
     """High level API implementing an SSL client.
 
@@ -447,12 +438,12 @@ class SslClient(BaseSslClient):
     def get_verified_chain(self) -> List[str]:
         """Returns the verified PEM-formatted certificate chain.
 
-        If certificate validation failed, CouldNotBuildVerifiedChain will be raised.
+        If certificate validation failed, CertificateChainValidationFailed will be raised.
         The leaf certificate is at index 0.
         Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
         """
-        verify_code, verify_str = self.get_certificate_chain_verify_result()
+        verify_code = self._ssl.get_verify_result()
         if verify_code != 0:  # X509_V_OK
-            raise CouldNotBuildVerifiedChain(f'Certificate validation failed: "{verify_str}"')
+            raise CertificateChainVerificationFailed(verify_code)
 
         return [x509.as_pem() for x509 in self._ssl.get0_verified_chain()]

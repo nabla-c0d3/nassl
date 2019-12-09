@@ -10,3 +10,5 @@ typedef struct {
 extern PyTypeObject nassl_X509_Type;
 
 void module_add_X509(PyObject* m);
+
+PyObject* stackOfX509ToPyList(STACK_OF(X509) *certChain);

@@ -17,6 +17,10 @@
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
 
+#ifndef LEGACY_OPENSSL
+#include "nassl_X509_STORE_CTX.h"
+#endif
+
 
 static PyMethodDef nassl_methods[] =
 {
@@ -146,6 +150,12 @@ PyMODINIT_FUNC init_nassl(void)
     module_add_X509(module);
     module_add_SSL_SESSION(module);
     module_add_OCSP_RESPONSE(module);
+
+
+#ifndef LEGACY_OPENSSL
+    // Only available in modern nassl
+    module_add_X509_STORE_CTX(module);
+#endif
 
     state = GETSTATE(module);
     state->error = PyErr_NewException("nassl._nassl.Error", NULL, NULL);

@@ -1,14 +1,11 @@
 import pytest
 
-from nassl import _nassl
-from nassl import _nassl_legacy
+from nassl._nassl import X509, X509_STORE_CTX
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
-class TestX509:
-    def test_from_pem(self, nassl_module):
-        # Given a PEM-formatted certificate
-        pem_cert = """-----BEGIN CERTIFICATE-----
+@pytest.fixture
+def certificate_as_x509() -> X509:
+    pem_cert = """-----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
 A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
 b3QgQ0ExGzAZBgNVBAMTEkdsb2JhbFNpZ24gUm9vdCBDQTAeFw05ODA5MDExMjAw
@@ -28,21 +25,31 @@ yj1hTdNGCbM+w6DjY1Ub8rrvrTnhQ7k4o+YviiY776BQVvnGCv04zcQLcFGUl5gE
 AbEVtQwdpf5pLGkkeB6zpxxxYu7KyJesF12KwvhHhm4qxFYxldBniYUr+WymXUad
 DKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveCX4XSQRjbgbME
 HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
------END CERTIFICATE-----
-"""
+-----END CERTIFICATE-----"""
+    return X509(pem_cert)
 
-        # When parsing it
-        certificate = nassl_module.X509(pem_cert)
 
-        # It succeeds
-        assert certificate
-        assert certificate.as_text()
-        assert pem_cert == certificate.as_pem()
+class TestX509_STORE_CTX:
+    def test_set0_trusted_stack(self, certificate_as_x509):
+        ctx = X509_STORE_CTX()
+        ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
 
-    def test_from_pem_bad(self, nassl_module):
-        pem_cert = "123123"
+        # When calling it a second time it fails
         with pytest.raises(ValueError):
-            nassl_module.X509(pem_cert)
+            ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
 
-    def test_verify_cert_error_string(self, nassl_module):
-        assert nassl_module.X509.verify_cert_error_string(1)
+    def test_set0_untrusted(self, certificate_as_x509):
+        ctx = X509_STORE_CTX()
+        ctx.set0_untrusted([certificate_as_x509, certificate_as_x509])
+
+        # When calling it a second time it fails
+        with pytest.raises(ValueError):
+            ctx.set0_untrusted([certificate_as_x509, certificate_as_x509])
+
+    def test_set_cert(self, certificate_as_x509):
+        ctx = X509_STORE_CTX()
+        ctx.set_cert(certificate_as_x509)
+
+        # When calling it a second time it fails
+        with pytest.raises(ValueError):
+            ctx.set_cert(certificate_as_x509)

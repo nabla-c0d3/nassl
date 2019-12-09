@@ -12,7 +12,6 @@ from nassl.ssl_client import (
     SslClient,
     OpenSSLError,
     OpenSslEarlyDataStatusEnum,
-    CouldNotBuildVerifiedChain,
 )
 from nassl.key_exchange_info import (
     OpenSslEvpPkeyEnum,
@@ -21,6 +20,7 @@ from nassl.key_exchange_info import (
     NistEcDhKeyExchangeInfo,
     EcDhKeyExchangeInfo,
 )
+from nassl.cert_chain_verifier import CertificateChainVerificationFailed
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
 
 
@@ -111,7 +111,6 @@ class TestSslClientOnline:
 
             # And when requesting the server certificate, it returns it
             assert ssl_client.get_received_chain()
-            assert ssl_client.get_certificate_chain_verify_result()[0]
         finally:
             ssl_client.shutdown()
 
@@ -225,7 +224,7 @@ class TestModernSslClientOnline:
             ssl_client.do_handshake()
 
             # And when requesting the verified certificate chain
-            with pytest.raises(CouldNotBuildVerifiedChain):
+            with pytest.raises(CertificateChainVerificationFailed):
                 # It fails because certificate validation failed
                 ssl_client.get_verified_chain()
         finally:

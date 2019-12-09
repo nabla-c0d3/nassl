@@ -15,6 +15,10 @@
 #include "nassl_X509.h"
 #include "openssl_utils.h"
 
+#ifndef LEGACY_OPENSSL
+#include "nassl_X509_STORE_CTX.h"
+#endif
+
 
 // nassl.X509.new()
 static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
@@ -48,7 +52,6 @@ static PyObject* nassl_X509_new(PyTypeObject *type, PyObject *args, PyObject *kw
     }
     return (PyObject *)self;
 }
-
 
 
 static void nassl_X509_dealloc(nassl_X509_Object *self)
@@ -88,6 +91,22 @@ static PyObject* nassl_X509_verify_cert_error_string(PyObject *nullPtr, PyObject
 }
 
 
+#ifndef LEGACY_OPENSSL
+static PyObject* nassl_X509_verify_cert(PyObject *nullPtr, PyObject *args)
+{
+    int verifyReturnValue = 0;
+    nassl_X509_STORE_CTX_Object *x509storeCtx_PyObject = NULL;
+    if (!PyArg_ParseTuple(args, "O!", &nassl_X509_STORE_CTX_Type, &x509storeCtx_PyObject))
+    {
+        return NULL;
+    }
+
+    verifyReturnValue = X509_verify_cert(x509storeCtx_PyObject->x509storeCtx);
+    return Py_BuildValue("i", verifyReturnValue);
+}
+#endif
+
+
 static PyMethodDef nassl_X509_Object_methods[] =
 {
     {"as_text", (PyCFunction)nassl_X509_as_text, METH_NOARGS,
@@ -99,6 +118,11 @@ static PyMethodDef nassl_X509_Object_methods[] =
     {"verify_cert_error_string", (PyCFunction)nassl_X509_verify_cert_error_string, METH_VARARGS | METH_STATIC,
      "OpenSSL's X509_verify_cert_error_string()."
     },
+#ifndef LEGACY_OPENSSL
+    {"verify_cert", (PyCFunction)nassl_X509_verify_cert, METH_VARARGS | METH_STATIC,
+     "OpenSSL's X509_verify_cert()."
+    },
+#endif
 
     {NULL}  // Sentinel
 };
@@ -161,3 +185,43 @@ void module_add_X509(PyObject* m)
 
 }
 
+
+// Utility function to to convert a stack of OpenSSL X509s to a Python list of nassl.X509
+PyObject* stackOfX509ToPyList(STACK_OF(X509) *certChain)
+{
+    PyObject* certChainPyList = NULL;
+    int certChainCount = 0, i = 0;
+
+    certChainCount = sk_X509_num(certChain);
+    certChainPyList = PyList_New(certChainCount);
+    if (certChainPyList == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+
+    for (i=0; i<certChainCount; i++)
+    {
+        nassl_X509_Object *x509_Object = NULL;
+        // Copy the certificate as the cert chain is freed automatically
+        X509 *cert = X509_dup(sk_X509_value(certChain, i));
+        if (cert == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
+            return NULL;
+        }
+
+        // Store the cert in an _nassl.X509 object
+        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
+        if (x509_Object == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            return PyErr_NoMemory();
+        }
+        x509_Object->x509 = cert;
+
+        // Add the X509 object to the final list
+        PyList_SET_ITEM(certChainPyList, i,  (PyObject *)x509_Object);
+    }
+    return certChainPyList;
+}

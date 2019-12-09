@@ -113,7 +113,6 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 }
 
 
-
 static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self)
 {
  	if (self->sslCtx != NULL)
@@ -155,7 +154,6 @@ static PyObject* nassl_SSL_CTX_set_verify(nassl_SSL_CTX_Object *self, PyObject *
 
 	Py_RETURN_NONE;
 }
-
 
 
 static PyObject* nassl_SSL_CTX_load_verify_locations(nassl_SSL_CTX_Object *self, PyObject *args)

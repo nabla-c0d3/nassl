@@ -549,7 +549,7 @@ static PyObject* nassl_SSL_get_client_CA_list(nassl_SSL_Object *self, PyObject *
 static PyObject* nassl_SSL_get_verify_result(nassl_SSL_Object *self, PyObject *args)
 {
     long returnValue = SSL_get_verify_result(self->ssl);
-    return Py_BuildValue("I", returnValue);
+    return Py_BuildValue("l", returnValue);
 }
 
 
@@ -763,11 +763,11 @@ static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *ar
     Py_RETURN_NONE;
 }
 
+
 static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject *args)
 {
     STACK_OF(X509) *verifiedCertChain = NULL;
     PyObject* certChainPyList = NULL;
-    int certChainCount = 0, i = 0;
 
     // Get the peer's certificate chain
     verifiedCertChain = SSL_get0_verified_chain(self->ssl); // automatically freed
@@ -778,41 +778,15 @@ static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject 
     }
 
     // We'll return a Python list containing each certificate
-    certChainCount = sk_X509_num(verifiedCertChain);
-    certChainPyList = PyList_New(certChainCount);
+    certChainPyList = stackOfX509ToPyList(verifiedCertChain);
     if (certChainPyList == NULL)
     {
-        return PyErr_NoMemory();
+        return NULL;
     }
-
-    for (i=0; i<certChainCount; i++)
-    {
-        nassl_X509_Object *x509_Object = NULL;
-        // Copy the certificate as the cert chain is freed automatically
-        X509 *cert = X509_dup(sk_X509_value(verifiedCertChain, i));
-        if (cert == NULL)
-        {
-            Py_DECREF(certChainPyList);
-            PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
-            return NULL;
-        }
-
-        // Store the cert in an _nassl.X509 object
-        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
-        if (x509_Object == NULL)
-        {
-            Py_DECREF(certChainPyList);
-            return PyErr_NoMemory();
-        }
-        x509_Object->x509 = cert;
-
-        // Add the X509 object to the final list
-        PyList_SET_ITEM(certChainPyList, i,  (PyObject *)x509_Object);
-    }
-
     return certChainPyList;
 }
 #endif
+
 
 static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
 {
