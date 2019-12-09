@@ -18,6 +18,8 @@ def test(ctx):
     ctx.run("flake8")
     ctx.run("black . --check")
 
+    ctx.run("python sample_client.py")
+
 
 @task
 def package_linux_wheels(ctx):
