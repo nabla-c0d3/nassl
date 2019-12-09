@@ -25,6 +25,7 @@ NASSL_SETUP = {
         "nassl.key_exchange_info",
         "nassl.legacy_ssl_client",
         "nassl.ocsp_response",
+        "nassl.cert_chain_verifier",
     ],
     "description": "Experimental OpenSSL wrapper for Python 3.7+ and SSLyze.",
     "author": __author__,
