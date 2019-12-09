@@ -24,7 +24,7 @@ cd /io
 "/opt/python/cp36-cp36m/bin/pipenv" lock -r --dev > requirements.txt
 
 # Now build the Python extension and wheel
-for PYBIN in "cp37-cp37m" "cp38-cp38m"; do
+for PYBIN in "cp37-cp37m" "cp38-cp38"; do
     "/opt/python/${PYBIN}/bin/python" setup.py clean --all
     "/opt/python/${PYBIN}/bin/python" setup.py build_ext -i
     "/opt/python/${PYBIN}/bin/pip" install -r requirements.txt
