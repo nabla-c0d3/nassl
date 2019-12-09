@@ -13,9 +13,9 @@ export PATH=$HOME/localperl/bin:$PATH
 
 cd /io
 
-# First build non-Python dependencies (Zlib, OpenSSL) using Python 3.6
+# First build non-Python dependencies (Zlib, OpenSSL) using Python 3.7
 "/opt/python/cp36-cp36m/bin/pip" install pipenv
-"/opt/python/cp36-cp36m/bin/pipenv" --python "/opt/python/cp36-cp36m/bin/python" install --dev
+"/opt/python/cp36-cp36m/bin/pipenv" --python "/opt/python/cp37-cp37m/bin/python" install --dev
 "/opt/python/cp36-cp36m/bin/pipenv" run invoke build.zlib
 "/opt/python/cp36-cp36m/bin/pipenv" run invoke build.legacy-openssl
 "/opt/python/cp36-cp36m/bin/pipenv" run invoke build.modern-openssl
@@ -24,7 +24,7 @@ cd /io
 "/opt/python/cp36-cp36m/bin/pipenv" lock -r --dev > requirements.txt
 
 # Now build the Python extension and wheel
-for PYBIN in "cp37-cp37m" "cp36-cp36m"; do
+for PYBIN in "cp37-cp37m" "cp38-cp38m"; do
     "/opt/python/${PYBIN}/bin/python" setup.py clean --all
     "/opt/python/${PYBIN}/bin/python" setup.py build_ext -i
     "/opt/python/${PYBIN}/bin/pip" install -r requirements.txt
