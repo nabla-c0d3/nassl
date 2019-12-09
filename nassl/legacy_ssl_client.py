@@ -1,4 +1,5 @@
 import socket
+from pathlib import Path
 
 from nassl._nassl import WantReadError, WantX509LookupError
 
@@ -29,9 +30,9 @@ class LegacySslClient(BaseSslClient):
         underlying_socket: Optional[socket.socket] = None,
         ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
-        ssl_verify_locations: Optional[str] = None,
-        client_certchain_file: Optional[str] = None,
-        client_key_file: Optional[str] = None,
+        ssl_verify_locations: Optional[Path] = None,
+        client_certificate_chain: Optional[Path] = None,
+        client_key: Optional[Path] = None,
         client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
         client_key_password: str = "",
         ignore_client_authentication_requests: bool = False,
@@ -41,8 +42,8 @@ class LegacySslClient(BaseSslClient):
             ssl_version,
             ssl_verify,
             ssl_verify_locations,
-            client_certchain_file,
-            client_key_file,
+            client_certificate_chain,
+            client_key,
             client_key_type,
             client_key_password,
             ignore_client_authentication_requests,

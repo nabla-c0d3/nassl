@@ -3,7 +3,7 @@ from pathlib import Path
 from nassl.ssl_client import OpenSslVersionEnum, SslClient, OpenSslVerifyEnum
 import socket
 
-mozilla_store = "tests/mozilla.pem"
+mozilla_store = Path("tests") / "mozilla.pem"
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.settimeout(5)
 sock.connect(("www.yahoo.com", 443))

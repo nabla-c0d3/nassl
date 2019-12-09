@@ -76,8 +76,8 @@ class TestSslClientClientAuthentication:
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
-                client_certchain_file=server.get_client_certificate_path(),
-                client_key_file=server.get_client_key_path(),
+                client_certificate_chain=server.get_client_certificate_path(),
+                client_key=server.get_client_key_path(),
             )
 
             # When doing the handshake, it succeeds
@@ -194,7 +194,7 @@ class TestModernSslClientOnline:
             underlying_socket=sock,
             # That is configured to properly validate certificates
             ssl_verify=OpenSslVerifyEnum.PEER,
-            ssl_verify_locations=str(Path(__file__).absolute().parent / "mozilla.pem"),
+            ssl_verify_locations=Path(__file__).absolute().parent / "mozilla.pem",
         )
 
         # When doing a TLS handshake, it succeeds

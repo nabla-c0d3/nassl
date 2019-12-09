@@ -1,5 +1,6 @@
 import socket
 from abc import ABC
+from pathlib import Path
 from types import ModuleType
 
 from nassl import _nassl
@@ -88,9 +89,9 @@ class BaseSslClient(ABC):
         underlying_socket: Optional[socket.socket] = None,
         ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
-        ssl_verify_locations: Optional[str] = None,
-        client_certchain_file: Optional[str] = None,
-        client_key_file: Optional[str] = None,
+        ssl_verify_locations: Optional[Path] = None,
+        client_certificate_chain: Optional[Path] = None,
+        client_key: Optional[Path] = None,
         client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
         client_key_password: str = "",
         ignore_client_authentication_requests: bool = False,
@@ -101,8 +102,8 @@ class BaseSslClient(ABC):
         # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
         self._init_server_authentication(ssl_verify, ssl_verify_locations)
         self._init_client_authentication(
-            client_certchain_file,
-            client_key_file,
+            client_certificate_chain,
+            client_key,
             client_key_type,
             client_key_password,
             ignore_client_authentication_requests,
@@ -120,31 +121,31 @@ class BaseSslClient(ABC):
         # A Python socket handles transmission of the data
         self._sock = underlying_socket
 
-    def _init_server_authentication(self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[str]) -> None:
+    def _init_server_authentication(self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[Path]) -> None:
         """Setup the certificate validation logic for authenticating the server.
         """
         self._ssl_ctx.set_verify(ssl_verify.value)
         if ssl_verify_locations:
             # Ensure the file exists
-            with open(ssl_verify_locations):
+            with ssl_verify_locations.open():
                 pass
-            self._ssl_ctx.load_verify_locations(ssl_verify_locations)
+            self._ssl_ctx.load_verify_locations(str(ssl_verify_locations))
 
     def _init_client_authentication(
         self,
-        client_certchain_file: Optional[str],
-        client_key_file: Optional[str],
+        client_certificate_chain: Optional[Path],
+        client_key: Optional[Path],
         client_key_type: OpenSslFileTypeEnum,
         client_key_password: str,
         ignore_client_authentication_requests: bool,
     ) -> None:
         """Setup client authentication using the supplied certificate and key.
         """
-        if client_certchain_file is not None and client_key_file is not None:
-            self._use_private_key(client_certchain_file, client_key_file, client_key_type, client_key_password)
+        if client_certificate_chain is not None and client_key is not None:
+            self._use_private_key(client_certificate_chain, client_key, client_key_type, client_key_password)
 
         if ignore_client_authentication_requests:
-            if client_certchain_file:
+            if client_certificate_chain:
                 raise ValueError("Cannot enable both client_certchain_file and ignore_client_authentication_requests")
 
             self._ssl_ctx.set_client_cert_cb_NULL()
@@ -325,8 +326,8 @@ class BaseSslClient(ABC):
 
     def _use_private_key(
         self,
-        client_certchain_file: str,
-        client_key_file: str,
+        client_certificate_chain: Path,
+        client_key: Path,
         client_key_type: OpenSslFileTypeEnum,
         client_key_password: str,
     ) -> None:
@@ -334,15 +335,15 @@ class BaseSslClient(ABC):
         constructor.
         """
         # Ensure the files exist
-        with open(client_certchain_file):
+        with client_certificate_chain.open():
             pass
-        with open(client_key_file):
+        with client_key.open():
             pass
 
-        self._ssl_ctx.use_certificate_chain_file(client_certchain_file)
+        self._ssl_ctx.use_certificate_chain_file(str(client_certificate_chain))
         self._ssl_ctx.set_private_key_password(client_key_password)
         try:
-            self._ssl_ctx.use_PrivateKey_file(client_key_file, client_key_type.value)
+            self._ssl_ctx.use_PrivateKey_file(str(client_key), client_key_type.value)
         except OpenSSLError as e:
             if "bad password read" in str(e) or "bad decrypt" in str(e):
                 raise ValueError("Invalid Private Key")

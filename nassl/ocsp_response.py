@@ -11,7 +11,7 @@ from typing import Dict
 
 
 class OcspResponseNotTrustedError(Exception):
-    def __init__(self, trust_store_path: str) -> None:
+    def __init__(self, trust_store_path: Path) -> None:
         self.trust_store_path = trust_store_path
 
 
@@ -81,14 +81,15 @@ class OcspResponse:
 
         Raises OcspResponseNotTrustedError if the validation failed ie. the OCSP response is not trusted.
         """
-        if not verify_locations.exists():
-            raise FileNotFoundError(str(verify_locations))
+        # Ensure the file exists
+        with verify_locations.open():
+            pass
 
         try:
             self._openssl_ocsp_response.basic_verify(str(verify_locations))
         except _nassl.OpenSSLError as e:
             if "certificate verify error" in str(e):
-                raise OcspResponseNotTrustedError(str(verify_locations))
+                raise OcspResponseNotTrustedError(verify_locations)
             raise
 
     @classmethod
