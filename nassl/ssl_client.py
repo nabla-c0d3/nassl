@@ -297,6 +297,13 @@ class BaseSslClient(ABC):
         """
         self._ssl.set_tlsext_host_name(name_indication)
 
+    def set1_groups_list(self, supported_groups: str) -> None:
+        """
+        Specify elliptic curves that are supported by the client in descending order.
+        Example: ssl_client.set1_groups_list(X25519:prime256v1:secp384r1)
+        """
+        self._ssl.set1_groups_list(supported_groups)
+
     def set_cipher_list(self, cipher_list: str) -> None:
         self._ssl.set_cipher_list(cipher_list)
 

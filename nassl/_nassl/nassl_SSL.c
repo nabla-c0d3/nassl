@@ -255,6 +255,22 @@ static PyObject* nassl_SSL_get_max_early_data(nassl_SSL_Object *self, PyObject *
 
     return Py_BuildValue("I", returnValue);
 }
+
+static PyObject* nassl_SSL_set1_groups_list(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+    char *supportedGroups = NULL;
+    if (PyArg_ParseTuple(args, "s", &supportedGroups) == NULL)
+    {
+        return NULL;
+    }
+
+    if (SSL_set1_groups_list(self->sslCtx, supportedGroups) != 1)
+    {
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
 #endif
 
 static PyObject* nassl_SSL_shutdown(nassl_SSL_Object *self, PyObject *args)
@@ -1134,6 +1150,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
      "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
+    },
+    {"set1_groups_list", (PyCFunction)nassl_SSL_set1_groups_list, METH_VARARGS,
+    "OpenSSL's SSL_set1_groups_list()"
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,
