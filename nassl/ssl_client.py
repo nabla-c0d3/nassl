@@ -439,7 +439,7 @@ class SslClient(BaseSslClient):
     def set1_groups_list(self, supported_groups: str) -> None:
         """
         Specify elliptic curves that are supported by the client in descending order.
-        Example: ssl_client.set1_groups_list(X25519:prime256v1:secp384r1)
+        Example: ssl_client.set1_groups_list("X25519:prime256v1:secp384r1")
         """
         self._ssl.set1_groups_list(supported_groups)
 
