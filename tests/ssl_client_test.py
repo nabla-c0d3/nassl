@@ -300,6 +300,52 @@ class TestModernSslClientOnline:
             assert dh_info.key_size == 448
             assert dh_info.curve == OpenSslEcNidEnum.X448
             assert len(dh_info.public_key) == 56
+            
+    def test_set1_groups_list_curve_secp192k1(self):
+        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1") as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            ssl_client.set1_groups_list("secp192k1")
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
+            assert dh_info.curve == OpenSslEcNidEnum.SECP192K1
+
+    def test_set1_groups_list_curve_x448(self):
+        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:X448:secp384r1:secp192k1") as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+            )
+
+            ssl_client.set1_groups_list("X448")
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            dh_info = ssl_client.get_dh_info()
+
+            assert isinstance(dh_info, EcDhKeyExchangeInfo)
+            assert dh_info.key_type == OpenSslEvpPkeyEnum.X448
+            assert dh_info.curve == OpenSslEcNidEnum.X448
 
 
 class TestLegacySslClientOnline:
