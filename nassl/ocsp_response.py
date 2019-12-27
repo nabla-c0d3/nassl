@@ -129,6 +129,14 @@ class OcspResponse:
 
         return cls(**response_dict)
 
+    def as_dict(self) -> Dict[str, any]:
+        """
+        Use custom dict conversion because _nassl.OCSP_RESPONSE is not pickleable
+        and therefore it must be excluded.
+        :return:
+        """
+        return {k: v for k, v in self.__dict__.items() if type(v) is not _nassl.OCSP_RESPONSE}
+
 
 # Text parsing
 def _get_value_from_text_output(key: str, text_output: str) -> str:

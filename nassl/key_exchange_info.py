@@ -140,6 +140,7 @@ class EcDhKeyExchangeInfo(KeyExchangeInfo):
     curve_name: str = field(init=False)
 
     def __post_init__(self) -> None:
+        super().__post_init__()
         self.curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve]
 
 
