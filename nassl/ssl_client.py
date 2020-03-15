@@ -10,11 +10,11 @@ from enum import IntEnum
 from typing import List, Any
 from typing import Optional
 from nassl.ocsp_response import OcspResponse
-from nassl.key_exchange_info import (
+from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
-    KeyExchangeInfo,
-    DhKeyExchangeInfo,
-    EcDhKeyExchangeInfo,
+    EphemeralKeyInfo,
+    DhEphemeralKeyInfo,
+    EcDhEphemeralKeyInfo,
     NistEcDhKeyExchangeInfo,
 )
 from nassl.cert_chain_verifier import CertificateChainVerificationFailed
@@ -309,18 +309,18 @@ class BaseSslClient(ABC):
     def get_current_cipher_bits(self) -> int:
         return self._ssl.get_cipher_bits()
 
-    def get_dh_info(self) -> Optional[KeyExchangeInfo]:
+    def get_ephemeral_key(self) -> Optional[EphemeralKeyInfo]:
         try:
             dh_info = self._ssl.get_dh_info()
         except TypeError:
             return None
 
-        if dh_info["key_type"] == OpenSslEvpPkeyEnum.DH:
-            return DhKeyExchangeInfo(**dh_info)
-        elif dh_info["key_type"] == OpenSslEvpPkeyEnum.EC:
+        if dh_info["type"] == OpenSslEvpPkeyEnum.DH:
+            return DhEphemeralKeyInfo(**dh_info)
+        elif dh_info["type"] == OpenSslEvpPkeyEnum.EC:
             return NistEcDhKeyExchangeInfo(**dh_info)
-        elif dh_info["key_type"] in [OpenSslEvpPkeyEnum.X25519, OpenSslEvpPkeyEnum.X448]:
-            return EcDhKeyExchangeInfo(**dh_info)
+        elif dh_info["type"] in [OpenSslEvpPkeyEnum.X25519, OpenSslEvpPkeyEnum.X448]:
+            return EcDhEphemeralKeyInfo(**dh_info)
         else:
             return None
 

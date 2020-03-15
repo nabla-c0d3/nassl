@@ -853,9 +853,9 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
 
         // Format the relevant params into a dictionary
         PyObject *return_dict = PyDict_New();
-        PyDict_SetItemString(return_dict, "key_type", Py_BuildValue("I", key_id));
-        PyDict_SetItemString(return_dict, "key_size", Py_BuildValue("I", EVP_PKEY_bits(key)));
-        PyDict_SetItemString(return_dict, "public_key", PyByteArray_FromStringAndSize((char*) pub_key_buf, pub_key_buf_size));
+        PyDict_SetItemString(return_dict, "type", Py_BuildValue("I", key_id));
+        PyDict_SetItemString(return_dict, "size", Py_BuildValue("I", EVP_PKEY_bits(key)));
+        PyDict_SetItemString(return_dict, "public_bytes", PyByteArray_FromStringAndSize((char*) pub_key_buf, pub_key_buf_size));
         PyDict_SetItemString(return_dict, "prime", PyByteArray_FromStringAndSize((char*) p_buf, p_buf_size));
         PyDict_SetItemString(return_dict, "generator", PyByteArray_FromStringAndSize((char*) g_buf, g_buf_size));
         
@@ -971,9 +971,9 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
 
         // Return a dictionary of relevant parameters
         PyObject *return_dict = PyDict_New();
-        PyDict_SetItemString(return_dict, "key_type", Py_BuildValue("I", key_id));
-        PyDict_SetItemString(return_dict, "key_size", Py_BuildValue("I", EVP_PKEY_bits(key)));
-        PyDict_SetItemString(return_dict, "public_key", PyByteArray_FromStringAndSize((char*) pub_key_buf, pub_key_buf_size));
+        PyDict_SetItemString(return_dict, "type", Py_BuildValue("I", key_id));
+        PyDict_SetItemString(return_dict, "size", Py_BuildValue("I", EVP_PKEY_bits(key)));
+        PyDict_SetItemString(return_dict, "public_bytes", PyByteArray_FromStringAndSize((char*) pub_key_buf, pub_key_buf_size));
         PyDict_SetItemString(return_dict, "curve", Py_BuildValue("I", nid));
         PyDict_SetItemString(return_dict, "x", PyByteArray_FromStringAndSize((char*) x_buf, x_buf_size));
         PyDict_SetItemString(return_dict, "y", PyByteArray_FromStringAndSize((char*) y_buf, y_buf_size));
@@ -1016,9 +1016,9 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
 
         // Return a dictionary of relevant parameters
         PyObject *return_dict = PyDict_New();
-        PyDict_SetItemString(return_dict, "key_type", Py_BuildValue("I", key_id));
-        PyDict_SetItemString(return_dict, "key_size", Py_BuildValue("I", EVP_PKEY_bits(key)));
-        PyDict_SetItemString(return_dict, "public_key", PyByteArray_FromStringAndSize((char*) pub_key_buf, pub_key_buf_size));
+        PyDict_SetItemString(return_dict, "type", Py_BuildValue("I", key_id));
+        PyDict_SetItemString(return_dict, "size", Py_BuildValue("I", EVP_PKEY_bits(key)));
+        PyDict_SetItemString(return_dict, "public_bytes", PyByteArray_FromStringAndSize((char*) pub_key_buf, pub_key_buf_size));
         PyDict_SetItemString(return_dict, "curve", Py_BuildValue("I", key_id));
 
         PyMem_Free(pub_key_buf);
