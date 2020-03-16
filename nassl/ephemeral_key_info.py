@@ -1,4 +1,3 @@
-import binascii
 from abc import ABC
 
 from enum import IntEnum
@@ -9,6 +8,7 @@ from typing import Dict
 class OpenSslEvpPkeyEnum(IntEnum):
     """Constants which map to the EVP_PKEY_XXX OpenSSL constants (obj_mac.h) used as the temporary key during key exchange
     """
+
     DH = 28
     EC = 408
     X25519 = 1034
@@ -19,6 +19,7 @@ class OpenSslEcNidEnum(IntEnum):
     """Constants which map to NID_XXX values valid for OpenSslEvpPkeyEnum.EC (obj_mac.h)
        Valid values for TLS taken from https://tools.ietf.org/html/rfc4492 and https://tools.ietf.org/html/rfc8422
     """
+
     # RFC4492 (now deprecated)
     SECT163K1 = 721
     SECT163R1 = 722
@@ -120,6 +121,7 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
 class EphemeralKeyInfo(ABC):
     """Common fields shared by all kinds of TLS key exchanges.
     """
+
     type: OpenSslEvpPkeyEnum
     type_name: str = field(init=False)
     size: int
@@ -127,7 +129,7 @@ class EphemeralKeyInfo(ABC):
 
     def __post_init__(self) -> None:
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
-        object.__setattr__(self, 'type_name', _OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.type])
+        object.__setattr__(self, "type_name", _OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.type])
 
 
 @dataclass(frozen=True)
@@ -138,7 +140,7 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
     def __post_init__(self) -> None:
         super().__post_init__()
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
-        object.__setattr__(self, 'curve_name', _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve])
+        object.__setattr__(self, "curve_name", _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve])
 
 
 @dataclass(frozen=True)
