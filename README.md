@@ -4,7 +4,9 @@ nassl
 
 [![Linux Build Status](https://travis-ci.org/nabla-c0d3/nassl.svg?branch=master)](https://travis-ci.org/nabla-c0d3/nassl)
 [![Windows Build status](https://ci.appveyor.com/api/projects/status/w4571k2gq2lxu1ku?svg=true)](https://ci.appveyor.com/project/nabla-c0d3/nassl)
-[![PyPI version](https://badge.fury.io/py/nassl.svg)](https://badge.fury.io/py/nassl)
+[![PyPI version](https://img.shields.io/pypi/v/nassl.svg)](https://pypi.org/project/nassl/)
+[![PyPI wheel](https://img.shields.io/pypi/wheel/nassl.svg)](https://pypi.org/project/nassl/)
+[![PyPI version](https://img.shields.io/pypi/pyversions/nassl.svg)](https://pypi.org/project/nassl/)
 
 Experimental OpenSSL wrapper for Python 3.7+ and SSLyze. **Do NOT use for anything serious**. This code has not
 been properly tested/reviewed and is absolutely not production ready.
