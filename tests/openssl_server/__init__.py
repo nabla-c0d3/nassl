@@ -243,7 +243,7 @@ class ModernOpenSslServer(_OpenSslServer):
         extra_args = []
 
         if prefer_server_order:
-            extra_args.append(f"-serverpref")
+            extra_args.append("-serverpref")
 
         if groups:
             extra_args.append(f"-groups {groups}")
