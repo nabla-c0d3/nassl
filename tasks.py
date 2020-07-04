@@ -25,8 +25,8 @@ def test(ctx):
 def package_linux_wheels(ctx):
     """Build the Linux 32 and 64 bit wheels using Docker.
     """
-    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_i686 bash /io/build_linux_wheels.sh")
-    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux1_x86_64 bash /io/build_linux_wheels.sh")
+    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_i686 bash /io/build_linux_wheels.sh")
+    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_x86_64 bash /io/build_linux_wheels.sh")
 
 
 @task

@@ -10,7 +10,7 @@ from build_tasks import (
     CURRENT_PLATFORM,
 )
 from nassl import __author__, __version__
-from setuptools import setup, Extension
+from setuptools import setup, Extension, find_packages
 
 SHOULD_BUILD_FOR_DEBUG = False
 
@@ -18,7 +18,8 @@ SHOULD_BUILD_FOR_DEBUG = False
 NASSL_SETUP = {
     "name": "nassl",
     "version": __version__,
-    "package_dir": {"nassl": "nassl"},
+    "packages": find_packages(exclude=["docs", "tests"]),
+    "package_data": {"nassl": ["py.typed"]},
     "py_modules": [
         "nassl.__init__",
         "nassl.ssl_client",

@@ -13,12 +13,12 @@ from nassl.ssl_client import (
     OpenSSLError,
     OpenSslEarlyDataStatusEnum,
 )
-from nassl.key_exchange_info import (
+from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
     OpenSslEcNidEnum,
-    DhKeyExchangeInfo,
+    DhEphemeralKeyInfo,
     NistEcDhKeyExchangeInfo,
-    EcDhKeyExchangeInfo,
+    EcDhEphemeralKeyInfo,
 )
 from nassl.cert_chain_verifier import CertificateChainVerificationFailed
 from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
@@ -129,12 +129,12 @@ class TestSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
             assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
-            assert dh_info.key_size > 0
-            assert len(dh_info.public_key) > 0
+            assert dh_info.type == OpenSslEvpPkeyEnum.EC
+            assert dh_info.size > 0
+            assert len(dh_info.public_bytes) > 0
             assert len(dh_info.x) > 0
             assert len(dh_info.y) > 0
 
@@ -153,12 +153,12 @@ class TestSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
-            assert isinstance(dh_info, DhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.DH
-            assert dh_info.key_size > 0
-            assert len(dh_info.public_key) > 0
+            assert isinstance(dh_info, DhEphemeralKeyInfo)
+            assert dh_info.type == OpenSslEvpPkeyEnum.DH
+            assert dh_info.size > 0
+            assert len(dh_info.public_bytes) > 0
             assert len(dh_info.prime) > 0
             assert len(dh_info.generator) > 0
 
@@ -177,7 +177,7 @@ class TestSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
             assert dh_info is None
 
@@ -245,13 +245,13 @@ class TestModernSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
             assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
-            assert dh_info.key_size == 256
+            assert dh_info.type == OpenSslEvpPkeyEnum.EC
+            assert dh_info.size == 256
             assert dh_info.curve == OpenSslEcNidEnum.PRIME256V1
-            assert len(dh_info.public_key) == 65
+            assert len(dh_info.public_bytes) == 65
             assert len(dh_info.x) == 32
             assert len(dh_info.y) == 32
 
@@ -270,13 +270,13 @@ class TestModernSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
-            assert isinstance(dh_info, EcDhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.X25519
-            assert dh_info.key_size == 253
+            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
+            assert dh_info.type == OpenSslEvpPkeyEnum.X25519
+            assert dh_info.size == 253
             assert dh_info.curve == OpenSslEcNidEnum.X25519
-            assert len(dh_info.public_key) == 32
+            assert len(dh_info.public_bytes) == 32
 
     def test_get_dh_info_ecdh_x448(self):
         with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X448") as server:
@@ -293,14 +293,14 @@ class TestModernSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
-            assert isinstance(dh_info, EcDhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.X448
-            assert dh_info.key_size == 448
+            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
+            assert dh_info.type == OpenSslEvpPkeyEnum.X448
+            assert dh_info.size == 448
             assert dh_info.curve == OpenSslEcNidEnum.X448
-            assert len(dh_info.public_key) == 56
-            
+            assert len(dh_info.public_bytes) == 56
+
     def test_set1_groups_list_curve_secp192k1(self):
         with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -318,10 +318,9 @@ class TestModernSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
-            assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.EC
+            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == OpenSslEcNidEnum.SECP192K1
 
     def test_set1_groups_list_curve_x448(self):
@@ -341,10 +340,9 @@ class TestModernSslClientOnline:
             finally:
                 ssl_client.shutdown()
 
-            dh_info = ssl_client.get_dh_info()
+            dh_info = ssl_client.get_ephemeral_key()
 
-            assert isinstance(dh_info, EcDhKeyExchangeInfo)
-            assert dh_info.key_type == OpenSslEvpPkeyEnum.X448
+            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == OpenSslEcNidEnum.X448
 
 

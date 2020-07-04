@@ -1,13 +1,8 @@
-import binascii
 from abc import ABC
 
 from enum import IntEnum
 from dataclasses import dataclass, field
 from typing import Dict
-
-
-def hexlify(byte_array: bytearray) -> str:
-    return binascii.hexlify(byte_array).decode("ascii")
 
 
 class OpenSslEvpPkeyEnum(IntEnum):
@@ -67,6 +62,7 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
     OpenSslEvpPkeyEnum.X448: "ECDH",
 }
 
+
 # Mapping between the OpenSSL NID_XXX value and NIST name defined in https://tools.ietf.org/html/rfc4492
 _OPENSSL_NID_TO_NIST_MAPPING: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECT163R2: "B-163",
@@ -85,6 +81,7 @@ _OPENSSL_NID_TO_NIST_MAPPING: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECP384R1: "P-384",
     OpenSslEcNidEnum.SECP521R1: "P-521",
 }
+
 
 # Mapping between the OpenSSL NID_XXX value and the SECG or ANSI X9.62 name (https://tools.ietf.org/html/rfc4492)
 # Where a ANSI X9.62 name is available, this is used in preference to the SECG
@@ -120,36 +117,39 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
 }
 
 
-@dataclass
-class KeyExchangeInfo(ABC):
+@dataclass(frozen=True)
+class EphemeralKeyInfo(ABC):
     """Common fields shared by all kinds of TLS key exchanges.
     """
 
-    key_type: OpenSslEvpPkeyEnum
-    key_type_name: str = field(init=False)
-    key_size: int
-    public_key: bytearray
+    type: OpenSslEvpPkeyEnum
+    type_name: str = field(init=False)
+    size: int
+    public_bytes: bytearray
 
     def __post_init__(self) -> None:
-        self.key_type_name = _OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.key_type]
+        # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
+        object.__setattr__(self, "type_name", _OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.type])
 
 
-@dataclass
-class EcDhKeyExchangeInfo(KeyExchangeInfo):
+@dataclass(frozen=True)
+class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
     curve: OpenSslEcNidEnum
     curve_name: str = field(init=False)
 
     def __post_init__(self) -> None:
-        self.curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve]
+        super().__post_init__()
+        # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
+        object.__setattr__(self, "curve_name", _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve])
 
 
-@dataclass
-class NistEcDhKeyExchangeInfo(EcDhKeyExchangeInfo):
+@dataclass(frozen=True)
+class NistEcDhKeyExchangeInfo(EcDhEphemeralKeyInfo):
     x: bytearray
     y: bytearray
 
 
-@dataclass
-class DhKeyExchangeInfo(KeyExchangeInfo):
+@dataclass(frozen=True)
+class DhEphemeralKeyInfo(EphemeralKeyInfo):
     prime: bytearray
     generator: bytearray
