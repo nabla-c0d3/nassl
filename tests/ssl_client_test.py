@@ -302,7 +302,10 @@ class TestModernSslClientOnline:
             assert len(dh_info.public_bytes) == 56
 
     def test_set1_groups_list_curve_secp192k1(self):
-        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1") as server:
+        with ModernOpenSslServer(
+                cipher="ECDHE-RSA-AES256-SHA",
+                groups="X25519:prime256v1:secp384r1:secp192k1"
+        ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -324,7 +327,10 @@ class TestModernSslClientOnline:
             assert dh_info.curve == OpenSslEcNidEnum.SECP192K1
 
     def test_set1_groups_list_curve_x448(self):
-        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:X448:secp384r1:secp192k1") as server:
+        with ModernOpenSslServer(
+                cipher="ECDHE-RSA-AES256-SHA",
+                groups="X25519:prime256v1:X448:secp384r1:secp192k1"
+        ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
