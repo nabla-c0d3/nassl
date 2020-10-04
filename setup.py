@@ -23,7 +23,7 @@ NASSL_SETUP = {
     "py_modules": [
         "nassl.__init__",
         "nassl.ssl_client",
-        "nassl.key_exchange_info",
+        "nassl.ephemeral_key_info",
         "nassl.legacy_ssl_client",
         "nassl.ocsp_response",
         "nassl.cert_chain_verifier",
