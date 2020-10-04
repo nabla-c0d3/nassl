@@ -301,7 +301,7 @@ class TestModernSslClientOnline:
             assert dh_info.curve == OpenSslEcNidEnum.X448
             assert len(dh_info.public_bytes) == 56
 
-    def test_set1_groups_list_curve_secp192k1(self):
+    def test_set1_groups_curve_secp192k1(self):
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1"
         ) as server:
@@ -313,7 +313,8 @@ class TestModernSslClientOnline:
                 ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
-            ssl_client.set1_groups_list("secp192k1")
+            configured_curve = OpenSslEcNidEnum.SECP192K1
+            ssl_client.set_groups([configured_curve])
 
             try:
                 ssl_client.do_handshake()
@@ -323,9 +324,9 @@ class TestModernSslClientOnline:
             dh_info = ssl_client.get_ephemeral_key()
 
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
-            assert dh_info.curve == OpenSslEcNidEnum.SECP192K1
+            assert dh_info.curve == configured_curve
 
-    def test_set1_groups_list_curve_x448(self):
+    def test_set1_groups_curve_x448(self):
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:X448:secp384r1:secp192k1"
         ) as server:
@@ -337,7 +338,8 @@ class TestModernSslClientOnline:
                 ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
 
-            ssl_client.set1_groups_list("X448")
+            configured_curve = OpenSslEcNidEnum.X448
+            ssl_client.set_groups([configured_curve])
 
             try:
                 ssl_client.do_handshake()
@@ -347,7 +349,7 @@ class TestModernSslClientOnline:
             dh_info = ssl_client.get_ephemeral_key()
 
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
-            assert dh_info.curve == OpenSslEcNidEnum.X448
+            assert dh_info.curve == configured_curve
 
 
 class TestLegacySslClientOnline:

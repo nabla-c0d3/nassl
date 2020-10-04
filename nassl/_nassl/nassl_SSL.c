@@ -256,19 +256,49 @@ static PyObject* nassl_SSL_get_max_early_data(nassl_SSL_Object *self, PyObject *
     return Py_BuildValue("I", returnValue);
 }
 
-static PyObject* nassl_SSL_set1_groups_list(nassl_SSL_CTX_Object *self, PyObject *args)
+static PyObject* nassl_SSL_set1_groups(nassl_SSL_Object *self, PyObject *args)
 {
-    char *supportedGroups = NULL;
-    if (PyArg_ParseTuple(args, "s", &supportedGroups) == NULL)
+    int i = 0;
+    PyObject *pyListOfOpensslNids;
+    Py_ssize_t nidsCount = 0;
+    int *listOfNids;
+
+    // Parse the Python list
+    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &pyListOfOpensslNids))
     {
         return NULL;
     }
 
-    if (SSL_set1_groups_list(self->sslCtx, supportedGroups) != 1)
+    // Extract each NID int from the list
+    nidsCount = PyList_Size(pyListOfOpensslNids);
+    listOfNids = (int *) PyMem_Malloc(nidsCount * sizeof(int));
+    if (listOfNids == NULL)
     {
+        return PyErr_NoMemory();
+    }
+
+    for (i=0; i<nidsCount; i++)
+    {
+        PyLongObject *pyNid;
+        int nid;
+
+        pyNid = (PyLongObject *) PyList_GetItem(pyListOfOpensslNids, i);
+        if ((pyNid == NULL) || (!PyLong_Check(pyNid)))
+        {
+            PyMem_Free(listOfNids);
+            return NULL;
+        }
+        nid = PyLong_AsSize_t(pyNid);
+        listOfNids[i] = nid;
+    }
+
+    if (SSL_set1_groups(self->ssl, listOfNids, nidsCount) != 1)
+    {
+        PyMem_Free(listOfNids);
         return raise_OpenSSL_error();
     }
 
+    PyMem_Free(listOfNids);
     Py_RETURN_NONE;
 }
 #endif
@@ -1151,8 +1181,8 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
      "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
     },
-    {"set1_groups_list", (PyCFunction)nassl_SSL_set1_groups_list, METH_VARARGS,
-    "OpenSSL's SSL_set1_groups_list()"
+    {"set1_groups", (PyCFunction)nassl_SSL_set1_groups, METH_VARARGS,
+    "OpenSSL's SSL_set1_groups()"
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,
