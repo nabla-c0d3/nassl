@@ -95,6 +95,7 @@ class BaseSslClient(ABC):
         client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
         client_key_password: str = "",
         ignore_client_authentication_requests: bool = False,
+        server_name_indication: Optional[str] = None,
     ) -> None:
         self._init_base_objects(ssl_version, underlying_socket)
 
@@ -110,6 +111,8 @@ class BaseSslClient(ABC):
         )
         # Now create the SSL object
         self._init_ssl_objects()
+        if server_name_indication is not None:
+            self._ssl.set_tlsext_host_name(server_name_indication)
 
     def _init_base_objects(self, ssl_version: OpenSslVersionEnum, underlying_socket: Optional[socket.socket]) -> None:
         """Setup the socket and SSL_CTX objects.
