@@ -278,30 +278,7 @@ class TestModernSslClientOnline:
             assert dh_info.curve == OpenSslEcNidEnum.X25519
             assert len(dh_info.public_bytes) == 32
 
-    def test_get_dh_info_ecdh_x448(self):
-        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X448") as server:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            sock.connect((server.hostname, server.port))
-
-            ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
-            )
-
-            try:
-                ssl_client.do_handshake()
-            finally:
-                ssl_client.shutdown()
-
-            dh_info = ssl_client.get_ephemeral_key()
-
-            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
-            assert dh_info.type == OpenSslEvpPkeyEnum.X448
-            assert dh_info.size == 448
-            assert dh_info.curve == OpenSslEcNidEnum.X448
-            assert len(dh_info.public_bytes) == 56
-
-    def test_set1_groups_curve_secp192k1(self):
+    def test_set_groups_curve_secp192k1(self):
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1"
@@ -328,7 +305,7 @@ class TestModernSslClientOnline:
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == configured_curve
 
-    def test_set1_groups_curve_x448(self):
+    def test_set_groups_curve_x448(self):
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:X448:secp384r1:secp192k1"
@@ -354,6 +331,9 @@ class TestModernSslClientOnline:
             dh_info = ssl_client.get_ephemeral_key()
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == configured_curve
+            assert dh_info.type == OpenSslEvpPkeyEnum.X448
+            assert dh_info.size == 448
+            assert len(dh_info.public_bytes) == 56
 
 
 class TestLegacySslClientOnline:
@@ -378,25 +358,7 @@ class TestLegacySslClientOnline:
 
 
 class TestModernSslClientOnlineTls13:
-    def test_set_ciphersuites(self):
-        # Given an SslClient for TLS 1.3
-        ssl_client = SslClient(
-            ssl_version=OpenSslVersionEnum.TLSV1_3,
-            ssl_verify=OpenSslVerifyEnum.NONE,
-            ignore_client_authentication_requests=True,
-        )
-
-        # With the default list of cipher disabled
-        ssl_client.set_cipher_list("")
-
-        # When setting a specific TLS 1.3 cipher suite as the list of supported ciphers
-        ssl_client.set_ciphersuites("TLS_CHACHA20_POLY1305_SHA256")
-
-        # That one cipher suite is the only one enabled
-        ciphers = ssl_client.get_cipher_list()
-        assert ["TLS_CHACHA20_POLY1305_SHA256"] == ciphers
-
-    def test_tls_1_3(self):
+    def test(self):
         # Given a server that supports TLS 1.3
         with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -411,6 +373,28 @@ class TestModernSslClientOnlineTls13:
                 ssl_client.do_handshake()
             finally:
                 ssl_client.shutdown()
+
+    def test_set_ciphersuites(self):
+        # Given a server that supports TLS 1.3
+        with ModernOpenSslServer() as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that only supports a specific TLS 1.3 cipher suite
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+            )
+            ssl_client.set_ciphersuites("TLS_CHACHA20_POLY1305_SHA256")
+
+            # When doing the TLS 1.3 handshake, it succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+        # And client's cipher suite was used
+        assert "TLS_CHACHA20_POLY1305_SHA256" == ssl_client.get_current_cipher_name()
 
     @staticmethod
     def _create_tls_1_3_session(server_host: str, server_port: int) -> _nassl.SSL_SESSION:
@@ -432,7 +416,7 @@ class TestModernSslClientOnlineTls13:
             ssl_client.shutdown()
         return session
 
-    def test_tls_1_3_write_early_data_does_not_finish_handshake(self):
+    def test_write_early_data_does_not_finish_handshake(self):
         # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=512) as server:
             # That has a previous TLS 1.3 session with the server
@@ -471,7 +455,7 @@ class TestModernSslClientOnlineTls13:
 
             ssl_client_early_data.shutdown()
 
-    def test_tls_1_3_write_early_data_fail_when_used_on_non_reused_session(self):
+    def test_write_early_data_fail_when_used_on_non_reused_session(self):
         # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=512) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -490,7 +474,7 @@ class TestModernSslClientOnlineTls13:
 
             ssl_client.shutdown()
 
-    def test_tls_1_3_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self):
+    def test_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self):
         # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=1) as server:
             # That has a previous TLS 1.3 session with the server
@@ -525,7 +509,7 @@ class TestModernSslClientOnlineTls13:
 
             ssl_client_early_data.shutdown()
 
-    def test_client_authentication_tls_1_3(self):
+    def test_client_authentication(self):
         # Given a server that requires client authentication
         with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides an invalid client certificate (actually the server cert)
