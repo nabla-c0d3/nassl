@@ -302,6 +302,7 @@ class TestModernSslClientOnline:
             assert len(dh_info.public_bytes) == 56
 
     def test_set1_groups_curve_secp192k1(self):
+        # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1"
         ) as server:
@@ -309,24 +310,26 @@ class TestModernSslClientOnline:
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
+            # And a client that only supports a specific curve: SECP192K1
             ssl_client = SslClient(
                 ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
-
             configured_curve = OpenSslEcNidEnum.SECP192K1
             ssl_client.set_groups([configured_curve])
 
+            # When the client connects to the server
             try:
                 ssl_client.do_handshake()
             finally:
                 ssl_client.shutdown()
 
+            # The curve enabled in the client is the one that was used
             dh_info = ssl_client.get_ephemeral_key()
-
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == configured_curve
 
     def test_set1_groups_curve_x448(self):
+        # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:X448:secp384r1:secp192k1"
         ) as server:
@@ -334,20 +337,21 @@ class TestModernSslClientOnline:
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
+            # And a client that only supports a specific curve: X448
             ssl_client = SslClient(
                 ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
             )
-
             configured_curve = OpenSslEcNidEnum.X448
             ssl_client.set_groups([configured_curve])
 
+            # When the client connects to the server
             try:
                 ssl_client.do_handshake()
             finally:
                 ssl_client.shutdown()
 
+            # The curve enabled in the client is the one that was used
             dh_info = ssl_client.get_ephemeral_key()
-
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == configured_curve
 
