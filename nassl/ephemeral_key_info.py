@@ -112,8 +112,8 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.PRIME256V1: "prime256v1",  # Also valid for SECP256R1
     OpenSslEcNidEnum.SECP384R1: "secp384r1",
     OpenSslEcNidEnum.SECP521R1: "secp521r1",
-    OpenSslEcNidEnum.X25519: "x25519",
-    OpenSslEcNidEnum.X448: "x448",
+    OpenSslEcNidEnum.X25519: "X25519",
+    OpenSslEcNidEnum.X448: "X448",
 }
 
 
