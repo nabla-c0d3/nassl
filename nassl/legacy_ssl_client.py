@@ -19,8 +19,7 @@ from nassl import _nassl_legacy  # type: ignore
 
 
 class LegacySslClient(BaseSslClient):
-    """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.).
-    """
+    """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.)."""
 
     # The legacy client uses the legacy OpenSSL
     _NASSL_MODULE = _nassl_legacy
@@ -67,13 +66,11 @@ class LegacySslClient(BaseSslClient):
 
     @staticmethod
     def get_available_compression_methods() -> List[str]:
-        """Returns the list of SSL compression methods supported by SslClient.
-        """
+        """Returns the list of SSL compression methods supported by SslClient."""
         return _nassl_legacy.SSL.get_available_compression_methods()
 
     def do_renegotiate(self) -> None:
-        """Initiate an SSL renegotiation.
-        """
+        """Initiate an SSL renegotiation."""
         if not self._is_handshake_completed:
             raise IOError("SSL Handshake was not completed; cannot renegotiate.")
 

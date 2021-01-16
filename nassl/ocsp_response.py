@@ -36,7 +36,9 @@ class SignedCertificateTimestampsExtension:
     signed_certificate_timestamps: List[SignedCertificateTimestamp]
 
     @classmethod
-    def from_openssl(cls, openssl_ocsp_response: _nassl.OCSP_RESPONSE) -> "SignedCertificateTimestampsExtension":
+    def from_openssl(
+        cls, openssl_ocsp_response: _nassl.OCSP_RESPONSE
+    ) -> "SignedCertificateTimestampsExtension":
         response_text = _openssl_response_to_text(openssl_ocsp_response)
         scts_text_list = response_text.split("Signed Certificate Timestamp")
         if len(scts_text_list) < 2:

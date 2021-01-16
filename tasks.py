@@ -23,23 +23,23 @@ def test(ctx):
 
 @task
 def package_linux_wheels(ctx):
-    """Build the Linux 32 and 64 bit wheels using Docker.
-    """
-    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_i686 bash /io/build_linux_wheels.sh")
-    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_x86_64 bash /io/build_linux_wheels.sh")
+    """Build the Linux 32 and 64 bit wheels using Docker."""
+    ctx.run(
+        f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_i686 bash /io/build_linux_wheels.sh"
+    )
+    ctx.run(
+        f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_x86_64 bash /io/build_linux_wheels.sh"
+    )
 
 
 @task
 def package_wheel(ctx):
-    """Build the binary wheel for the current system; works on Windows anc macOS.
-    """
+    """Build the binary wheel for the current system; works on Windows anc macOS."""
     ctx.run("python setup.py bdist_wheel")
 
 
 @task
 def package_windows_wheels(ctx):
-    """Build the binary wheels for Windows; this expects Python to be installed at specific locations.
-    """
     """Build the binary wheels for Windows; this expects Python to be installed at specific locations."""
     for python_exe in [
         "%userprofile%\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",

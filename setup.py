@@ -123,7 +123,9 @@ MODERN_NASSL_EXT_SETUP.update(
         ],
     }
 )
-MODERN_NASSL_EXT_SETUP["sources"].append("nassl/_nassl/nassl_X509_STORE_CTX.c")  # API only available in modern nassl
+MODERN_NASSL_EXT_SETUP["sources"].append(
+    "nassl/_nassl/nassl_X509_STORE_CTX.c"
+)  # API only available in modern nassl
 
 
 if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
@@ -136,7 +138,9 @@ else:
     MODERN_NASSL_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
 
 
-NASSL_SETUP.update({"ext_modules": [Extension(**LEGACY_NASSL_EXT_SETUP), Extension(**MODERN_NASSL_EXT_SETUP)]})
+NASSL_SETUP.update(
+    {"ext_modules": [Extension(**LEGACY_NASSL_EXT_SETUP), Extension(**MODERN_NASSL_EXT_SETUP)]}
+)
 
 
 if __name__ == "__main__":

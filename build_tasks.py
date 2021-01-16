@@ -26,8 +26,7 @@ _DEPS_PATH = Path(__file__).parent.absolute() / "deps"
 
 
 class SupportedPlatformEnum(Enum):
-    """Platforms supported by nassl.
-    """
+    """Platforms supported by nassl."""
 
     OSX_64 = 1
     LINUX_64 = 2
@@ -59,8 +58,7 @@ elif architecture()[0] == "32bit":
 
 
 class BuildConfig(ABC):
-    """Base class we use to configure and build Zlib and OpenSSL.
-    """
+    """Base class we use to configure and build Zlib and OpenSSL."""
 
     def __init__(self, platform: SupportedPlatformEnum) -> None:
         self.platform = platform
@@ -68,8 +66,7 @@ class BuildConfig(ABC):
     @property
     @abstractmethod
     def src_path(self) -> Path:
-        """Where the src package is extracted to before trying to build it.
-        """
+        """Where the src package is extracted to before trying to build it."""
         pass
 
     def clean(self) -> None:
@@ -78,13 +75,11 @@ class BuildConfig(ABC):
     @property
     @abstractmethod
     def src_tar_gz_url(self) -> str:
-        """Where to download src package from.
-        """
+        """Where to download src package from."""
         pass
 
     def fetch_source(self) -> None:
-        """Download the tar archive that contains the source code for the library.
-        """
+        """Download the tar archive that contains the source code for the library."""
         with TemporaryFile() as temp_file:
             # Download the source archive
             with urlopen(self.src_tar_gz_url) as src_tar_gz_response:
@@ -153,7 +148,10 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             raise ValueError("Unknown platform")
 
         if should_build_for_debug:
-            if self.platform not in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+            if self.platform not in [
+                SupportedPlatformEnum.WINDOWS_32,
+                SupportedPlatformEnum.WINDOWS_64,
+            ]:
                 raise ValueError("Debug builds only supported for Windows")
             else:
                 openssl_target = f"debug-{openssl_target}"
@@ -207,7 +205,9 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             else:
                 ctx.run("ms\\do_win64a.bat")
 
-            ctx.run("nmake -f ms\\nt.mak clean", warn=True)  # Does not work if tmp32 does not exist (fresh build)
+            ctx.run(
+                "nmake -f ms\\nt.mak clean", warn=True
+            )  # Does not work if tmp32 does not exist (fresh build)
             ctx.run("nmake -f ms\\nt.mak")
 
         else:
@@ -322,7 +322,9 @@ class ZlibBuildConfig(BuildConfig):
             masm_path = self.src_path / "contrib" / f"masm{arch}"
             with ctx.cd(str(masm_path)):
                 ctx.run(build_script)
-                ctx.run(f"msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}")
+                ctx.run(
+                    f"msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}"
+                )
 
         else:
             # Linux/macOS build
@@ -335,7 +337,9 @@ class ZlibBuildConfig(BuildConfig):
     def libz_path(self) -> Path:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             arch = "x86" if self.platform == SupportedPlatformEnum.WINDOWS_32 else "x64"
-            zlib_lib_path = self.src_path / "contrib" / "vstudio" / "vc14" / arch / "ZlibStatRelease" / "zlibstat.lib"
+            zlib_lib_path = (
+                self.src_path / "contrib" / "vstudio" / "vc14" / arch / "ZlibStatRelease" / "zlibstat.lib"
+            )
         else:
             zlib_lib_path = self.src_path / "libz.a"
         return zlib_lib_path

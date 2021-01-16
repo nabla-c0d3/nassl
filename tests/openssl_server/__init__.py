@@ -10,15 +10,19 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional, List
 
-from build_tasks import ModernOpenSslBuildConfig, LegacyOpenSslBuildConfig, CURRENT_PLATFORM, SupportedPlatformEnum
+from build_tasks import (
+    ModernOpenSslBuildConfig,
+    LegacyOpenSslBuildConfig,
+    CURRENT_PLATFORM,
+    SupportedPlatformEnum,
+)
 
 
 _logger = logging.getLogger(name="tests.openssl_server")
 
 
 class ClientAuthConfigEnum(Enum):
-    """Whether the server asked for client authentication.
-    """
+    """Whether the server asked for client authentication."""
 
     DISABLED = 1
     OPTIONAL = 2
@@ -26,8 +30,7 @@ class ClientAuthConfigEnum(Enum):
 
 
 class _OpenSslServerIOManager:
-    """Thread to log all output from s_server and reply to incoming connections.
-    """
+    """Thread to log all output from s_server and reply to incoming connections."""
 
     def __init__(self, s_server_stdout, s_server_stdin):
         self.s_server_stdout = s_server_stdout
@@ -67,8 +70,7 @@ class _OpenSslServerIOManager:
 
 
 class _OpenSslServer(ABC):
-    """A wrapper around OpenSSL's s_server CLI.
-    """
+    """A wrapper around OpenSSL's s_server CLI."""
 
     # On Windows with modern OpenSSL, trying to use ports below 10k will fail for some reason
     _AVAILABLE_LOCAL_PORTS = set(range(18110, 18150))
@@ -184,8 +186,7 @@ class _OpenSslServer(ABC):
 
 
 class LegacyOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.0.0e s_server binary.
-    """
+    """A wrapper around the OpenSSL 1.0.0e s_server binary."""
 
     def __init__(
         self,
@@ -216,8 +217,7 @@ class LegacyOpenSslServer(_OpenSslServer):
 
 
 class ModernOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.1.1 s_server binary.
-    """
+    """A wrapper around the OpenSSL 1.1.1 s_server binary."""
 
     @classmethod
     def get_openssl_path(cls):

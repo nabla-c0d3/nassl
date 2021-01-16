@@ -36,7 +36,9 @@ class TestSslClientClientAuthentication:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
             # When doing the handshake the right error is returned
             with pytest.raises(ClientCertificateRequested):
@@ -96,7 +98,9 @@ class TestSslClientOnline:
         sock.connect(("www.google.com", 443))
 
         ssl_client = ssl_client_cls(
-            ssl_version=OpenSslVersionEnum.SSLV23, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+            ssl_version=OpenSslVersionEnum.SSLV23,
+            underlying_socket=sock,
+            ssl_verify=OpenSslVerifyEnum.NONE,
         )
 
         # When doing a TLS handshake, it succeeds
@@ -121,7 +125,9 @@ class TestSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             try:
@@ -145,7 +151,9 @@ class TestSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             try:
@@ -169,7 +177,9 @@ class TestSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             try:
@@ -237,7 +247,9 @@ class TestModernSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             try:
@@ -262,7 +274,9 @@ class TestModernSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             try:
@@ -289,7 +303,9 @@ class TestModernSslClientOnline:
 
             # And a client that only supports a specific curve: SECP192K1
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
             configured_curve = OpenSslEcNidEnum.SECP192K1
             ssl_client.set_groups([configured_curve])
@@ -316,7 +332,9 @@ class TestModernSslClientOnline:
 
             # And a client that only supports a specific curve: X448
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_2, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
             configured_curve = OpenSslEcNidEnum.X448
             ssl_client.set_groups([configured_curve])
@@ -366,7 +384,9 @@ class TestModernSslClientOnlineTls13:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
             # When doing the TLS 1.3 handshake, it succeeds
             try:
@@ -383,7 +403,9 @@ class TestModernSslClientOnlineTls13:
 
             # And a client that only supports a specific TLS 1.3 cipher suite
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
             ssl_client.set_ciphersuites("TLS_CHACHA20_POLY1305_SHA256")
 
@@ -403,7 +425,9 @@ class TestModernSslClientOnlineTls13:
         sock.connect((server_host, server_port))
 
         ssl_client = SslClient(
-            ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+            ssl_version=OpenSslVersionEnum.TLSV1_3,
+            underlying_socket=sock,
+            ssl_verify=OpenSslVerifyEnum.NONE,
         )
 
         try:
@@ -464,7 +488,9 @@ class TestModernSslClientOnlineTls13:
 
             # That does NOT have a previous session with the server
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             # When sending early data
@@ -518,7 +544,9 @@ class TestModernSslClientOnlineTls13:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient(
-                ssl_version=OpenSslVersionEnum.TLSV1_3, underlying_socket=sock, ssl_verify=OpenSslVerifyEnum.NONE
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
             )
 
             # When doing the handshake the right error is returned

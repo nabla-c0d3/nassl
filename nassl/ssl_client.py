@@ -22,8 +22,7 @@ from nassl.cert_chain_verifier import CertificateChainVerificationFailed
 
 
 class OpenSslVerifyEnum(IntEnum):
-    """SSL validation options which map to the SSL_VERIFY_XXX OpenSSL constants.
-    """
+    """SSL validation options which map to the SSL_VERIFY_XXX OpenSSL constants."""
 
     NONE = 0
     PEER = 1
@@ -32,8 +31,7 @@ class OpenSslVerifyEnum(IntEnum):
 
 
 class OpenSslVersionEnum(IntEnum):
-    """SSL version constants.
-    """
+    """SSL version constants."""
 
     SSLV23 = 0
     SSLV2 = 1
@@ -45,8 +43,7 @@ class OpenSslVersionEnum(IntEnum):
 
 
 class OpenSslFileTypeEnum(IntEnum):
-    """Certificate and private key format constants which map to the SSL_FILETYPE_XXX OpenSSL constants.
-    """
+    """Certificate and private key format constants which map to the SSL_FILETYPE_XXX OpenSSL constants."""
 
     PEM = 1
     ASN1 = 2
@@ -77,8 +74,7 @@ class NasslModuleType(ModuleType):
 
 
 class BaseSslClient(ABC):
-    """Common code and methods to the modern and legacy SSL clients.
-    """
+    """Common code and methods to the modern and legacy SSL clients."""
 
     _DEFAULT_BUFFER_SIZE = 4096
 
@@ -115,9 +111,10 @@ class BaseSslClient(ABC):
         if server_name_indication is not None:
             self._ssl.set_tlsext_host_name(server_name_indication)
 
-    def _init_base_objects(self, ssl_version: OpenSslVersionEnum, underlying_socket: Optional[socket.socket]) -> None:
-        """Setup the socket and SSL_CTX objects.
-        """
+    def _init_base_objects(
+        self, ssl_version: OpenSslVersionEnum, underlying_socket: Optional[socket.socket]
+    ) -> None:
+        """Setup the socket and SSL_CTX objects."""
         self._is_handshake_completed = False
         self._ssl_version = ssl_version
         self._ssl_ctx = self._NASSL_MODULE.SSL_CTX(ssl_version.value)
@@ -125,9 +122,10 @@ class BaseSslClient(ABC):
         # A Python socket handles transmission of the data
         self._sock = underlying_socket
 
-    def _init_server_authentication(self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[Path]) -> None:
-        """Setup the certificate validation logic for authenticating the server.
-        """
+    def _init_server_authentication(
+        self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[Path]
+    ) -> None:
+        """Setup the certificate validation logic for authenticating the server."""
         self._ssl_ctx.set_verify(ssl_verify.value)
         if ssl_verify_locations:
             # Ensure the file exists
@@ -143,14 +141,15 @@ class BaseSslClient(ABC):
         client_key_password: str,
         ignore_client_authentication_requests: bool,
     ) -> None:
-        """Setup client authentication using the supplied certificate and key.
-        """
+        """Setup client authentication using the supplied certificate and key."""
         if client_certificate_chain is not None and client_key is not None:
             self._use_private_key(client_certificate_chain, client_key, client_key_type, client_key_password)
 
         if ignore_client_authentication_requests:
             if client_certificate_chain:
-                raise ValueError("Cannot enable both client_certchain_file and ignore_client_authentication_requests")
+                raise ValueError(
+                    "Cannot enable both client_certchain_file and ignore_client_authentication_requests"
+                )
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
@@ -247,8 +246,7 @@ class BaseSslClient(ABC):
                     raise
 
     def write(self, data: bytes) -> int:
-        """Returns the number of (encrypted) bytes sent.
-        """
+        """Returns the number of (encrypted) bytes sent."""
         if self._sock is None:
             raise IOError("Internal socket set to None; cannot perform handshake.")
         if not self._is_handshake_completed:
@@ -278,8 +276,7 @@ class BaseSslClient(ABC):
         return final_length
 
     def shutdown(self) -> None:
-        """Close the TLS connection and the underlying network socket.
-        """
+        """Close the TLS connection and the underlying network socket."""
         self._is_handshake_completed = False
         try:
             self._flush_ssl_engine()
@@ -297,8 +294,7 @@ class BaseSslClient(ABC):
             self._sock.close()
 
     def set_tlsext_host_name(self, name_indication: str) -> None:
-        """Set the hostname within the Server Name Indication extension in the client SSL Hello.
-        """
+        """Set the hostname within the Server Name Indication extension in the client SSL Hello."""
         self._ssl.set_tlsext_host_name(name_indication)
 
     def set_cipher_list(self, cipher_list: str) -> None:
@@ -359,13 +355,11 @@ class BaseSslClient(ABC):
     _TLSEXT_STATUSTYPE_ocsp = 1
 
     def set_tlsext_status_ocsp(self) -> None:
-        """Enable the OCSP Stapling extension.
-        """
+        """Enable the OCSP Stapling extension."""
         self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
 
     def get_tlsext_status_ocsp_resp(self) -> Optional[OcspResponse]:
-        """Retrieve the server's OCSP Stapling status.
-        """
+        """Retrieve the server's OCSP Stapling status."""
         ocsp_response = self._ssl.get_tlsext_status_ocsp_resp()
         if ocsp_response:
             return OcspResponse.from_openssl(ocsp_response)
@@ -376,13 +370,11 @@ class BaseSslClient(ABC):
         return self._ssl.get_client_CA_list()
 
     def get_session(self) -> _nassl.SSL_SESSION:
-        """Get the SSL connection's Session object.
-        """
+        """Get the SSL connection's Session object."""
         return self._ssl.get_session()
 
     def set_session(self, ssl_session: _nassl.SSL_SESSION) -> None:
-        """Set the SSL connection's Session object.
-        """
+        """Set the SSL connection's Session object."""
         self._ssl.set_session(ssl_session)
 
     _SSL_OP_NO_TICKET = 0x00004000  # No TLS Session tickets
@@ -400,8 +392,7 @@ class BaseSslClient(ABC):
 
 
 class OpenSslEarlyDataStatusEnum(IntEnum):
-    """Early data status constants.
-    """
+    """Early data status constants."""
 
     NOT_SENT = 0
     REJECTED = 1
@@ -419,8 +410,7 @@ class SslClient(BaseSslClient):
     _NASSL_MODULE = _nassl
 
     def write_early_data(self, data: bytes) -> int:
-        """Returns the number of (encrypted) bytes sent.
-        """
+        """Returns the number of (encrypted) bytes sent."""
         if self._is_handshake_completed:
             raise IOError("SSL Handshake was completed; cannot send early data.")
 
@@ -441,8 +431,7 @@ class SslClient(BaseSslClient):
         self._ssl.set_ciphersuites(cipher_suites)
 
     def set_groups(self, supported_groups: List[OpenSslEcNidEnum]) -> None:
-        """Specify elliptic curves or DH groups that are supported by the client in descending order.
-        """
+        """Specify elliptic curves or DH groups that are supported by the client in descending order."""
         self._ssl.set1_groups(supported_groups)
 
     def get_verified_chain(self) -> List[str]:
