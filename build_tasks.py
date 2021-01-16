@@ -40,7 +40,7 @@ class SupportedPlatformEnum(Enum):
 CURRENT_PLATFORM = None
 if architecture()[0] == "64bit":
     if platform == "darwin":
-        if machine() == 'x86_64':
+        if machine() == "x86_64":
             CURRENT_PLATFORM = SupportedPlatformEnum.OSX_64
         else:
             CURRENT_PLATFORM = SupportedPlatformEnum.OSX_ARM64
