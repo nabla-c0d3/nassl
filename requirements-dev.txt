@@ -1,0 +1,43 @@
+-i https://pypi.org/simple
+appdirs==1.4.4
+atomicwrites==1.4.0 ; sys_platform == 'win32'
+attrs==19.3.0
+black==19.3b0
+bleach==3.1.5
+certifi==2020.6.20
+chardet==3.0.4
+click==7.1.2
+colorama==0.4.3 ; sys_platform == 'win32'
+docutils==0.16
+flake8==3.8.3
+idna==2.9
+importlib-metadata==1.6.1 ; python_version < '3.8'
+invoke==1.4.1
+keyring==21.2.1
+mccabe==0.6.1
+more-itertools==8.4.0
+mypy-extensions==0.4.3
+mypy==0.781
+packaging==20.4
+pkginfo==1.5.0.1
+pluggy==0.13.1
+py==1.8.2
+pycodestyle==2.6.0
+pyflakes==2.2.0
+pygments==2.6.1
+pyparsing==2.4.7
+pytest==5.4.3
+pywin32-ctypes==0.2.0 ; sys_platform == 'win32'
+readme-renderer==26.0
+requests-toolbelt==0.9.1
+requests==2.24.0
+six==1.15.0
+toml==0.10.1
+tqdm==4.46.1
+twine==3.1.1
+typed-ast==1.4.1
+typing-extensions==3.7.4.2
+urllib3==1.25.9
+wcwidth==0.2.4
+webencodings==0.5.1
+zipp==3.1.0
