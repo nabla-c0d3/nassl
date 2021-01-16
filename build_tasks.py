@@ -7,6 +7,7 @@ from tempfile import TemporaryFile
 from platform import architecture, machine
 from sys import platform
 from typing import Optional, Any
+from urllib.request import urlopen
 
 try:
     from invoke import task, Context
@@ -84,14 +85,14 @@ class BuildConfig(ABC):
     def fetch_source(self) -> None:
         """Download the tar archive that contains the source code for the library.
         """
-        import requests  # Do not import at the top that this file can be imported by setup.py
-
         with TemporaryFile() as temp_file:
             # Download the source archive
-            request = requests.get(self.src_tar_gz_url)
-            temp_file.write(request.content)
+            with urlopen(self.src_tar_gz_url) as src_tar_gz_response:
+                temp_file.write(src_tar_gz_response.read())
+
             # Rewind the file
             temp_file.seek(0)
+
             # Extract the content of the archive
             tar_file = tarfile.open(fileobj=temp_file)
             tar_file.extractall(path=_DEPS_PATH)

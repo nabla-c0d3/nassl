@@ -15,7 +15,6 @@ mypy = "*"
 pytest = "*"
 twine = "*"
 invoke = "*"
-requests = "*"
 black = "==19.3b0"
 
 
