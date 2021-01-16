@@ -29,7 +29,11 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BUILD: "cp37-* cp38-* cp39-*"
-          CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.all"
+          # The C libraries (OpenSSL and Zlib) only need to be built once per OS
+          # as they are not tied to a specific Python version
+          CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.deps"
+          # However the nassl C extension is by design tied to a specific Python version
+          CIBW_BEFORE_BUILD: "invoke build.nassl"
           CIBW_TEST_REQUIRES: "invoke pytest mypy flake8 black"
           CIBW_TEST_COMMAND: "python -m pytest {project}/tests"
 
