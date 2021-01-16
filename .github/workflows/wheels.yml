@@ -19,7 +19,7 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==1.7.4
 
-      - name Build dependencies
+      - name: Build dependencies
         run: invoke build.all
 
       - name: Build wheels
