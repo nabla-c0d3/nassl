@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
 from tempfile import TemporaryFile
-from platform import architecture
+from platform import architecture, machine
 from sys import platform
 from typing import Optional, Any
 
@@ -34,12 +34,16 @@ class SupportedPlatformEnum(Enum):
     WINDOWS_32 = 4
     WINDOWS_64 = 5
     OPENBSD_64 = 6
+    OSX_ARM64 = 7
 
 
 CURRENT_PLATFORM = None
 if architecture()[0] == "64bit":
     if platform == "darwin":
-        CURRENT_PLATFORM = SupportedPlatformEnum.OSX_64
+        if machine() == 'x86_64':
+            CURRENT_PLATFORM = SupportedPlatformEnum.OSX_64
+        else:
+            CURRENT_PLATFORM = SupportedPlatformEnum.OSX_ARM64
     elif platform in ["linux", "linux2"]:
         CURRENT_PLATFORM = SupportedPlatformEnum.LINUX_64
     elif platform == "win32":
@@ -138,6 +142,8 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             openssl_target = "VC-WIN64A"
         elif self.platform == SupportedPlatformEnum.OSX_64:
             openssl_target = "darwin64-x86_64-cc"
+        elif self.platform == SupportedPlatformEnum.OSX_ARM64:
+            openssl_target = "arm64-x86_64-cc"
         elif self.platform == SupportedPlatformEnum.LINUX_64:
             openssl_target = "linux-x86_64"
         elif self.platform == SupportedPlatformEnum.LINUX_32:
