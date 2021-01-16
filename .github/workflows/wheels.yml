@@ -33,8 +33,8 @@ jobs:
           # as they are not tied to a specific Python version
           CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.deps"
           # However the nassl C extension is by design tied to a specific Python version
-          CIBW_BEFORE_BUILD: "invoke build.nassl"
-          CIBW_TEST_REQUIRES: "invoke pytest mypy flake8 black"
+          CIBW_BEFORE_BUILD: "python -m pip install invoke && invoke build.nassl"
+          CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "python -m pytest {project}/tests"
 
       - uses: actions/upload-artifact@v2
