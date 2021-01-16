@@ -40,7 +40,11 @@ def package_wheel(ctx):
 def package_windows_wheels(ctx):
     """Build the binary wheels for Windows; this expects Python to be installed at specific locations.
     """
-    for python_exe in ["D:\\Python36\\python.exe", "D:\\Python37\\python.exe"]:
+    """Build the binary wheels for Windows; this expects Python to be installed at specific locations."""
+    for python_exe in [
+        "%userprofile%\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
+        "%userprofile%\\AppData\\Local\\Programs\\Python\\Python38\\python.exe",
+    ]:
         ctx.run(f"{python_exe} setup.py bdist_wheel")
 
 
