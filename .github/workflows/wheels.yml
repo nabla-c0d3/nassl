@@ -30,6 +30,8 @@ jobs:
         env:
           CIBW_BUILD: "cp37-* cp38-* cp39-*"
           CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.all"
+          CIBW_TEST_REQUIRES: "pytest mypy flake8 black"
+          CIBW_TEST_COMMAND: "invoke test"
 
       - uses: actions/upload-artifact@v2
         with:
