@@ -10,13 +10,13 @@ root_path = Path(__file__).parent.absolute()
 
 @task
 def test(ctx):
-    # Run the test suite
-    ctx.run("pytest")
-
     # Run linters
     ctx.run("mypy sample_client.py")
     ctx.run("flake8")
     ctx.run("black . --check")
+
+    # Run the test suite
+    ctx.run("pytest --durations 5")
 
     ctx.run("python sample_client.py")
 
