@@ -1,6 +1,10 @@
 name: Build Wheels
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ release ]
+  pull_request:
+    branches: [ release ]
 
 jobs:
   build_wheels:

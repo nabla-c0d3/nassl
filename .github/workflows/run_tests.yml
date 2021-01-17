@@ -1,10 +1,6 @@
 name: Lint & Test
 
-on:
-  push:
-    branches: [ release ]
-  pull_request:
-    branches: [ release ]
+on: [push, pull_request]
 
 jobs:
   build:
