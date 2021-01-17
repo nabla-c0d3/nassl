@@ -32,7 +32,7 @@ jobs:
           CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.deps"
           # However the nassl C extension is by design tied to a specific Python version
           CIBW_BEFORE_BUILD: "python -m pip install invoke && invoke build.nassl"
-          CIBW_BEFORE_BUILD_WINDOWS: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"'
+          CIBW_BEFORE_ALL_WINDOWS: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"'
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "python -m pytest {project}/tests"
 
