@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from nassl.ocsp_response import verify_ocsp_response
 from nassl.ssl_client import OpenSslVersionEnum, SslClient, OpenSslVerifyEnum
 import socket
 
@@ -30,8 +31,7 @@ for pem_cert in ssl_client.get_verified_chain():
 ocsp_resp = ssl_client.get_tlsext_status_ocsp_resp()
 if ocsp_resp:
     print("OCSP Stapling")
-    ocsp_resp.verify(Path(mozilla_store))
-    print(ocsp_resp.status)
+    verify_ocsp_response(ocsp_resp, Path(mozilla_store))
 
 print("\nCipher suite")
 print(ssl_client.get_current_cipher_name())

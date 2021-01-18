@@ -9,7 +9,6 @@ from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
 from enum import IntEnum
 from typing import List, Any
 from typing import Optional
-from nassl.ocsp_response import OcspResponse
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
     EphemeralKeyInfo,
@@ -358,13 +357,16 @@ class BaseSslClient(ABC):
         """Enable the OCSP Stapling extension."""
         self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
 
-    def get_tlsext_status_ocsp_resp(self) -> Optional[OcspResponse]:
-        """Retrieve the server's OCSP Stapling status."""
-        ocsp_response = self._ssl.get_tlsext_status_ocsp_resp()
-        if ocsp_response:
-            return OcspResponse.from_openssl(ocsp_response)
-        else:
-            return None
+    def get_tlsext_status_ocsp_resp(self) -> Optional[_nassl.OCSP_RESPONSE]:
+        """Retrieve the server's OCSP response.
+
+        Will return None if OCSP Stapling was not enabled before the handshake or if the server did not return
+        an OCSP response.
+
+        The response can be parsed for example using cryptography:
+            load_der_ocsp_response(ocsp_resp.as_der_bytes())
+        """
+        return self._ssl.get_tlsext_status_ocsp_resp()
 
     def get_client_CA_list(self) -> List[str]:
         return self._ssl.get_client_CA_list()

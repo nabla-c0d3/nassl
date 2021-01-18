@@ -79,6 +79,24 @@ static PyObject* nassl_OCSP_RESPONSE_as_text(nassl_OCSP_RESPONSE_Object *self)
 }
 
 
+static PyObject* nassl_OCSP_RESPONSE_as_der_bytes(nassl_OCSP_RESPONSE_Object *self)
+{
+    PyObject *res = NULL;
+    char *ocspBuf = NULL;
+    unsigned int ocspRespLen = 0;
+
+    ocspRespLen = i2d_OCSP_RESPONSE(self->ocspResp, &ocspBuf);
+    if (ocspRespLen < 0)
+    {
+        PyErr_SetString(PyExc_ValueError, "Could not convert OCSP response do DER bytes");
+        return NULL;
+    }
+    res = PyBytes_FromStringAndSize(ocspBuf, ocspRespLen);
+    OPENSSL_free(ocspBuf);
+    return res;
+}
+
+
 static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *self, PyObject *args)
 {
     X509_STORE *trustedCAs = NULL;
@@ -129,23 +147,16 @@ static PyObject* nassl_OCSP_RESPONSE_basic_verify(nassl_OCSP_RESPONSE_Object *se
 }
 
 
-static PyObject* nassl_OCSP_RESPONSE_status(nassl_OCSP_RESPONSE_Object *self)
-{
-    int status = OCSP_response_status(self->ocspResp);
-    return Py_BuildValue("I", status);
-}
-
-
 static PyMethodDef nassl_OCSP_RESPONSE_Object_methods[] =
 {
     {"as_text", (PyCFunction)nassl_OCSP_RESPONSE_as_text, METH_NOARGS,
      "OpenSSL's OCSP_RESPONSE_print()."
     },
+    {"as_der_bytes", (PyCFunction)nassl_OCSP_RESPONSE_as_der_bytes, METH_NOARGS,
+     "OpenSSL's i2d_OCSP_RESPONSE()."
+    },
     {"basic_verify", (PyCFunction)nassl_OCSP_RESPONSE_basic_verify, METH_VARARGS,
      "OpenSSL's OCSP_basic_verify()."
-    },
-    {"get_status", (PyCFunction)nassl_OCSP_RESPONSE_status, METH_VARARGS,
-     "OpenSSL's OCSP_response_status() ."
     },
     {NULL}  // Sentinel
 };
