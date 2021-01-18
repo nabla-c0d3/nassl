@@ -3,7 +3,6 @@ nassl
 
 
 ![Build Status](https://github.com/nabla-c0d3/nassl/workflows/Build/badge.svg)
-[![Windows Build status](https://ci.appveyor.com/api/projects/status/w4571k2gq2lxu1ku?svg=true)](https://ci.appveyor.com/project/nabla-c0d3/nassl)
 [![PyPI version](https://img.shields.io/pypi/v/nassl.svg)](https://pypi.org/project/nassl/)
 [![PyPI wheel](https://img.shields.io/pypi/wheel/nassl.svg)](https://pypi.org/project/nassl/)
 [![PyPI version](https://img.shields.io/pypi/pyversions/nassl.svg)](https://pypi.org/project/nassl/)
