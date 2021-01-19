@@ -1,8 +1,7 @@
 nassl
 =====
 
-
-![Build Status](https://github.com/nabla-c0d3/nassl/workflows/Build/badge.svg)
+![Build Wheels](https://github.com/nabla-c0d3/nassl/workflows/Build%20Wheels/badge.svg)
 [![PyPI version](https://img.shields.io/pypi/v/nassl.svg)](https://pypi.org/project/nassl/)
 [![PyPI wheel](https://img.shields.io/pypi/wheel/nassl.svg)](https://pypi.org/project/nassl/)
 [![PyPI version](https://img.shields.io/pypi/pyversions/nassl.svg)](https://pypi.org/project/nassl/)
