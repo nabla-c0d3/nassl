@@ -28,7 +28,11 @@ jobs:
         env:
           CIBW_BUILD: "cp37-* cp38-* cp39-*"
           CIBW_SKIP: "*-win32 pp*"  # Skip win32 builds and PyPy builds
+          # Build wheels for Apple Silicon
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+          # Build manylinux2014 wheels
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           # The C libraries (OpenSSL and Zlib) only need to be built once per OS
           # as they are not tied to a specific Python version
           CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.deps"
