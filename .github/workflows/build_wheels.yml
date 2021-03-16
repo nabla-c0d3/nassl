@@ -28,6 +28,8 @@ jobs:
         env:
           CIBW_BUILD: "cp37-* cp38-* cp39-*"
           CIBW_SKIP: "*-win32 pp*"  # Skip win32 builds and PyPy builds
+          # Build wheels for Apple Silicon
+          CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
           # Build manylinux2014 wheels
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
