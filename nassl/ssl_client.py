@@ -204,6 +204,9 @@ class BaseSslClient(ABC):
                 if "alert bad certificate" in e.args[0]:
                     # Bad certificate alert (https://github.com/nabla-c0d3/sslyze/issues/313 )
                     raise ClientCertificateRequested(self.get_client_CA_list())
+                if "sslv3 alert certificate unknown" in e.args[0]:
+                    # Some banking websites do that: https://github.com/nabla-c0d3/sslyze/issues/531
+                    raise ClientCertificateRequested(self.get_client_CA_list())
                 else:
                     raise
 
