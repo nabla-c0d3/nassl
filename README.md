@@ -18,16 +18,13 @@ Nassl can be installed directly via pip:
 
     pip install nassl
 
+Development environment
+-----------------------
 
-Dev environment
----------------
+To setup a development environment:
 
-If you want to setup a local environment where you can work on SSLyze, you will first need to install
-[pipenv](https://docs.pipenv.org/). Then, the environment can initialized using:
-
-    $ cd nassl
-    $ pipenv install --dev
-    $ pipenv shell
+    $ pip install --upgrade pip setuptools wheel
+    $ pip install -r dev-requirements.txt
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
