@@ -244,6 +244,9 @@ class BaseSslClient(ABC):
             except OpenSSLError as e:
                 if "tlsv13 alert certificate required" in str(e):
                     raise ClientCertificateRequested(self.get_client_CA_list())
+                elif "alert bad certificate" in e.args[0]:
+                    # Bad certificate alert (https://github.com/nabla-c0d3/sslyze/issues/532 )
+                    raise ClientCertificateRequested(self.get_client_CA_list())
                 else:
                     raise
 
