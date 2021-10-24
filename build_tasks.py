@@ -155,7 +155,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
         elif self.platform == SupportedPlatformEnum.LINUX_ARM64:
             openssl_target = "linux-aarch64"
         elif self.platform == SupportedPlatformEnum.LINUX_ARM32:
-            openssl_target = 'linux-armv4'
+            openssl_target = "linux-armv4"
         else:
             raise ValueError("Unknown platform")
 
