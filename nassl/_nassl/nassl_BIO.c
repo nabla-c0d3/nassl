@@ -1,4 +1,4 @@
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <openssl/ssl.h>
@@ -104,7 +104,7 @@ static PyObject* nassl_BIO_pending(nassl_BIO_Object *self, PyObject *args)
 static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args)
 {
     PyObject *res = NULL;
-    unsigned int writeSize;
+    Py_ssize_t writeSize;
     int returnValue;
     char *writeBuffer;
     if (!PyArg_ParseTuple(args, "s#", &writeBuffer, &writeSize))
