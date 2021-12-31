@@ -157,7 +157,7 @@ class _OpenSslServer(ABC):
                 time.sleep(1)
                 attempts_count += 1
 
-                if self._process.poll() is not None or attempts_count > 2:
+                if self._process.poll() is not None or attempts_count > 3:
                     # s_server has terminated early
                     raise RuntimeError("Could not start s_server")
 
