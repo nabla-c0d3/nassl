@@ -1,4 +1,4 @@
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 // Fix symbol clashing on Windows
@@ -158,7 +158,8 @@ static PyObject* nassl_SSL_do_handshake(nassl_SSL_Object *self, PyObject *args)
 
 static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args)
 {
-    int returnValue, readSize;
+    int returnValue;
+    unsigned int readSize;
     char *readBuffer;
     PyObject *res = NULL;
 
@@ -192,7 +193,8 @@ static PyObject* nassl_SSL_read(nassl_SSL_Object *self, PyObject *args)
 
 static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
 {
-    int returnValue, writeSize;
+    int returnValue;
+    Py_ssize_t writeSize;
     char *writeBuffer;
     PyObject *res = NULL;
 
@@ -218,7 +220,8 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
 #ifndef LEGACY_OPENSSL
 static PyObject* nassl_SSL_write_early_data(nassl_SSL_Object *self, PyObject *args)
 {
-    int returnValue, writeSize;
+    int returnValue;
+    Py_ssize_t writeSize;
     size_t writtenDataSize;
     char *writeBuffer;
     PyObject *res = NULL;

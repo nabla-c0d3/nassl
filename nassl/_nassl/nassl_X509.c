@@ -1,4 +1,4 @@
-
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 // Fix symbol clashing on Windows
