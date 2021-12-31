@@ -314,7 +314,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
-        return "http://zlib.net/zlib-1.2.11.tar.gz"
+        return "https://zlib.net/zlib-1.2.11.tar.gz"
 
     @property
     def src_path(self) -> Path:
