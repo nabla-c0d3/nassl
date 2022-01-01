@@ -52,22 +52,6 @@ class OpenSslEcNidEnum(IntEnum):
     X25519 = 1034
     X448 = 1035
 
-    # Brainpool
-    brainpoolP160r1 = 921
-    brainpoolP160t1 = 922
-    brainpoolP192r1 = 923
-    brainpoolP192t1 = 924
-    brainpoolP224r1 = 925
-    brainpoolP224t1 = 926
-    brainpoolP256r1 = 927
-    brainpoolP256t1 = 928
-    brainpoolP320r1 = 929
-    brainpoolP320t1 = 930
-    brainpoolP384r1 = 931
-    brainpoolP384t1 = 932
-    brainpoolP512r1 = 933
-    brainpoolP512t1 = 934
-
 
 # Mapping between OpenSSL EVP_PKEY_XXX value and display name
 _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
@@ -109,20 +93,6 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECP521R1: "secp521r1",
     OpenSslEcNidEnum.X25519: "X25519",
     OpenSslEcNidEnum.X448: "X448",
-    OpenSslEcNidEnum.brainpoolP160r1: "brainpoolP160r1",
-    OpenSslEcNidEnum.brainpoolP160t1: "brainpoolP160t1",
-    OpenSslEcNidEnum.brainpoolP192r1: "brainpoolP192r1",
-    OpenSslEcNidEnum.brainpoolP192t1: "brainpoolP192t1",
-    OpenSslEcNidEnum.brainpoolP224r1: "brainpoolP224r1",
-    OpenSslEcNidEnum.brainpoolP224t1: "brainpoolP224t1",
-    OpenSslEcNidEnum.brainpoolP256r1: "brainpoolP256r1",
-    OpenSslEcNidEnum.brainpoolP256t1: "brainpoolP256t1",
-    OpenSslEcNidEnum.brainpoolP320r1: "brainpoolP320r1",
-    OpenSslEcNidEnum.brainpoolP320t1: "brainpoolP320t1",
-    OpenSslEcNidEnum.brainpoolP384r1: "brainpoolP384r1",
-    OpenSslEcNidEnum.brainpoolP384t1: "brainpoolP384t1",
-    OpenSslEcNidEnum.brainpoolP512r1: "brainpoolP512r1",
-    OpenSslEcNidEnum.brainpoolP512t1: "brainpoolP512t1",
 }
 
 
@@ -150,7 +120,7 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
         try:
             curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve]
         except KeyError:
-            curve_name = f"unknown-curve-with-id-{self.curve.value}"
+            curve_name = f"unknown-curve-with-openssl-id-{self.curve.value}"
 
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(self, "curve_name", curve_name)
