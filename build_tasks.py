@@ -314,11 +314,11 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
-        return "https://zlib.net/zlib-1.2.11.tar.gz"
+        return "https://zlib.net/zlib-1.2.12.tar.gz"
 
     @property
     def src_path(self) -> Path:
-        return _DEPS_PATH / "zlib-1.2.11"
+        return _DEPS_PATH / "zlib-1.2.12"
 
     def build(self, ctx: Context) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
