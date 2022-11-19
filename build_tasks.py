@@ -9,6 +9,13 @@ from sys import platform
 from typing import Optional, Any
 from urllib.request import urlopen
 
+# Monkeypatch for Python 3.11
+# TODO: Remove after this is fixed: https://github.com/pyinvoke/invoke/issues/833
+import inspect
+
+if not hasattr(inspect, "getargspec"):
+    inspect.getargspec = inspect.getfullargspec
+
 try:
     from invoke import task, Context
 except ImportError:

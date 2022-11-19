@@ -1,4 +1,5 @@
 mypy
+typing_extensions; python_version < '3.8'  # For typing.Protocol
 flake8
 invoke
 pytest<7.3.0
