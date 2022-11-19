@@ -24,7 +24,7 @@ Development environment
 To setup a development environment:
 
     $ pip install --upgrade pip setuptools wheel
-    $ pip install -r dev-requirements.txt
+    $ pip install -r requirements-dev.txt
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
