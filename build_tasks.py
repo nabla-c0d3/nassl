@@ -330,19 +330,20 @@ class ZlibBuildConfig(BuildConfig):
     def build(self, ctx: Context) -> None:
         if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
             if self.platform == SupportedPlatformEnum.WINDOWS_32:
-                arch = "x86"
-                build_script = "bld_ml32.bat"
                 build_platform = "Win32"
             else:
-                arch = "x64"
-                build_script = "bld_ml64.bat"
                 build_platform = "x64"
 
-            masm_path = self.src_path / "contrib" / f"masm{arch}"
-            with ctx.cd(str(masm_path)):
-                ctx.run(build_script)
+            # Assuming default path for Visual Studio 2022
+            msbuild_path = Path(
+                "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe"
+            )
+            assert msbuild_path.exists()
+
+            vs_contrib_path = self.src_path / "contrib" / "vstudio"
+            with ctx.cd(str(vs_contrib_path)):
                 ctx.run(
-                    f"msbuild ..\\vstudio\\vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}"
+                    f'"{msbuild_path}" vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}'
                 )
 
         else:

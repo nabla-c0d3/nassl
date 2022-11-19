@@ -12,10 +12,24 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, macOS-10.15]  #, windows-2019]  TODO: Fix Windows
+        os: [ubuntu-22.04, macOS-10.15, windows-2022]
 
     steps:
       - uses: actions/checkout@v2
+
+      - name: Install Windows 8.1 SDK
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Method Get -Uri https://go.microsoft.com/fwlink/p/?LinkId=323507 -OutFile sdksetup.exe -UseBasicParsing
+          Start-Process -Wait sdksetup.exe -ArgumentList "/q", "/norestart", "/features", "OptionId.WindowsDesktopSoftwareDevelopmentKit", "OptionId.NetFxSoftwareDevelopmentKit"
+        if: runner.os == 'Windows'
+
+      - name: Install VS 2015 tools for Zlib
+        shell: powershell
+        run: |
+          Invoke-WebRequest -Method Get -Uri https://aka.ms/vs/17/release/vs_enterprise.exe -OutFile vs_enterprise.exe
+          Start-Process -Wait vs_enterprise.exe -ArgumentList 'modify', '--installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise"', '--add', 'Microsoft.VisualStudio.Component.VC.140', '--quiet', '--norestart', '--wait'
+        if: runner.os == 'Windows'
 
       - uses: actions/setup-python@v2
         name: Install Python
@@ -36,7 +50,7 @@ jobs:
           # The C libraries (OpenSSL and Zlib) only need to be built once per OS
           # as they are not tied to a specific Python version
           CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.deps"
-          CIBW_BEFORE_ALL_WINDOWS: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && python -m pip install invoke && invoke build.deps'
+          CIBW_BEFORE_ALL_WINDOWS: '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && python -m pip install invoke && invoke build.deps'
           # However the nassl C extension is by design tied to a specific Python version
           CIBW_BEFORE_BUILD: "python -m pip install invoke && invoke build.nassl"
           CIBW_TEST_REQUIRES: "pytest"
