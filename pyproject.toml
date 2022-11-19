@@ -12,6 +12,7 @@ exclude = '''
     | \.mypy_cache
     | \.tox
     | \.venv
+    | \.venv311
     | _build
     | buck-out
     | build

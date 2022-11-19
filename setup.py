@@ -19,7 +19,7 @@ NASSL_SETUP = {
     "name": "nassl",
     "version": __version__,
     "packages": find_packages(exclude=["docs", "tests"]),
-    "package_data": {"nassl": ["py.typed"]},
+    "package_data": {"nassl": ["py.typed", "_nassl.pyi", "_nassl_legacy.pyi"]},
     "py_modules": [
         "nassl.__init__",
         "nassl.ssl_client",
@@ -43,6 +43,7 @@ NASSL_SETUP = {
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: System :: Networking",
         "Topic :: System :: Monitoring",
         "Topic :: System :: Networking :: Monitoring",

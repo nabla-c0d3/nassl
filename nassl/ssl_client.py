@@ -1,13 +1,20 @@
 import socket
 from abc import ABC
 from pathlib import Path
-from types import ModuleType
 
 from nassl import _nassl
 from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
 
 from enum import IntEnum
 from typing import List, Any
+
+try:
+    from typing import Protocol
+except ImportError:
+    # Will happen on Python 3.7
+    from typing_extensions import Protocol  # type: ignore
+
+
 from typing import Optional
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
@@ -64,12 +71,17 @@ class ClientCertificateRequested(Exception):
         return exc_msg
 
 
-# TODO(AD): Create a proper typing stub for the C modules
-class NasslModuleType(ModuleType):
-
+class NasslModuleProtocol(Protocol):
     SSL_CTX: Any
     SSL: Any
     BIO: Any
+    X509: Any
+    X509_STORE_CTX: Any
+    OCSP_RESPONSE: Any
+    OpenSSLError: Any
+    WantReadError: Any
+    WantX509LookupError: Any
+    SSL_SESSION: Any
 
 
 class BaseSslClient(ABC):
@@ -78,7 +90,7 @@ class BaseSslClient(ABC):
     _DEFAULT_BUFFER_SIZE = 4096
 
     # The version of OpenSSL/nassl to use (modern VS legacy)
-    _NASSL_MODULE: NasslModuleType
+    _NASSL_MODULE: NasslModuleProtocol
 
     def __init__(
         self,
