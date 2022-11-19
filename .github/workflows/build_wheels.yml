@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macOS-10.15, windows-2019]
+        os: [ubuntu-22.04, macOS-10.15]  #, windows-2019]  TODO: Fix Windows
 
     steps:
       - uses: actions/checkout@v2
@@ -21,12 +21,12 @@ jobs:
         name: Install Python
 
       - name: Install cibuildwheel
-        run: python -m pip install "cibuildwheel<2.4.0"
+        run: python -m pip install "cibuildwheel<2.12.0"
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: "cp37-* cp38-* cp39-* cp310-*"
+          CIBW_BUILD: "cp37-* cp38-* cp39-* cp310-* cp311-*"
           CIBW_SKIP: "*-win32 pp* *-musllinux_i686"  # Skip win32, PyPy and muslinux32 builds
           # Build wheels for Apple Silicon
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
@@ -36,7 +36,7 @@ jobs:
           # The C libraries (OpenSSL and Zlib) only need to be built once per OS
           # as they are not tied to a specific Python version
           CIBW_BEFORE_ALL: "python -m pip install invoke && invoke build.deps"
-          CIBW_BEFORE_ALL_WINDOWS: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && python -m pip install invoke && python -m invoke build.deps'
+          CIBW_BEFORE_ALL_WINDOWS: '"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && python -m pip install invoke && invoke build.deps'
           # However the nassl C extension is by design tied to a specific Python version
           CIBW_BEFORE_BUILD: "python -m pip install invoke && invoke build.nassl"
           CIBW_TEST_REQUIRES: "pytest"
