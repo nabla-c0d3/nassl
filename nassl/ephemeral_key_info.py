@@ -2,11 +2,11 @@ from abc import ABC
 
 from enum import IntEnum
 from dataclasses import dataclass, field
-from typing import Dict
+from typing import Dict, List
 
 
 class OpenSslEvpPkeyEnum(IntEnum):
-    """Constants which map to the EVP_PKEY_XXX OpenSSL constants (obj_mac.h) used as the temporary key during key exchange"""
+    """Maps to the EVP_PKEY_XXX OpenSSL constants (obj_mac.h) used as the temporary key during key exchange."""
 
     DH = 28
     EC = 408
@@ -15,7 +15,8 @@ class OpenSslEvpPkeyEnum(IntEnum):
 
 
 class OpenSslEcNidEnum(IntEnum):
-    """Constants which map to NID_XXX values valid for OpenSslEvpPkeyEnum.EC (obj_mac.h)
+    """Maps to NID_XXX values valid for OpenSslEvpPkeyEnum.EC (obj_mac.h).
+
     Valid values for TLS taken from https://tools.ietf.org/html/rfc4492 and https://tools.ietf.org/html/rfc8422
     """
 
@@ -51,6 +52,30 @@ class OpenSslEcNidEnum(IntEnum):
     SECP521R1 = 716
     X25519 = 1034
     X448 = 1035
+
+    # Brainpool
+    brainpoolP160r1 = 921
+    brainpoolP160t1 = 922
+    brainpoolP192r1 = 923
+    brainpoolP192t1 = 924
+    brainpoolP224r1 = 925
+    brainpoolP224t1 = 926
+    brainpoolP256r1 = 927
+    brainpoolP256t1 = 928
+    brainpoolP320r1 = 929
+    brainpoolP320t1 = 930
+    brainpoolP384r1 = 931
+    brainpoolP384t1 = 932
+    brainpoolP512r1 = 933
+    brainpoolP512t1 = 934
+
+    @classmethod
+    def get_supported_by_ssl_client(cls) -> List["OpenSslEcNidEnum"]:
+        """Some NIDs (the brainpool ones) trigger an error with nassl.SslClient when trying to use them.
+
+        See also https://github.com/nabla-c0d3/nassl/issues/104.
+        """
+        return [nid for nid in cls if "brainpool" not in nid.name]
 
 
 # Mapping between OpenSSL EVP_PKEY_XXX value and display name
@@ -93,6 +118,20 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECP521R1: "secp521r1",
     OpenSslEcNidEnum.X25519: "X25519",
     OpenSslEcNidEnum.X448: "X448",
+    OpenSslEcNidEnum.brainpoolP160r1: "brainpoolP160r1",
+    OpenSslEcNidEnum.brainpoolP160t1: "brainpoolP160t1",
+    OpenSslEcNidEnum.brainpoolP192r1: "brainpoolP192r1",
+    OpenSslEcNidEnum.brainpoolP192t1: "brainpoolP192t1",
+    OpenSslEcNidEnum.brainpoolP224r1: "brainpoolP224r1",
+    OpenSslEcNidEnum.brainpoolP224t1: "brainpoolP224t1",
+    OpenSslEcNidEnum.brainpoolP256r1: "brainpoolP256r1",
+    OpenSslEcNidEnum.brainpoolP256t1: "brainpoolP256t1",
+    OpenSslEcNidEnum.brainpoolP320r1: "brainpoolP320r1",
+    OpenSslEcNidEnum.brainpoolP320t1: "brainpoolP320t1",
+    OpenSslEcNidEnum.brainpoolP384r1: "brainpoolP384r1",
+    OpenSslEcNidEnum.brainpoolP384t1: "brainpoolP384t1",
+    OpenSslEcNidEnum.brainpoolP512r1: "brainpoolP512r1",
+    OpenSslEcNidEnum.brainpoolP512t1: "brainpoolP512t1",
 }
 
 
@@ -107,7 +146,7 @@ class EphemeralKeyInfo(ABC):
 
     def __post_init__(self) -> None:
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
-        object.__setattr__(self, "type_name", _OPENSSL_EVP_PKEY_TO_NAME_MAPPING[self.type])
+        object.__setattr__(self, "type_name", _OPENSSL_EVP_PKEY_TO_NAME_MAPPING.get(self.type, "UNKNOWN"))
 
 
 @dataclass(frozen=True)
@@ -117,11 +156,9 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        try:
-            curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62[self.curve]
-        except KeyError:
-            curve_name = f"unknown-curve-with-openssl-id-{self.curve.value}"
-
+        curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62.get(
+            self.curve, f"unknown-curve-with-openssl-id-{self.curve}"
+        )
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(self, "curve_name", curve_name)
 
