@@ -7,6 +7,7 @@ X509: Any
 X509_STORE_CTX: Any
 OCSP_RESPONSE: Any
 OpenSSLError: Any
+SslError: Any
 WantReadError: Any
 WantX509LookupError: Any
 SSL_SESSION: Any
