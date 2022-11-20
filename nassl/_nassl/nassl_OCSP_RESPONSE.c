@@ -85,7 +85,7 @@ static PyObject* nassl_OCSP_RESPONSE_as_der_bytes(nassl_OCSP_RESPONSE_Object *se
     char *ocspBuf = NULL;
     unsigned int ocspRespLen = 0;
 
-    ocspRespLen = i2d_OCSP_RESPONSE(self->ocspResp, &ocspBuf);
+    ocspRespLen = i2d_OCSP_RESPONSE(self->ocspResp, (unsigned char **) &ocspBuf);
     if (ocspRespLen < 0)
     {
         PyErr_SetString(PyExc_ValueError, "Could not convert OCSP response do DER bytes");

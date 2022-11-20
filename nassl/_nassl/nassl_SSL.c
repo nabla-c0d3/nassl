@@ -282,10 +282,10 @@ static PyObject* nassl_SSL_set1_groups(nassl_SSL_Object *self, PyObject *args)
 
     for (i=0; i<nidsCount; i++)
     {
-        PyLongObject *pyNid;
+        PyObject *pyNid;
         int nid;
 
-        pyNid = (PyLongObject *) PyList_GetItem(pyListOfOpensslNids, i);
+        pyNid = PyList_GetItem(pyListOfOpensslNids, i);
         if ((pyNid == NULL) || (!PyLong_Check(pyNid)))
         {
             PyMem_Free(listOfNids);
