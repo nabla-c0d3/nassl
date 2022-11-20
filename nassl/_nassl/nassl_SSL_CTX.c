@@ -193,7 +193,6 @@ static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, P
 {
     char *filePath = NULL;
     int certType = 0;
-#if PY_MAJOR_VERSION >= 3
     PyObject *pyFilePath = NULL;
     if (!PyArg_ParseTuple(args, "O&I", PyUnicode_FSConverter, &pyFilePath, &certType))
     {
@@ -205,12 +204,6 @@ static PyObject* nassl_SSL_CTX_use_PrivateKey_file(nassl_SSL_CTX_Object *self, P
         PyErr_SetString(PyExc_ValueError, "Could not extract the file path");
         return NULL;
     }
-#else
-    if (!PyArg_ParseTuple(args, "sI", &filePath, &certType))
-    {
-        return NULL;
-    }
-#endif
 
     if (SSL_CTX_use_PrivateKey_file(self->sslCtx, filePath, certType) != 1)
     {

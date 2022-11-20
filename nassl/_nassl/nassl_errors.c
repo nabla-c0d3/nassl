@@ -71,11 +71,7 @@ PyObject* raise_OpenSSL_error()
         iterateOpenSslError = ERR_get_error();
     }
 
-#if PY_MAJOR_VERSION >= 3
     PyErr_SetString(nassl_OpenSSLError_Exception, PyUnicode_AsUTF8(pyFinalErrorString));
-#else
-    PyErr_SetString(nassl_OpenSSLError_Exception, PyString_AsString(pyFinalErrorString));
-#endif
     Py_DECREF(pyFinalErrorString);
     Py_DECREF(pyNewLineString);
     return NULL;

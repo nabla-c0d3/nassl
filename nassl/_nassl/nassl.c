@@ -32,15 +32,8 @@ struct module_state
     PyObject *error;
 };
 
-#if PY_MAJOR_VERSION >= 3
 #define GETSTATE(m) ((struct module_state*)PyModule_GetState(m))
-#else
-#define GETSTATE(m) (&_state)
-static struct module_state _state;
-#endif
 
-
-#if PY_MAJOR_VERSION >= 3
 
 static int nassl_traverse(PyObject *m, visitproc visit, void *arg)
 {
@@ -76,19 +69,11 @@ static struct PyModuleDef moduledef =
 
 #define INITERROR return NULL
 
-#else
-
-#define INITERROR return
-
-#endif
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
 
-
-
-#if PY_MAJOR_VERSION >= 3
 
 #ifdef LEGACY_OPENSSL
 PyMODINIT_FUNC PyInit__nassl_legacy(void)
@@ -96,15 +81,6 @@ PyMODINIT_FUNC PyInit__nassl_legacy(void)
 PyMODINIT_FUNC PyInit__nassl(void)
 #endif
 
-#else
-
-#ifdef LEGACY_OPENSSL
-PyMODINIT_FUNC init_nassl_legacy(void)
-#else
-PyMODINIT_FUNC init_nassl(void)
-#endif
-
-#endif
 {
     PyObject* module;
     struct module_state *state;
@@ -123,18 +99,8 @@ PyMODINIT_FUNC init_nassl(void)
         INITERROR;
     }
 
-    // Initalize the module
-#if PY_MAJOR_VERSION >= 3
+    // Initialize the module
     module = PyModule_Create(&moduledef);
-#else
-
-#ifdef LEGACY_OPENSSL
-    module = Py_InitModule3("_nassl_legacy", nassl_methods, "Nassl legacy implementation");
-#else
-    module = Py_InitModule3("_nassl", nassl_methods, "Nassl modern implementation");
-#endif
-
-#endif
     if (module == NULL)
     {
         INITERROR;
@@ -165,7 +131,5 @@ PyMODINIT_FUNC init_nassl(void)
         INITERROR;
     }
 
-#if PY_MAJOR_VERSION >= 3
     return module;
-#endif
 }
