@@ -239,11 +239,23 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
     def _openssl_git_tag(self) -> str:
         return "OpenSSL_1_0_2e"
 
+    # Note `no-asm` is necessary for macOS M* support.
+    # The linux-aarch64 target causes the build system to output GAS assembly directives, which are incompatible with
+    # the default assembler in the macOS toolchain.
+    # TODO: Since the C routines used when no-asm is passed are ostensibly less efficient than the corresponding
+    # assembly routines, we could consider only passing `no-asm` when we're building for the macOS M* target.
     _OPENSSL_CONF_CMD = (
         "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost "
-        "enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_include_path} "
+        "enable-cast enable-idea enable-ripemd enable-mdc2 no-asm --with-zlib-include={zlib_include_path} "
         "--with-zlib-lib={zlib_lib_path} {extra_args}"
     )
+
+    def _get_build_target(self, should_build_for_debug: bool) -> str:
+        # As a hack, the legacy OpenSSL build targets the linux-aarch64 platform on M* macOS
+        if self.platform == SupportedPlatformEnum.OSX_ARM64:
+            # Note there's no debug build variant available here
+            return "linux-aarch64"
+        return super()._get_build_target(should_build_for_debug)
 
     @property
     def include_path(self) -> Path:
