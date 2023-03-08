@@ -154,7 +154,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
         elif self.platform == SupportedPlatformEnum.OSX_64:
             openssl_target = "darwin64-x86_64-cc"
         elif self.platform == SupportedPlatformEnum.OSX_ARM64:
-            openssl_target = "arm64-x86_64-cc"
+            openssl_target = "darwin64-arm64-cc"
         elif self.platform == SupportedPlatformEnum.LINUX_64:
             openssl_target = "linux-x86_64"
         elif self.platform == SupportedPlatformEnum.LINUX_32:
@@ -277,7 +277,7 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
 class ModernOpenSslBuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
-        return "OpenSSL_1_1_1s"
+        return "OpenSSL_1_1_1t"
 
     _OPENSSL_CONF_CMD = (
         "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost "
