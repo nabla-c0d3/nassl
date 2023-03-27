@@ -219,6 +219,9 @@ class BaseSslClient(ABC):
                 if "sslv3 alert certificate unknown" in e.args[0]:
                     # Some banking websites do that: https://github.com/nabla-c0d3/sslyze/issues/531
                     raise ClientCertificateRequested(self.get_client_CA_list())
+                if "octet invalid" in e.args[0] and 'bad signature' in e.args[0]:
+                    # Fix sslyze crash on some domains where we have "first octet invalid" and "bad signature" error or "last octet invalide" and "bad signature" error
+                    raise ClientCertificateRequested(self.get_client_CA_list())
                 else:
                     raise
 
