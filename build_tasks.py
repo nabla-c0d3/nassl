@@ -6,7 +6,7 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from platform import architecture, machine
 from sys import platform
-from typing import Optional, Any
+from typing import Optional, Any, List
 from urllib.request import urlopen
 
 # Monkeypatch for Python 3.11
@@ -44,6 +44,15 @@ class SupportedPlatformEnum(Enum):
     OSX_ARM64 = 7
     LINUX_ARM64 = 8
     LINUX_ARM32 = 9
+
+    @classmethod
+    def all_linux_platforms(cls) -> List["SupportedPlatformEnum"]:
+        return [
+            cls.LINUX_32,
+            cls.LINUX_64,
+            cls.LINUX_ARM32,
+            cls.LINUX_ARM64,
+        ]
 
 
 CURRENT_PLATFORM = None

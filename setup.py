@@ -84,9 +84,10 @@ if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.
 else:
     BASE_NASSL_EXT_SETUP["extra_compile_args"].append("-Wall")
 
-    # Hide internal OpenSSL symbols to avoid "symbol confusion" when Python loads the system's OpenSSL libraries
-    # https://github.com/nabla-c0d3/nassl/issues/95
-    BASE_NASSL_EXT_SETUP["extra_link_args"].append("-Wl,--exclude-libs=ALL")
+    if CURRENT_PLATFORM in SupportedPlatformEnum.all_linux_platforms():
+        # Hide internal OpenSSL symbols to avoid "symbol confusion" when Python loads the system's OpenSSL libraries
+        # https://github.com/nabla-c0d3/nassl/issues/95
+        BASE_NASSL_EXT_SETUP["extra_link_args"].append("-Wl,--exclude-libs=ALL")
 
     if CURRENT_PLATFORM == SupportedPlatformEnum.LINUX_64:
         # Explicitly disable executable stack on Linux 64 to address issues with Ubuntu on Windows
