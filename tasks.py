@@ -29,6 +29,11 @@ def test(ctx):
 
 
 @task
+def autoformat(ctx):
+    ctx.run("black .")
+
+
+@task
 def package_linux_wheels(ctx):
     """Build the Linux 32 and 64 bit wheels using Docker."""
     ctx.run(
@@ -81,6 +86,7 @@ def release(ctx):
 ns = Collection()
 ns.add_task(release)
 ns.add_task(test)
+ns.add_task(autoformat)
 
 
 package = Collection("package")
