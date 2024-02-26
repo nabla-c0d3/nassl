@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-22.04, macos-12, windows-2022]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Windows 8.1 SDK
         shell: powershell
@@ -31,7 +31,7 @@ jobs:
           Start-Process -Wait vs_enterprise.exe -ArgumentList 'modify', '--installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise"', '--add', 'Microsoft.VisualStudio.Component.VC.140', '--quiet', '--norestart', '--wait'
         if: runner.os == 'Windows'
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v5
         name: Install Python
 
       - name: Install cibuildwheel
@@ -56,6 +56,6 @@ jobs:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "python -m pytest {project}/tests"
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
