@@ -21,7 +21,11 @@ from nassl.ephemeral_key_info import (
     EcDhEphemeralKeyInfo,
 )
 from nassl.cert_chain_verifier import CertificateChainVerificationFailed
-from tests.openssl_server import ModernOpenSslServer, ClientAuthConfigEnum, LegacyOpenSslServer
+from tests.openssl_server import (
+    ModernOpenSslServer,
+    ClientAuthConfigEnum,
+    LegacyOpenSslServer,
+)
 
 
 # TODO(AD): Switch to legacy server and add a TODO; skip tests for TLS 1.3
@@ -295,7 +299,8 @@ class TestModernSslClientOnline:
     def test_set_groups_curve_secp192k1(self):
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
-            cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:secp384r1:secp192k1"
+            cipher="ECDHE-RSA-AES256-SHA",
+            groups="X25519:prime256v1:secp384r1:secp192k1",
         ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -324,7 +329,8 @@ class TestModernSslClientOnline:
     def test_set_groups_curve_x448(self):
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
-            cipher="ECDHE-RSA-AES256-SHA", groups="X25519:prime256v1:X448:secp384r1:secp192k1"
+            cipher="ECDHE-RSA-AES256-SHA",
+            groups="X25519:prime256v1:X448:secp384r1:secp192k1",
         ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)

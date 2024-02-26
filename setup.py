@@ -71,14 +71,24 @@ BASE_NASSL_EXT_SETUP = {
     ],
 }
 
-if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+if CURRENT_PLATFORM in [
+    SupportedPlatformEnum.WINDOWS_32,
+    SupportedPlatformEnum.WINDOWS_64,
+]:
     # Build using the Python that was used to run this script; will not work for cross-compiling
     PYTHON_LIBS_PATH = Path(sys.executable).parent / "libs"
 
     BASE_NASSL_EXT_SETUP.update(
         {
             "library_dirs": [str(PYTHON_LIBS_PATH)],
-            "libraries": ["user32", "kernel32", "Gdi32", "Advapi32", "Ws2_32", "crypt32"],
+            "libraries": [
+                "user32",
+                "kernel32",
+                "Gdi32",
+                "Advapi32",
+                "Ws2_32",
+                "crypt32",
+            ],
         }
     )
 else:
@@ -131,12 +141,13 @@ MODERN_NASSL_EXT_SETUP.update(
         ],
     }
 )
-MODERN_NASSL_EXT_SETUP["sources"].append(
-    "nassl/_nassl/nassl_X509_STORE_CTX.c"
-)  # API only available in modern nassl
+MODERN_NASSL_EXT_SETUP["sources"].append("nassl/_nassl/nassl_X509_STORE_CTX.c")  # API only available in modern nassl
 
 
-if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+if CURRENT_PLATFORM in [
+    SupportedPlatformEnum.WINDOWS_32,
+    SupportedPlatformEnum.WINDOWS_64,
+]:
     if SHOULD_BUILD_FOR_DEBUG:
         LEGACY_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
         MODERN_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
@@ -147,7 +158,12 @@ else:
 
 
 NASSL_SETUP.update(
-    {"ext_modules": [Extension(**LEGACY_NASSL_EXT_SETUP), Extension(**MODERN_NASSL_EXT_SETUP)]}
+    {
+        "ext_modules": [
+            Extension(**LEGACY_NASSL_EXT_SETUP),
+            Extension(**MODERN_NASSL_EXT_SETUP),
+        ]
+    }
 )
 
 

@@ -137,7 +137,6 @@ class TestModernSSL:
 
 
 class TestLegacySSL:
-
     # The following tests don't pass with modern OpenSSL - the API might have changed
     def test_set_cipher_list_bad(self):
         # Invalid cipher string

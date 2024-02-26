@@ -4,7 +4,10 @@ from typing import List
 
 import pytest
 
-from nassl.cert_chain_verifier import CertificateChainVerifier, CertificateChainVerificationFailed
+from nassl.cert_chain_verifier import (
+    CertificateChainVerifier,
+    CertificateChainVerificationFailed,
+)
 from nassl._nassl import X509
 
 

@@ -1,23 +1,8 @@
-[tool.black]
-line-length = 110
-target_version = ['py37']
-include = '\.pyi?$'
-exclude = '''
+[tool.ruff]
+line-length = 120
 
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | \.venv311
-    | _build
-    | buck-out
-    | build
-    | dist
-    | deps           # OpenSSL has some Python scripts that black rejects
-  )/
-)
-'''
+[tool.mypy]
+python_version = "3.8"
+ignore_missing_imports = true
+strict_optional = true
+disallow_untyped_defs = true
