@@ -1,11 +1,10 @@
 .venv
-.venv311
 bin
 .cache
-requirements.txt
 deps
 .pytest_cache
-
+.vscode
+.ruff_cache/
 .mypy_cache/
 
 # OpenSSL build artifacts
