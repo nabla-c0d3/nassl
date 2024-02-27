@@ -4,7 +4,8 @@ from nassl import _nassl, _nassl_legacy
 import pytest
 
 can_only_run_on_linux_64 = pytest.mark.skipif(
-    condition=platform not in ["linux", "linux2"], reason="The test suite it not being run on Linux"
+    condition=platform not in ["linux", "linux2"],
+    reason="The test suite it not being run on Linux",
 )
 
 

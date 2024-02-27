@@ -1,12 +1,5 @@
 from pathlib import Path
 
-# Monkeypatch for Python 3.11
-# TODO: Remove after this is fixed: https://github.com/pyinvoke/invoke/issues/833
-import inspect
-
-if not hasattr(inspect, "getargspec"):
-    inspect.getargspec = inspect.getfullargspec
-
 from invoke import task, Collection
 
 import build_tasks
@@ -17,31 +10,22 @@ root_path = Path(__file__).parent.absolute()
 
 @task
 def test(ctx):
-    # Run linters
-    ctx.run("mypy sample_client.py")
-    ctx.run("flake8")
-    ctx.run("black . --check")
-
-    # Run the test suite
     ctx.run("pytest --durations 5")
-
     ctx.run("python sample_client.py")
 
 
 @task
-def autoformat(ctx):
-    ctx.run("black .")
+def lint(ctx):
+    ctx.run("ruff format .")
+    ctx.run("ruff check . --fix")
+    ctx.run("mypy sample_client.py nassl")
 
 
 @task
 def package_linux_wheels(ctx):
     """Build the Linux 32 and 64 bit wheels using Docker."""
-    ctx.run(
-        f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_i686 bash /io/build_linux_wheels.sh"
-    )
-    ctx.run(
-        f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_x86_64 bash /io/build_linux_wheels.sh"
-    )
+    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_i686 bash /io/build_linux_wheels.sh")
+    ctx.run(f"docker run --rm -v {root_path}:/io quay.io/pypa/manylinux2010_x86_64 bash /io/build_linux_wheels.sh")
 
 
 @task
@@ -86,7 +70,7 @@ def release(ctx):
 ns = Collection()
 ns.add_task(release)
 ns.add_task(test)
-ns.add_task(autoformat)
+ns.add_task(lint)
 
 
 package = Collection("package")

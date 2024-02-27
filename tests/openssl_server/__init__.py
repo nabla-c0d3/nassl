@@ -141,13 +141,19 @@ class _OpenSslServer(ABC):
 
     def __enter__(self):
         _logger.warning(f'Running s_server with command: "{self._command_line}"')
-        if CURRENT_PLATFORM in [SupportedPlatformEnum.WINDOWS_64, SupportedPlatformEnum.WINDOWS_32]:
+        if CURRENT_PLATFORM in [
+            SupportedPlatformEnum.WINDOWS_64,
+            SupportedPlatformEnum.WINDOWS_32,
+        ]:
             args = self._command_line
         else:
             args = shlex.split(self._command_line)
         try:
             self._process = subprocess.Popen(
-                args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+                args,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
             )
             self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
 
@@ -194,7 +200,6 @@ class LegacyOpenSslServer(_OpenSslServer):
         cipher: Optional[str] = None,
         prefer_server_order: bool = False,
     ) -> None:
-
         extra_args = []
 
         if prefer_server_order:

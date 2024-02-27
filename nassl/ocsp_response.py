@@ -28,6 +28,7 @@ def verify_ocsp_response(ocsp_response: _nassl.OCSP_RESPONSE, trust_store_path: 
     except _nassl.OpenSSLError as e:
         if "certificate verify error" in str(e):
             raise OcspResponseNotTrustedError(
-                "OCSP Response verification failed: the response is not trusted", trust_store_path
+                "OCSP Response verification failed: the response is not trusted",
+                trust_store_path,
             )
         raise

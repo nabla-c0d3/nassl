@@ -9,13 +9,6 @@ from sys import platform
 from typing import Optional, Any, List
 from urllib.request import urlopen
 
-# Monkeypatch for Python 3.11
-# TODO: Remove after this is fixed: https://github.com/pyinvoke/invoke/issues/833
-import inspect
-
-if not hasattr(inspect, "getargspec"):
-    inspect.getargspec = inspect.getfullargspec
-
 try:
     from invoke import task, Context
 except ImportError:
@@ -206,9 +199,16 @@ class OpenSslBuildConfig(BuildConfig, ABC):
     _OPENSSL_CONF_CMD: str = None
 
     def _run_configure_command(
-        self, ctx: Context, openssl_target: str, zlib_lib_path: Path, zlib_include_path: Path
+        self,
+        ctx: Context,
+        openssl_target: str,
+        zlib_lib_path: Path,
+        zlib_include_path: Path,
     ) -> None:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             extra_args = "-no-asm -DZLIB_WINAPI"  # *hate* zlib
             # On Windows OpenSSL wants the full path to the lib file
             final_zlib_path = zlib_lib_path
@@ -227,15 +227,16 @@ class OpenSslBuildConfig(BuildConfig, ABC):
         )
 
     def _run_build_steps(self, ctx: Context) -> None:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             if self.platform == SupportedPlatformEnum.WINDOWS_32:
                 ctx.run("ms\\do_ms")
             else:
                 ctx.run("ms\\do_win64a.bat")
 
-            ctx.run(
-                "nmake -f ms\\nt.mak clean", warn=True
-            )  # Does not work if tmp32 does not exist (fresh build)
+            ctx.run("nmake -f ms\\nt.mak clean", warn=True)  # Does not work if tmp32 does not exist (fresh build)
             ctx.run("nmake -f ms\\nt.mak")
 
         else:
@@ -268,28 +269,40 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
     def include_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "inc32"
         else:
             return self.src_path / "include"
 
     @property
     def libcrypto_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "out32" / "libeay32.lib"
         else:
             return self.src_path / "libcrypto.a"
 
     @property
     def libssl_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "out32" / "ssleay32.lib"
         else:
             return self.src_path / "libssl.a"
 
     @property
     def exe_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "out32" / "openssl.exe"
         else:
             return self.src_path / "apps" / "openssl"
@@ -307,7 +320,10 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
     )
 
     def _run_build_steps(self, ctx: Context) -> None:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             ctx.run("nmake clean", warn=True)
             ctx.run("nmake")
         else:
@@ -315,14 +331,20 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
     def libcrypto_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "libcrypto.lib"
         else:
             return self.src_path / "libcrypto.a"
 
     @property
     def libssl_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "libssl.lib"
         else:
             return self.src_path / "libssl.a"
@@ -333,7 +355,10 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 
     @property
     def exe_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             return self.src_path / "apps" / "openssl.exe"
         else:
             return self.src_path / "apps" / "openssl"
@@ -349,7 +374,10 @@ class ZlibBuildConfig(BuildConfig):
         return _DEPS_PATH / "zlib-1.2.13"
 
     def build(self, ctx: Context) -> None:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             if self.platform == SupportedPlatformEnum.WINDOWS_32:
                 build_platform = "Win32"
             else:
@@ -363,9 +391,7 @@ class ZlibBuildConfig(BuildConfig):
 
             vs_contrib_path = self.src_path / "contrib" / "vstudio"
             with ctx.cd(str(vs_contrib_path)):
-                ctx.run(
-                    f'"{msbuild_path}" vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}'
-                )
+                ctx.run(f'"{msbuild_path}" vc14\\zlibvc.sln /P:Configuration=Release /P:Platform={build_platform}')
 
         else:
             # Linux/macOS build
@@ -376,11 +402,12 @@ class ZlibBuildConfig(BuildConfig):
 
     @property
     def libz_path(self) -> Path:
-        if self.platform in [SupportedPlatformEnum.WINDOWS_32, SupportedPlatformEnum.WINDOWS_64]:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
             arch = "x86" if self.platform == SupportedPlatformEnum.WINDOWS_32 else "x64"
-            zlib_lib_path = (
-                self.src_path / "contrib" / "vstudio" / "vc14" / arch / "ZlibStatRelease" / "zlibstat.lib"
-            )
+            zlib_lib_path = self.src_path / "contrib" / "vstudio" / "vc14" / arch / "ZlibStatRelease" / "zlibstat.lib"
         else:
             zlib_lib_path = self.src_path / "libz.a"
         return zlib_lib_path

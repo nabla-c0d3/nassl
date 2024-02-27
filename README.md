@@ -6,7 +6,7 @@ nassl
 [![PyPI wheel](https://img.shields.io/pypi/wheel/nassl.svg)](https://pypi.org/project/nassl/)
 [![PyPI version](https://img.shields.io/pypi/pyversions/nassl.svg)](https://pypi.org/project/nassl/)
 
-Experimental OpenSSL wrapper for Python 3.7+ and [SSLyze](https://github.com/nabla-c0d3/sslyze).
+Experimental OpenSSL wrapper for Python 3.8+ and [SSLyze](https://github.com/nabla-c0d3/sslyze).
 
 **Do NOT use for anything serious**. This code has not been properly tested/reviewed and is not production ready.
 

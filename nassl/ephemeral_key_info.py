@@ -146,7 +146,11 @@ class EphemeralKeyInfo(ABC):
 
     def __post_init__(self) -> None:
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
-        object.__setattr__(self, "type_name", _OPENSSL_EVP_PKEY_TO_NAME_MAPPING.get(self.type, "UNKNOWN"))
+        object.__setattr__(
+            self,
+            "type_name",
+            _OPENSSL_EVP_PKEY_TO_NAME_MAPPING.get(self.type, "UNKNOWN"),
+        )
 
 
 @dataclass(frozen=True)
@@ -156,9 +160,7 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62.get(
-            self.curve, f"unknown-curve-with-openssl-id-{self.curve}"
-        )
+        curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62.get(self.curve, f"unknown-curve-with-openssl-id-{self.curve}")
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(self, "curve_name", curve_name)
 

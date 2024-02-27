@@ -8,11 +8,7 @@ from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
 from enum import IntEnum
 from typing import List, Any
 
-try:
-    from typing import Protocol
-except ImportError:
-    # Will happen on Python 3.7
-    from typing_extensions import Protocol  # type: ignore
+from typing import Protocol
 
 
 from typing import Optional
@@ -123,7 +119,9 @@ class BaseSslClient(ABC):
             self._ssl.set_tlsext_host_name(server_name_indication)
 
     def _init_base_objects(
-        self, ssl_version: OpenSslVersionEnum, underlying_socket: Optional[socket.socket]
+        self,
+        ssl_version: OpenSslVersionEnum,
+        underlying_socket: Optional[socket.socket],
     ) -> None:
         """Setup the socket and SSL_CTX objects."""
         self._is_handshake_completed = False
@@ -133,9 +131,7 @@ class BaseSslClient(ABC):
         # A Python socket handles transmission of the data
         self._sock = underlying_socket
 
-    def _init_server_authentication(
-        self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[Path]
-    ) -> None:
+    def _init_server_authentication(self, ssl_verify: OpenSslVerifyEnum, ssl_verify_locations: Optional[Path]) -> None:
         """Setup the certificate validation logic for authenticating the server."""
         self._ssl_ctx.set_verify(ssl_verify.value)
         if ssl_verify_locations:
@@ -154,13 +150,16 @@ class BaseSslClient(ABC):
     ) -> None:
         """Setup client authentication using the supplied certificate and key."""
         if client_certificate_chain is not None and client_key is not None:
-            self._use_private_key(client_certificate_chain, client_key, client_key_type, client_key_password)
+            self._use_private_key(
+                client_certificate_chain,
+                client_key,
+                client_key_type,
+                client_key_password,
+            )
 
         if ignore_client_authentication_requests:
             if client_certificate_chain:
-                raise ValueError(
-                    "Cannot enable both client_certchain_file and ignore_client_authentication_requests"
-                )
+                raise ValueError("Cannot enable both client_certchain_file and ignore_client_authentication_requests")
 
             self._ssl_ctx.set_client_cert_cb_NULL()
 
