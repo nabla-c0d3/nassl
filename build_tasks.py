@@ -212,6 +212,11 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             extra_args = "-no-asm -DZLIB_WINAPI"  # *hate* zlib
             # On Windows OpenSSL wants the full path to the lib file
             final_zlib_path = zlib_lib_path
+        elif self.platform == SupportedPlatformEnum.OSX_ARM64:
+            extra_args = " -fPIC"
+            # For some reason on macOS arm64, the compiled openssl binary only works if we put the full path
+            # to the lib file, although it triggers an ld warning
+            final_zlib_path = zlib_lib_path
         else:
             extra_args = " -fPIC"
             # On Unix OpenSSL wants the path to the folder where the lib is
