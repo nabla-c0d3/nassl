@@ -6,7 +6,7 @@ from nassl import _nassl
 from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
 
 from enum import IntEnum
-from typing import List, Any
+from typing import List, Any, Tuple
 
 from typing import Protocol
 
@@ -30,6 +30,17 @@ class OpenSslVerifyEnum(IntEnum):
     PEER = 1
     FAIL_IF_NO_PEER_CERT = 2
     CLIENT_ONCE = 4
+
+
+class OpenSslDigestNidEnum(IntEnum):
+    """SSL digest algorithms used for the signature algorithm, per obj_mac.h."""
+
+    MD5 = 4
+    SHA1 = 64
+    SHA224 = 675
+    SHA256 = 672
+    SHA384 = 673
+    SHA512 = 674
 
 
 class OpenSslVersionEnum(IntEnum):
@@ -455,9 +466,10 @@ class SslClient(BaseSslClient):
         # TODO(AD): Eventually merge this method with get/set_cipher_list()
         self._ssl.set_ciphersuites(cipher_suites)
 
-    def set_sigalgs(self, cipher_suites: str) -> None:
-        """Set the enabled signature algorithms, e.g. 'ECDSA+SHA256:RSA+SHA256'"""
-        self._ssl.set1_sigalgs_list(cipher_suites)
+    def set_sigalgs(self, sigalgs: List[Tuple[OpenSslDigestNidEnum, OpenSslEvpPkeyEnum]]) -> None:
+        """Set the enabled signature algorithms for the key exchange."""
+        flattened_sigalgs = [item for sublist in sigalgs for item in sublist]
+        self._ssl.set1_sigalgs(flattened_sigalgs)
 
     def set_groups(self, supported_groups: List[OpenSslEcNidEnum]) -> None:
         """Specify elliptic curves or DH groups that are supported by the client in descending order."""

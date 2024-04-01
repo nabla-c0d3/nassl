@@ -12,6 +12,9 @@ class OpenSslEvpPkeyEnum(IntEnum):
     EC = 408
     X25519 = 1034
     X448 = 1035
+    RSA = 6
+    DSA = 116
+    RSA_PSS = 912
 
 
 class OpenSslEcNidEnum(IntEnum):

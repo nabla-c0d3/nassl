@@ -819,20 +819,50 @@ static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *ar
 }
 
 
-// SSL_set1_sigalgs_list() is only available in OpenSSL 1.1.1
-static PyObject* nassl_SSL_set1_sigalgs_list(nassl_SSL_Object *self, PyObject *args)
+// SSL_set1_sigalgs() is only available in OpenSSL 1.1.1
+static PyObject* nassl_SSL_set1_sigalgs(nassl_SSL_Object *self, PyObject *args)
 {
-    char *sigalgList;
-    if (!PyArg_ParseTuple(args, "s", &sigalgList))
+    int i = 0;
+    PyObject *pyListOfOpensslNids;
+    Py_ssize_t nidsCount = 0;
+    int *listOfNids;
+
+    // Parse the Python list
+    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &pyListOfOpensslNids))
     {
         return NULL;
     }
 
-    if (!SSL_set1_sigalgs_list(self->ssl, sigalgList))
+    // Extract each NID int from the list
+    nidsCount = PyList_Size(pyListOfOpensslNids);
+    listOfNids = (int *) PyMem_Malloc(nidsCount * sizeof(int));
+    if (listOfNids == NULL)
     {
+        return PyErr_NoMemory();
+    }
+
+    for (i=0; i<nidsCount; i++)
+    {
+        PyObject *pyNid;
+        int nid;
+
+        pyNid = PyList_GetItem(pyListOfOpensslNids, i);
+        if ((pyNid == NULL) || (!PyLong_Check(pyNid)))
+        {
+            PyMem_Free(listOfNids);
+            return NULL;
+        }
+        nid = PyLong_AsSize_t(pyNid);
+        listOfNids[i] = nid;
+    }
+
+    if (SSL_set1_sigalgs(self->ssl, listOfNids, nidsCount) != 1)
+    {
+        PyMem_Free(listOfNids);
         return raise_OpenSSL_error();
     }
 
+    PyMem_Free(listOfNids);
     Py_RETURN_NONE;
 }
 
@@ -1205,8 +1235,8 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"set_ciphersuites", (PyCFunction)nassl_SSL_set_ciphersuites, METH_VARARGS,
      "OpenSSL's SSL_set_ciphersuites()."
     },
-    {"set1_sigalgs_list", (PyCFunction)nassl_SSL_set1_sigalgs_list, METH_VARARGS,
-     "OpenSSL's SSL_set1_sigalgs_list()."
+    {"set1_sigalgs", (PyCFunction)nassl_SSL_set1_sigalgs, METH_VARARGS,
+     "OpenSSL's SSL_set1_sigalgs()."
     },
     {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
      "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."

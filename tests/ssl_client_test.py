@@ -12,7 +12,7 @@ from nassl.ssl_client import (
     OpenSslVerifyEnum,
     SslClient,
     OpenSSLError,
-    OpenSslEarlyDataStatusEnum,
+    OpenSslEarlyDataStatusEnum, OpenSslDigestNidEnum,
 )
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
@@ -466,6 +466,26 @@ class TestModernSslClientOnlineTls13:
 
         # And client's cipher suite was used
         assert "TLS_CHACHA20_POLY1305_SHA256" == ssl_client.get_current_cipher_name()
+
+    def test_set_sigalgs(self):
+        with ModernOpenSslServer() as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            # These signature algorithms are unsupported
+            ssl_client.set_sigalgs([
+                (OpenSslDigestNidEnum.SHA512, OpenSslEvpPkeyEnum.EC)
+            ])
+
+            with pytest.raises(OpenSSLError):
+                ssl_client.do_handshake()
+            ssl_client.shutdown()
 
     @staticmethod
     def _create_tls_1_3_session(server_host: str, server_port: int) -> _nassl.SSL_SESSION:
