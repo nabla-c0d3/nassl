@@ -455,6 +455,10 @@ class SslClient(BaseSslClient):
         # TODO(AD): Eventually merge this method with get/set_cipher_list()
         self._ssl.set_ciphersuites(cipher_suites)
 
+    def set_sigalgs(self, cipher_suites: str) -> None:
+        """Set the enabled signature algorithms, e.g. 'ECDSA+SHA256:RSA+SHA256'"""
+        self._ssl.set1_sigalgs_list(cipher_suites)
+
     def set_groups(self, supported_groups: List[OpenSslEcNidEnum]) -> None:
         """Specify elliptic curves or DH groups that are supported by the client in descending order."""
         self._ssl.set1_groups(supported_groups)

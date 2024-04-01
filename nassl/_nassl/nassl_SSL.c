@@ -819,6 +819,24 @@ static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *ar
 }
 
 
+// SSL_set1_sigalgs_list() is only available in OpenSSL 1.1.1
+static PyObject* nassl_SSL_set1_sigalgs_list(nassl_SSL_Object *self, PyObject *args)
+{
+    char *sigalgList;
+    if (!PyArg_ParseTuple(args, "s", &sigalgList))
+    {
+        return NULL;
+    }
+
+    if (!SSL_set1_sigalgs_list(self->ssl, sigalgList))
+    {
+        return raise_OpenSSL_error();
+    }
+
+    Py_RETURN_NONE;
+}
+
+
 static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject *args)
 {
     STACK_OF(X509) *verifiedCertChain = NULL;
@@ -1186,6 +1204,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"set_ciphersuites", (PyCFunction)nassl_SSL_set_ciphersuites, METH_VARARGS,
      "OpenSSL's SSL_set_ciphersuites()."
+    },
+    {"set1_sigalgs_list", (PyCFunction)nassl_SSL_set1_sigalgs_list, METH_VARARGS,
+     "OpenSSL's SSL_set1_sigalgs_list()."
     },
     {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
      "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
