@@ -867,6 +867,18 @@ static PyObject* nassl_SSL_set1_sigalgs(nassl_SSL_Object *self, PyObject *args)
 }
 
 
+static PyObject* nassl_get_peer_signature_nid(nassl_SSL_Object *self)
+{
+    int psig_nid;
+
+    if(SSL_get_peer_signature_nid(self->ssl, &psig_nid) != 1)
+    {
+            return raise_OpenSSL_error();
+    }
+    return PyLong_FromUnsignedLong((long)psig_nid);
+}
+
+
 static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject *args)
 {
     STACK_OF(X509) *verifiedCertChain = NULL;
@@ -1237,6 +1249,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"set1_sigalgs", (PyCFunction)nassl_SSL_set1_sigalgs, METH_VARARGS,
      "OpenSSL's SSL_set1_sigalgs()."
+    },
+    {"get_peer_signature_nid", (PyCFunction)nassl_get_peer_signature_nid, METH_NOARGS,
+     "OpenSSL's get_peer_signature_nid(). Returns a digest NID"
     },
     {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
      "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
