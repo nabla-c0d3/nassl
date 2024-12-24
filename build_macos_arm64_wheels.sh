@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Python 3.9+ arm64 is required
-python -m pip install "cibuildwheel>=2.17,<2.18"
+python -m pip install "cibuildwheel>=2.22,<2.23"
 
 export CIBW_ARCHS_MACOS="arm64"
 export CIBW_BEFORE_ALL='python -m pip install invoke && invoke build.deps'
