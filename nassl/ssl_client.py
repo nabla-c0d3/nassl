@@ -409,14 +409,6 @@ class BaseSslClient(ABC):
         """
         return [x509.as_pem() for x509 in self._ssl.get_peer_cert_chain()]
 
-    def get_ems_support(self) -> Optional[bool]:
-        support = self._ssl.get_extms_support()
-        if support == 1:
-            return True
-        if support == 0:
-            return False
-        return None
-
 
 class OpenSslEarlyDataStatusEnum(IntEnum):
     """Early data status constants."""
@@ -424,6 +416,12 @@ class OpenSslEarlyDataStatusEnum(IntEnum):
     NOT_SENT = 0
     REJECTED = 1
     ACCEPTED = 2
+
+
+class ExtendedMasterSecretSupportEnum(IntEnum):
+    NOT_USED_IN_CURRENT_SESSION = 0
+    USED_IN_CURRENT_SESSION = 1
+    UNKNOWN = -1
 
 
 class SslClient(BaseSslClient):
@@ -473,3 +471,15 @@ class SslClient(BaseSslClient):
             raise CertificateChainVerificationFailed(verify_code)
 
         return [x509.as_pem() for x509 in self._ssl.get0_verified_chain()]
+
+    def get_extended_master_secret_support(self) -> ExtendedMasterSecretSupportEnum:
+        """Indicates whether the current session used extended master secret."""
+        support = self._ssl.get_extms_support()
+        if support == 1:
+            return ExtendedMasterSecretSupportEnum.USED_IN_CURRENT_SESSION
+        elif support == 0:
+            return ExtendedMasterSecretSupportEnum.NOT_USED_IN_CURRENT_SESSION
+        elif support == -1:
+            return ExtendedMasterSecretSupportEnum.UNKNOWN
+        else:
+            raise ValueError(f"Unexpected return value get_extms_support(): {support}")

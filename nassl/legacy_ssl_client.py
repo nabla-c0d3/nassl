@@ -151,7 +151,3 @@ class LegacySslClient(BaseSslClient):
             except WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
-
-    def get_ems_support(self) -> Optional[bool]:
-        """ EMS is not supported by legacy OpenSSL """
-        return None

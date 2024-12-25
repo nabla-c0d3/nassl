@@ -1194,7 +1194,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     "OpenSSL's SSL_set1_groups()"
     },
     {"get_extms_support", (PyCFunction)nassl_SSL_get_extms_support, METH_NOARGS,
-    "Returns whether the current session used extended master secret."
+    "OpenSSL's SSL_get_extms_support()."
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,

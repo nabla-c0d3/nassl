@@ -7,6 +7,7 @@ from nassl import _nassl
 from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import (
     ClientCertificateRequested,
+    ExtendedMasterSecretSupportEnum,
     OpenSslVersionEnum,
     OpenSslVerifyEnum,
     SslClient,
@@ -358,6 +359,48 @@ class TestModernSslClientOnline:
             assert dh_info.type == OpenSslEvpPkeyEnum.X448
             assert dh_info.size == 448
             assert len(dh_info.public_bytes) == 56
+
+    def test_get_extended_master_secret_not_used(self):
+        with LegacyOpenSslServer() as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            exms_support_before_handshake = ssl_client.get_extended_master_secret_support()
+            assert exms_support_before_handshake == ExtendedMasterSecretSupportEnum.UNKNOWN
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            exms_support = ssl_client.get_extended_master_secret_support()
+            assert exms_support == ExtendedMasterSecretSupportEnum.NOT_USED_IN_CURRENT_SESSION
+
+    def test_get_extended_master_secret_used(self):
+        with ModernOpenSslServer() as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            ssl_client = SslClient(
+                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            exms_support = ssl_client.get_extended_master_secret_support()
+            assert exms_support == ExtendedMasterSecretSupportEnum.USED_IN_CURRENT_SESSION
 
 
 class TestLegacySslClientOnline:
