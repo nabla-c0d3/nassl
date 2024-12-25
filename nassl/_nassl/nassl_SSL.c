@@ -304,6 +304,12 @@ static PyObject* nassl_SSL_set1_groups(nassl_SSL_Object *self, PyObject *args)
     PyMem_Free(listOfNids);
     Py_RETURN_NONE;
 }
+
+static PyObject *nassl_SSL_get_extms_support(nassl_SSL_Object *self)
+{
+    long returnValue = SSL_get_extms_support(self->ssl);
+    return Py_BuildValue("l", returnValue);
+}
 #endif
 
 static PyObject* nassl_SSL_shutdown(nassl_SSL_Object *self, PyObject *args)
@@ -1186,6 +1192,9 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"set1_groups", (PyCFunction)nassl_SSL_set1_groups, METH_VARARGS,
     "OpenSSL's SSL_set1_groups()"
+    },
+    {"get_extms_support", (PyCFunction)nassl_SSL_get_extms_support, METH_NOARGS,
+    "OpenSSL's SSL_get_extms_support()."
     },
 #endif
     {"get_peer_cert_chain", (PyCFunction)nassl_SSL_get_peer_cert_chain, METH_NOARGS,
