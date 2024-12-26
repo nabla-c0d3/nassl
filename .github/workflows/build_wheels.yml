@@ -12,7 +12,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # macos-14 is apple silicon
         os: [ubuntu-22.04, macos-14, windows-2022]
 
     steps:
@@ -45,8 +44,7 @@ jobs:
         env:
           CIBW_BUILD: "cp39-* cp310-* cp311-* cp312-* cp313-*"
           CIBW_SKIP: "*-win32 pp* *-musllinux_i686"  # Skip win32, PyPy and muslinux32 builds
-          # Build wheels for Apple x86_64 only; we use another workflow for Apple arm64
-          CIBW_ARCHS_MACOS: "native"
+          CIBW_ARCHS_MACOS: "native"  # macos-14 is apple silicon ie. arm64
           # Build manylinux2014 wheels
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
