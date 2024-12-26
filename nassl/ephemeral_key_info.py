@@ -87,6 +87,9 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
     OpenSslEvpPkeyEnum.EC: "ECDH",
     OpenSslEvpPkeyEnum.X25519: "ECDH",
     OpenSslEvpPkeyEnum.X448: "ECDH",
+    OpenSslEvpPkeyEnum.RSA: "RSA",
+    OpenSslEvpPkeyEnum.DSA: "DSA",
+    OpenSslEvpPkeyEnum.RSA_PSS: "RSA-PSS",
 }
 
 

@@ -466,9 +466,11 @@ class SslClient(BaseSslClient):
         # TODO(AD): Eventually merge this method with get/set_cipher_list()
         self._ssl.set_ciphersuites(cipher_suites)
 
-    def set_sigalgs(self, sigalgs: List[Tuple[OpenSslDigestNidEnum, OpenSslEvpPkeyEnum]]) -> None:
-        """Set the enabled signature algorithms for the key exchange."""
-        flattened_sigalgs = [item for sublist in sigalgs for item in sublist]
+    def set_signature_algorithms(self, algorithms: List[Tuple[OpenSslDigestNidEnum, OpenSslEvpPkeyEnum]]) -> None:
+        """Set the enabled signature algorithms for the key exchange.
+
+        The algorithms parameter is a list of a public key algorithm and a digest."""
+        flattened_sigalgs = [item for sublist in algorithms for item in sublist]
         self._ssl.set1_sigalgs(flattened_sigalgs)
 
     def get_peer_signature_nid(self) -> OpenSslDigestNidEnum:
