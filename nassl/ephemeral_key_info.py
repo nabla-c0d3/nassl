@@ -12,6 +12,9 @@ class OpenSslEvpPkeyEnum(IntEnum):
     EC = 408
     X25519 = 1034
     X448 = 1035
+    RSA = 6
+    DSA = 116
+    RSA_PSS = 912
 
 
 class OpenSslEcNidEnum(IntEnum):
@@ -84,6 +87,9 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
     OpenSslEvpPkeyEnum.EC: "ECDH",
     OpenSslEvpPkeyEnum.X25519: "ECDH",
     OpenSslEvpPkeyEnum.X448: "ECDH",
+    OpenSslEvpPkeyEnum.RSA: "RSA",
+    OpenSslEvpPkeyEnum.DSA: "DSA",
+    OpenSslEvpPkeyEnum.RSA_PSS: "RSA-PSS",
 }
 
 
