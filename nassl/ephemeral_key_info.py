@@ -2,7 +2,7 @@ from abc import ABC
 
 from enum import IntEnum
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, Set
 
 
 class OpenSslEvpPkeyEnum(IntEnum):
@@ -48,9 +48,7 @@ class OpenSslEcNidEnum(IntEnum):
 
     # RFC8422 (current)
     SECP192R1 = 409
-    PRIME192V1 = 409  # Intentional duplicate of SECP192R1
     SECP256R1 = 415
-    PRIME256V1 = 415  # Intentional duplicate of SECP256R1
     SECP384R1 = 715
     SECP521R1 = 716
     X25519 = 1034
@@ -73,12 +71,12 @@ class OpenSslEcNidEnum(IntEnum):
     brainpoolP512t1 = 934
 
     @classmethod
-    def get_supported_by_ssl_client(cls) -> List["OpenSslEcNidEnum"]:
+    def get_supported_by_ssl_client(cls) -> Set["OpenSslEcNidEnum"]:
         """Some NIDs (the brainpool ones) trigger an error with nassl.SslClient when trying to use them.
 
         See also https://github.com/nabla-c0d3/nassl/issues/104.
         """
-        return [nid for nid in cls if "brainpool" not in nid.name]
+        return {nid for nid in cls if "brainpool" not in nid.name}
 
 
 # Mapping between OpenSSL EVP_PKEY_XXX value and display name
@@ -93,9 +91,7 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
 }
 
 
-# Mapping between the OpenSSL NID_XXX value and the SECG or ANSI X9.62 name (https://tools.ietf.org/html/rfc4492)
-# Where a ANSI X9.62 name is available, this is used in preference to the SECG
-# X25519 and X448 also included from https://tools.ietf.org/html/rfc8422
+# Mapping between the OpenSSL NID_XXX value and the SECG name (https://www.rfc-editor.org/rfc/rfc8422.html#appendix-A)
 _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECT163K1: "sect163k1",
     OpenSslEcNidEnum.SECT163R1: "sect163r1",
@@ -115,11 +111,11 @@ _OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
     OpenSslEcNidEnum.SECP160R1: "secp160r1",
     OpenSslEcNidEnum.SECP160R2: "secp160r2",
     OpenSslEcNidEnum.SECP192K1: "secp192k1",
+    OpenSslEcNidEnum.SECP192R1: "secp192r1",
     OpenSslEcNidEnum.SECP224K1: "secp224k1",
     OpenSslEcNidEnum.SECP224R1: "secp224r1",
     OpenSslEcNidEnum.SECP256K1: "secp256k1",
-    OpenSslEcNidEnum.PRIME192V1: "prime192v1",  # Also valid for SECP192R1
-    OpenSslEcNidEnum.PRIME256V1: "prime256v1",  # Also valid for SECP256R1
+    OpenSslEcNidEnum.SECP256R1: "secp256r1",
     OpenSslEcNidEnum.SECP384R1: "secp384r1",
     OpenSslEcNidEnum.SECP521R1: "secp521r1",
     OpenSslEcNidEnum.X25519: "X25519",
