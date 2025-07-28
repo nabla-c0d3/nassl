@@ -372,7 +372,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
 class OpenSSL3BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
-        return "openssl-3.0.15"
+        return "openssl-3.5.1"
 
     _OPENSSL_CONF_CMD = (
         "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost "
