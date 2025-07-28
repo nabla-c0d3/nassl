@@ -6,6 +6,7 @@ from build_tasks import (
     ModernOpenSslBuildConfig,
     ZlibBuildConfig,
     LegacyOpenSslBuildConfig,
+    OpenSSL3BuildConfig,
     SupportedPlatformEnum,
     CURRENT_PLATFORM,
 )
@@ -19,7 +20,7 @@ NASSL_SETUP = {
     "name": "nassl",
     "version": __version__,
     "packages": find_packages(exclude=["docs", "tests"]),
-    "package_data": {"nassl": ["py.typed", "_nassl.pyi", "_nassl_legacy.pyi"]},
+    "package_data": {"nassl": ["py.typed", "_nassl.pyi", "_nassl_legacy.pyi", "_nassl3.pyi"]},
     "py_modules": [
         "nassl.__init__",
         "nassl.ssl_client",
@@ -27,6 +28,7 @@ NASSL_SETUP = {
         "nassl.legacy_ssl_client",
         "nassl.ocsp_response",
         "nassl.cert_chain_verifier",
+        "nassl.openssl3_ssl_client",
     ],
     "description": "Experimental OpenSSL wrapper for Python 3.9+ and SSLyze.",
     "author": __author__,
@@ -144,6 +146,26 @@ MODERN_NASSL_EXT_SETUP.update(
 MODERN_NASSL_EXT_SETUP["sources"].append("nassl/_nassl/nassl_X509_STORE_CTX.c")  # API only available in modern nassl
 
 
+# The configure the setup for OpenSSL 3 nassl
+openssl3_config = OpenSSL3BuildConfig(CURRENT_PLATFORM)
+
+OPENSSL3_NASSL_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
+OPENSSL3_NASSL_EXT_SETUP["name"] = "nassl._nassl3"
+OPENSSL3_NASSL_EXT_SETUP["define_macros"] = [("OPENSSL3", "1")]
+OPENSSL3_NASSL_EXT_SETUP.update(
+    {
+        "include_dirs": [str(openssl3_config.include_path)],
+        "extra_objects": [
+            # The order matters on some flavors of Linux
+            str(openssl3_config.libssl_path),
+            str(openssl3_config.libcrypto_path),
+            str(zlib_config.libz_path),
+        ],
+    }
+)
+OPENSSL3_NASSL_EXT_SETUP["sources"].append("nassl/_nassl/nassl_X509_STORE_CTX.c")  # API available in OpenSSL 3
+
+
 if CURRENT_PLATFORM in [
     SupportedPlatformEnum.WINDOWS_32,
     SupportedPlatformEnum.WINDOWS_64,
@@ -151,10 +173,12 @@ if CURRENT_PLATFORM in [
     if SHOULD_BUILD_FOR_DEBUG:
         LEGACY_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
         MODERN_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
+        OPENSSL3_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
 else:
     # Add arguments specific to Unix builds
     LEGACY_NASSL_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
     MODERN_NASSL_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
+    OPENSSL3_NASSL_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
 
 
 NASSL_SETUP.update(
@@ -162,6 +186,7 @@ NASSL_SETUP.update(
         "ext_modules": [
             Extension(**LEGACY_NASSL_EXT_SETUP),
             Extension(**MODERN_NASSL_EXT_SETUP),
+            Extension(**OPENSSL3_NASSL_EXT_SETUP),
         ]
     }
 )

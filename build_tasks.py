@@ -369,6 +369,62 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
+class OpenSSL3BuildConfig(OpenSslBuildConfig):
+    @property
+    def _openssl_git_tag(self) -> str:
+        return "openssl-3.0.15"
+
+    _OPENSSL_CONF_CMD = (
+        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost "
+        "enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_include_path} "
+        "--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args} no-async"
+    )
+
+    def _run_build_steps(self, ctx: Context) -> None:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            ctx.run("nmake clean", warn=True)
+            ctx.run("nmake")
+        else:
+            return super()._run_build_steps(ctx)
+
+    @property
+    def libcrypto_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "libcrypto.lib"
+        else:
+            return self.src_path / "libcrypto.a"
+
+    @property
+    def libssl_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "libssl.lib"
+        else:
+            return self.src_path / "libssl.a"
+
+    @property
+    def include_path(self) -> Path:
+        return self.src_path / "include"
+
+    @property
+    def exe_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "apps" / "openssl.exe"
+        else:
+            return self.src_path / "apps" / "openssl"
+
+
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
@@ -458,6 +514,18 @@ def build_modern_openssl(ctx, do_not_clean=False):
 
 
 @task
+def build_openssl3(ctx, do_not_clean=False):
+    print("OPENSSL 3: Starting...")
+    ssl3_cfg = OpenSSL3BuildConfig(CURRENT_PLATFORM)
+    if not do_not_clean:
+        ssl3_cfg.clean()
+        ssl3_cfg.fetch_source()
+    zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
+    ssl3_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
+    print("OPENSSL 3: All done")
+
+
+@task
 def build_nassl(ctx):
     """Build the nassl C extension."""
     extra_args = ""
@@ -480,6 +548,7 @@ def build_deps(ctx, do_not_clean=False):
     build_zlib(ctx, do_not_clean)
     build_legacy_openssl(ctx, do_not_clean)
     build_modern_openssl(ctx, do_not_clean)
+    build_openssl3(ctx, do_not_clean)
 
 
 @task

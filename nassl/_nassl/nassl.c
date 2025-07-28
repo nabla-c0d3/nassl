@@ -54,6 +54,8 @@ static struct PyModuleDef moduledef =
 
 #ifdef LEGACY_OPENSSL
         "_nassl_legacy",
+#elif defined(OPENSSL3)
+        "_nassl3",
 #else
         "_nassl",
 #endif
@@ -77,6 +79,8 @@ static struct PyModuleDef moduledef =
 
 #ifdef LEGACY_OPENSSL
 PyMODINIT_FUNC PyInit__nassl_legacy(void)
+#elif defined(OPENSSL3)
+PyMODINIT_FUNC PyInit__nassl3(void)
 #else
 PyMODINIT_FUNC PyInit__nassl(void)
 #endif
@@ -124,7 +128,13 @@ PyMODINIT_FUNC PyInit__nassl(void)
 #endif
 
     state = GETSTATE(module);
+#ifdef LEGACY_OPENSSL
+    state->error = PyErr_NewException("nassl._nassl_legacy.Error", NULL, NULL);
+#elif defined(OPENSSL3)
+    state->error = PyErr_NewException("nassl._nassl3.Error", NULL, NULL);
+#else
     state->error = PyErr_NewException("nassl._nassl.Error", NULL, NULL);
+#endif
     if (state->error == NULL)
     {
         Py_DECREF(module);
