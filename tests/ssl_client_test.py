@@ -269,7 +269,7 @@ class TestModernSslClientOnline:
             assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
             assert dh_info.type == OpenSslEvpPkeyEnum.EC
             assert dh_info.size == 256
-            assert dh_info.curve == OpenSslEcNidEnum.PRIME256V1
+            assert dh_info.curve == OpenSslEcNidEnum.SECP256R1
             assert len(dh_info.public_bytes) == 65
             assert len(dh_info.x) == 32
             assert len(dh_info.y) == 32
