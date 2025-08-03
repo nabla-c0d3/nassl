@@ -1,5 +1,6 @@
 __author__ = "Alban Diquet"
-__version__ = "5.3.0"
+
+__version__ = "5.3.1"
 
 
 def _detect_available_openssl_versions():
