@@ -466,7 +466,7 @@ class TestModernSslClientOnline:
                 ssl_client.do_handshake()
             ssl_client.shutdown()
 
-
+@pytest.mark.skipif(LegacySslClient is None, reason="Legacy OpenSSL not available")
 class TestLegacySslClientOnline:
     def test_ssl_2(self) -> None:
         # Given a server that supports SSL 2.0
