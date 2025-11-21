@@ -1,10 +1,16 @@
 import pytest
 
-from nassl._nassl import X509, X509_STORE_CTX
+from tests.test_helpers import NASSL_MODULES
+
+
+@pytest.fixture(params=NASSL_MODULES)
+def nassl_module(request):
+    """Fixture that provides each nassl module (modern, legacy, and OpenSSL 3)."""
+    return request.param
 
 
 @pytest.fixture
-def certificate_as_x509() -> X509:
+def certificate_as_x509(nassl_module):
     pem_cert = """-----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
 A1UEBhMCQkUxGTAXBgNVBAoTEEdsb2JhbFNpZ24gbnYtc2ExEDAOBgNVBAsTB1Jv
@@ -26,28 +32,28 @@ AbEVtQwdpf5pLGkkeB6zpxxxYu7KyJesF12KwvhHhm4qxFYxldBniYUr+WymXUad
 DKqC5JlR3XC321Y9YeRq4VzW9v493kHMB65jUr9TU/Qr6cf9tveCX4XSQRjbgbME
 HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
 -----END CERTIFICATE-----"""
-    return X509(pem_cert)
+    return nassl_module.X509(pem_cert)
 
 
 class TestX509_STORE_CTX:
-    def test_set0_trusted_stack(self, certificate_as_x509):
-        ctx = X509_STORE_CTX()
+    def test_set0_trusted_stack(self, certificate_as_x509, nassl_module):
+        ctx = nassl_module.X509_STORE_CTX()
         ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
 
         # When calling it a second time it fails
         with pytest.raises(ValueError):
             ctx.set0_trusted_stack([certificate_as_x509, certificate_as_x509])
 
-    def test_set0_untrusted(self, certificate_as_x509):
-        ctx = X509_STORE_CTX()
+    def test_set0_untrusted(self, certificate_as_x509, nassl_module):
+        ctx = nassl_module.X509_STORE_CTX()
         ctx.set0_untrusted([certificate_as_x509, certificate_as_x509])
 
         # When calling it a second time it fails
         with pytest.raises(ValueError):
             ctx.set0_untrusted([certificate_as_x509, certificate_as_x509])
 
-    def test_set_cert(self, certificate_as_x509):
-        ctx = X509_STORE_CTX()
+    def test_set_cert(self, certificate_as_x509, nassl_module):
+        ctx = nassl_module.X509_STORE_CTX()
         ctx.set_cert(certificate_as_x509)
 
         # When calling it a second time it fails

@@ -9,11 +9,11 @@ class OcspResponseNotTrustedError(Exception):
         self.trust_store_path = trust_store_path
 
 
-def verify_ocsp_response(ocsp_response: _nassl.OCSP_RESPONSE, trust_store_path: Path) -> None:
+def verify_ocsp_response(ocsp_response, trust_store_path: Path) -> None:
     """Verify that the OCSP response is trusted.
 
     Args:
-        ocsp_response: The OCSP response to verify.
+        ocsp_response: The OCSP response to verify (from any nassl module).
         trust_store_path: The file path to a trust store containing pem-formatted certificates, to be used for
         validating the OCSP response.
 
@@ -25,8 +25,9 @@ def verify_ocsp_response(ocsp_response: _nassl.OCSP_RESPONSE, trust_store_path: 
 
     try:
         ocsp_response.basic_verify(str(trust_store_path))
-    except _nassl.OpenSSLError as e:
-        if "certificate verify error" in str(e):
+    except Exception as e:
+        # Catch OpenSSLError from any nassl module (_nassl, _nassl_legacy, _nassl3)
+        if "OpenSSLError" in type(e).__name__ and "certificate verify error" in str(e):
             raise OcspResponseNotTrustedError(
                 "OCSP Response verification failed: the response is not trusted",
                 trust_store_path,

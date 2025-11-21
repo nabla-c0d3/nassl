@@ -1,11 +1,10 @@
 import pytest
 
-from nassl import _nassl
-from nassl import _nassl_legacy
-from nassl.ssl_client import SslClient, OpenSslVersionEnum, OpenSslVerifyEnum
+from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum
+from tests.test_helpers import NASSL_MODULES
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+@pytest.mark.parametrize("nassl_module", NASSL_MODULES)
 class TestCommonSSL:
     def test_new(self, nassl_module):
         nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))

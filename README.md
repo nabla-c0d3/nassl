@@ -52,39 +52,6 @@ API. In most cases, Python methods of such objects directly match the OpenSSL fu
 
 These classes should be considered internal.
 
-### OpenSSL Version Support
-
-Nassl supports multiple OpenSSL versions:
-
-- **Legacy OpenSSL (1.0.2)**: Available via `nassl._nassl_legacy`
-- **Modern OpenSSL (1.1.1)**: Available via `nassl._nassl` 
-- **OpenSSL 3.x**: Available via `nassl._nassl3` (NEW!)
-
-To check which versions are available:
-
-```python
-from nassl import get_openssl_versions, has_openssl3_support
-
-print("Available versions:", get_openssl_versions())
-print("OpenSSL 3 support:", has_openssl3_support())
-```
-
-To use the OpenSSL 3 client:
-
-```python
-from nassl.openssl3_ssl_client import OpenSSL3SslClient
-
-if OpenSSL3SslClient.is_available():
-    ssl_client = OpenSSL3SslClient()
-    # Use ssl_client...
-```
-
-### Building OpenSSL 3 Support
-
-To build with OpenSSL 3 support:
-
-    $ invoke build.openssl3
-    $ invoke build.nassl
 
 Why another SSL library?
 ------------------------

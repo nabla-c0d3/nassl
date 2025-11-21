@@ -4,13 +4,11 @@ from pathlib import Path
 import pytest
 
 from nassl import _nassl
-from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ssl_client import (
     ClientCertificateRequested,
     ExtendedMasterSecretSupportEnum,
     OpenSslVersionEnum,
     OpenSslVerifyEnum,
-    SslClient,
     OpenSSLError,
     OpenSslEarlyDataStatusEnum,
     OpenSslDigestNidEnum,
@@ -28,10 +26,11 @@ from tests.openssl_server import (
     ClientAuthConfigEnum,
     LegacyOpenSslServer,
 )
+from tests.test_helpers import SSL_CLIENT_CLASSES
 
 
 # TODO(AD): Switch to legacy server and add a TODO; skip tests for TLS 1.3
-@pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
+@pytest.mark.parametrize("ssl_client_cls", SSL_CLIENT_CLASSES)
 class TestSslClientClientAuthentication:
     def test_client_authentication_no_certificate_supplied(self, ssl_client_cls) -> None:
         # Given a server that requires client authentication
@@ -95,7 +94,7 @@ class TestSslClientClientAuthentication:
                 ssl_client.shutdown()
 
 
-@pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
+@pytest.mark.parametrize("ssl_client_cls", SSL_CLIENT_CLASSES)
 class TestSslClientOnline:
     def test(self, ssl_client_cls) -> None:
         # Given an SslClient connecting to Google

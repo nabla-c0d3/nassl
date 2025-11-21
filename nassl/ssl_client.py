@@ -206,7 +206,7 @@ class BaseSslClient(ABC):
                 # Handshake was successful
                 return
 
-            except WantReadError:
+            except self._NASSL_MODULE.WantReadError:
                 # OpenSSL is expecting more data from the peer
                 # Send available handshake data to the peer
                 self._flush_ssl_engine()
@@ -218,11 +218,11 @@ class BaseSslClient(ABC):
                 # Pass the data to the SSL engine
                 self._network_bio.write(handshake_data_in)
 
-            except WantX509LookupError:
+            except self._NASSL_MODULE.WantX509LookupError:
                 # Server asked for a client certificate and we didn't provide one
                 raise ClientCertificateRequested(self.get_client_CA_list())
 
-            except OpenSSLError as e:
+            except self._NASSL_MODULE.OpenSSLError as e:
                 if "alert bad certificate" in e.args[0]:
                     # Bad certificate alert (https://github.com/nabla-c0d3/sslyze/issues/313 )
                     raise ClientCertificateRequested(self.get_client_CA_list())
@@ -258,12 +258,12 @@ class BaseSslClient(ABC):
                 decrypted_data = self._ssl.read(size)
                 return decrypted_data
 
-            except WantReadError:
+            except self._NASSL_MODULE.WantReadError:
                 # The SSL engine needs more data
                 # before it can decrypt the whole message
                 pass
 
-            except OpenSSLError as e:
+            except self._NASSL_MODULE.OpenSSLError as e:
                 if "tlsv13 alert certificate required" in str(e):
                     raise ClientCertificateRequested(self.get_client_CA_list())
                 elif "alert bad certificate" in e.args[0]:
@@ -313,7 +313,7 @@ class BaseSslClient(ABC):
 
         try:
             self._ssl.shutdown()
-        except OpenSSLError as e:
+        except self._NASSL_MODULE.OpenSSLError as e:
             # Ignore "uninitialized" exception
             if "SSL_shutdown:uninitialized" not in str(e) and "shutdown while in init" not in str(e):
                 raise

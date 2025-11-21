@@ -8,20 +8,22 @@ from nassl.ephemeral_key_info import (
     _OPENSSL_EVP_PKEY_TO_NAME_MAPPING,
     DhEphemeralKeyInfo,
 )
-from nassl.ssl_client import SslClient
+from tests.test_helpers import MODERN_SSL_CLIENT_CLASSES
 
 
+# set_groups is only available in modern OpenSSL (1.1.1+) and OpenSSL 3
+@pytest.mark.parametrize("ssl_client_cls", MODERN_SSL_CLIENT_CLASSES)
 class TestOpenSslEcNidEnum:
-    def test_supported_by_ssl_client(self):
+    def test_supported_by_ssl_client(self, ssl_client_cls):
         # Ensure the expected NIDs can be used to configure an SslClient
         for ec_nid in OpenSslEcNidEnum.get_supported_by_ssl_client():
-            ssl_client = SslClient()
+            ssl_client = ssl_client_cls()
             ssl_client.set_groups([ec_nid])
 
     @pytest.mark.skip("TODO: Fix brainpool support; see also https://github.com/nabla-c0d3/nassl/issues/104")
-    def test_brainpool_fix_me(self):
+    def test_brainpool_fix_me(self, ssl_client_cls):
         # Brainpool NIDs will trigger an OpenSslError
-        ssl_client = SslClient()
+        ssl_client = ssl_client_cls()
         ssl_client.set_groups([OpenSslEcNidEnum.brainpoolP160r1])
 
 

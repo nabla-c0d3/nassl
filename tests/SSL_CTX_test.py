@@ -2,11 +2,12 @@ import tempfile
 
 import pytest
 
-from nassl import _nassl, _nassl_legacy
+from nassl import _nassl
 from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
+from tests.test_helpers import NASSL_MODULES, MODERN_NASSL_MODULES
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+@pytest.mark.parametrize("nassl_module", NASSL_MODULES)
 class TestCommonSSL_CTX:
     def test_new(self, nassl_module):
         assert nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
@@ -224,7 +225,8 @@ Pd2eQ9+DkopOz3UGU7c=
     # TODO: add get_ca_list tests
 
 
+@pytest.mark.parametrize("nassl_module", MODERN_NASSL_MODULES)
 class TestModernSSL_CTX:
-    def test_tlsv1_3(self):
-        ssl_ctx = _nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
+    def test_tlsv1_3(self, nassl_module):
+        ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
         assert ssl_ctx
