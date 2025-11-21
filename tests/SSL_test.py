@@ -49,10 +49,8 @@ class TestCommonSSL:
     # Can't really unittest a full handshake, read or write
     def test_do_handshake_bad(self, nassl_module):
         # Connection type not set
-        # OpenSSL 1.1.1: error:140940F5:SSL routines:ssl3_read_bytes:unexpected message
-        # OpenSSL 3.x: error:0A000090:SSL routines::connection type not set OR error:0A000178:SSL routines::unexpected message
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(nassl_module.OpenSSLError):
+        with pytest.raises(nassl_module.OpenSSLError, match="(unexpected message|not set)"):
             test_ssl.do_handshake()
 
     def test_pending(self, nassl_module):
@@ -89,10 +87,8 @@ class TestCommonSSL:
         test_ssl.set_cipher_list("HIGH")
 
     def test_shutdown_bad(self, nassl_module):
-        # OpenSSL 1.1.1: error:...:uninitialized
-        # OpenSSL 3.x: error:0A000114:SSL routines::uninitialized OR error:0A000126:SSL routines::unexpected eof while reading
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(nassl_module.OpenSSLError):
+        with pytest.raises(nassl_module.OpenSSLError, match="uninitialized"):
             test_ssl.shutdown()
 
     def test_get_cipher_list(self, nassl_module):

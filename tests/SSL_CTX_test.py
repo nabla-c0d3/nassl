@@ -92,7 +92,7 @@ AEkZ5g==
         # OpenSSL 1.1.1: error:02001002:system library:fopen:No such file or directory
         # OpenSSL 3.x: error:05800088:x509 certificate routines::no certificate or crl found
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(nassl_module.OpenSSLError):
+        with pytest.raises(nassl_module.OpenSSLError, match="(No such file|no certificate)"):
             test_ssl_ctx.load_verify_locations("tests")
 
     def test_set_private_key_password_null_byte(self, nassl_module):
@@ -111,9 +111,8 @@ AEkZ5g==
 
     def test_use_certificate_file_bad(self, nassl_module):
         # Bad filename
-        # OpenSSL 3.x: error:80000002:system library::No such file or directory
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(nassl_module.OpenSSLError):
+        with pytest.raises(nassl_module.OpenSSLError, match="No such file"):
             test_ssl_ctx.use_certificate_chain_file("invalidPath")
 
     def test_use_PrivateKey_file(self, nassl_module):
@@ -125,9 +124,8 @@ AEkZ5g==
 
     def test_use_PrivateKey_file_bad(self, nassl_module):
         # Bad filename
-        # OpenSSL 3.x: error:80000002:system library::No such file or directory
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(nassl_module.OpenSSLError):
+        with pytest.raises(nassl_module.OpenSSLError, match="No such file"):
             test_ssl_ctx.use_PrivateKey_file("invalidPath", OpenSslFileTypeEnum.PEM.value)
 
     def test_check_private_key(self, nassl_module):
@@ -143,9 +141,8 @@ AEkZ5g==
         test_ssl_ctx.check_private_key()
 
     def test_check_private_key_bad(self, nassl_module):
-        # OpenSSL 3.x: error:0A0000B1:SSL routines::no certificate assigned
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(nassl_module.OpenSSLError):
+        with pytest.raises(nassl_module.OpenSSLError, match="no certificate assigned"):
             test_ssl_ctx.check_private_key()
 
     # TODO: add get_ca_list tests
