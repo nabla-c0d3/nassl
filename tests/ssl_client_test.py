@@ -12,7 +12,12 @@ from nassl.ssl_client import (
     OpenSSLError,
     OpenSslEarlyDataStatusEnum,
     OpenSslDigestNidEnum,
+    SslClient,
 )
+try:
+    from nassl.legacy_ssl_client import LegacySslClient
+except (ImportError, RuntimeError):
+    LegacySslClient = None  # type: ignore
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
     OpenSslEcNidEnum,
@@ -268,7 +273,7 @@ class TestModernSslClientOnline:
             assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
             assert dh_info.type == OpenSslEvpPkeyEnum.EC
             assert dh_info.size == 256
-            assert dh_info.curve == OpenSslEcNidEnum.PRIME256V1
+            assert dh_info.curve == OpenSslEcNidEnum.SECP256R1
             assert len(dh_info.public_bytes) == 65
             assert len(dh_info.x) == 32
             assert len(dh_info.y) == 32
@@ -298,23 +303,23 @@ class TestModernSslClientOnline:
             assert dh_info.curve == OpenSslEcNidEnum.X25519
             assert len(dh_info.public_bytes) == 32
 
-    def test_set_groups_curve_secp192k1(self) -> None:
+    def test_set_groups_curve_secp384r1(self) -> None:
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA",
-            groups="X25519:prime256v1:secp384r1:secp192k1",
+            groups="X25519:prime256v1:secp384r1",
         ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
-            # And a client that only supports a specific curve: SECP192K1
+            # And a client that only supports a specific curve: SECP384R1
             ssl_client = SslClient(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
-            configured_curve = OpenSslEcNidEnum.SECP192K1
+            configured_curve = OpenSslEcNidEnum.SECP384R1
             ssl_client.set_groups([configured_curve])
 
             # When the client connects to the server
@@ -332,7 +337,7 @@ class TestModernSslClientOnline:
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA",
-            groups="X25519:prime256v1:X448:secp384r1:secp192k1",
+            groups="X25519:prime256v1:X448:secp384r1",
         ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
