@@ -1,6 +1,13 @@
 import pytest
 
-from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum
+from nassl import _nassl
+from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, SslClient
+
+try:
+    from nassl import _nassl_legacy
+except ImportError:
+    _nassl_legacy = None
+
 from tests.test_helpers import NASSL_MODULES
 
 
@@ -42,8 +49,10 @@ class TestCommonSSL:
     # Can't really unittest a full handshake, read or write
     def test_do_handshake_bad(self, nassl_module):
         # Connection type not set
+        # OpenSSL 1.1.1: error:140940F5:SSL routines:ssl3_read_bytes:unexpected message
+        # OpenSSL 3.x: error:0A000178:SSL routines::unexpected message
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError, match="connection type not set"):
+        with pytest.raises(_nassl.OpenSSLError, match="(connection type not set|unexpected message)"):
             test_ssl.do_handshake()
 
     def test_pending(self, nassl_module):
@@ -60,8 +69,11 @@ class TestCommonSSL:
         test_ssl.get_current_compression_method()
 
     def test_get_available_compression_methods_has_zlib(self, nassl_module):
+        # OpenSSL 3.x removed zlib compression support by default
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        assert ["zlib compression"] == test_ssl.get_available_compression_methods()
+        methods = test_ssl.get_available_compression_methods()
+        # OpenSSL 1.1.1 has zlib, OpenSSL 3.x returns empty list
+        assert methods in (["zlib compression"], [])
 
     def test_set_tlsext_host_name(self, nassl_module):
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
@@ -77,8 +89,10 @@ class TestCommonSSL:
         test_ssl.set_cipher_list("HIGH")
 
     def test_shutdown_bad(self, nassl_module):
+        # OpenSSL 1.1.1: error:...:uninitialized
+        # OpenSSL 3.x: error:0A000126:SSL routines::unexpected eof while reading
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError, match="uninitialized"):
+        with pytest.raises(_nassl.OpenSSLError, match="(uninitialized|unexpected eof)"):
             test_ssl.shutdown()
 
     def test_get_cipher_list(self, nassl_module):
@@ -130,11 +144,14 @@ class TestCommonSSL:
 class TestModernSSL:
     def test_set_ciphersuites_bad_string(self):
         # Invalid cipher string
+        # OpenSSL 1.1.1: error:...:no cipher match
+        # OpenSSL 3.x: error:0A0BA080:SSL routines::no ciphers available
         test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_2.value))
-        with pytest.raises(_nassl.OpenSSLError, match="no cipher match"):
+        with pytest.raises(_nassl.OpenSSLError, match="(no cipher match|no ciphers available)"):
             test_ssl.set_ciphersuites("lol")
 
 
+@pytest.mark.skipif(_nassl_legacy is None, reason="Legacy OpenSSL not available")
 class TestLegacySSL:
     # The following tests don't pass with modern OpenSSL - the API might have changed
     def test_set_cipher_list_bad(self):
