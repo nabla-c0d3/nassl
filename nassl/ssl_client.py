@@ -481,6 +481,10 @@ class SslClient(BaseSslClient):
         """Specify elliptic curves or DH groups that are supported by the client in descending order."""
         self._ssl.set1_groups(supported_groups)
 
+    def get_group_name(self) -> str:
+        """Get the IANA name of the negotiated group."""
+        return self._ssl.get0_group_name()
+
     def get_verified_chain(self) -> List[str]:
         """Returns the verified PEM-formatted certificate chain.
 
