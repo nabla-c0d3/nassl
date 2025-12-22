@@ -22,10 +22,10 @@ jobs:
       run: uv sync --dev
 
     - name: Build C extension
-      run: invoke build.all
+      run: uv run invoke build.all
 
     - name: Lint
-      run: invoke lint
+      run: uv run invoke lint
 
     - name: Test
-      run: invoke test
+      run: uv run invoke test
