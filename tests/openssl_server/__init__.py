@@ -10,7 +10,7 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional, List
 
-from build_tasks import (
+from build_config import (
     ModernOpenSslBuildConfig,
     LegacyOpenSslBuildConfig,
     CURRENT_PLATFORM,

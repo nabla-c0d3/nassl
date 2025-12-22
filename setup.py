@@ -2,7 +2,7 @@ import copy
 import sys
 from pathlib import Path
 
-from build_tasks import (
+from build_config import (
     ModernOpenSslBuildConfig,
     ZlibBuildConfig,
     LegacyOpenSslBuildConfig,

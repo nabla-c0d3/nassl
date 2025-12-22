@@ -3,7 +3,7 @@ import shutil
 
 from invoke import task, Collection, Context
 
-import build_tasks
+import build_config
 from nassl import __version__
 
 root_path = Path(__file__).parent.absolute()
@@ -19,7 +19,7 @@ def test(ctx: Context) -> None:
 def lint(ctx: Context) -> None:
     ctx.run("ruff format .")
     ctx.run("ruff check . --fix")
-    ctx.run("mypy build_tasks.py sample_client.py nassl")
+    ctx.run("mypy build_config.py sample_client.py nassl")
 
 
 @task
@@ -86,8 +86,8 @@ build = Collection("build")
 @task
 def build_zlib(ctx: Context, do_not_clean: bool = False) -> None:
     print("ZLIB: Starting...")
-    assert build_tasks.CURRENT_PLATFORM
-    zlib_cfg = build_tasks.ZlibBuildConfig(build_tasks.CURRENT_PLATFORM)
+    assert build_config.CURRENT_PLATFORM
+    zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
         zlib_cfg.clean()
         zlib_cfg.fetch_source()
@@ -98,12 +98,12 @@ def build_zlib(ctx: Context, do_not_clean: bool = False) -> None:
 @task
 def build_legacy_openssl(ctx: Context, do_not_clean: bool = False) -> None:
     print("OPENSSL LEGACY: Starting...")
-    assert build_tasks.CURRENT_PLATFORM
-    ssl_legacy_cfg = build_tasks.LegacyOpenSslBuildConfig(build_tasks.CURRENT_PLATFORM)
+    assert build_config.CURRENT_PLATFORM
+    ssl_legacy_cfg = build_config.LegacyOpenSslBuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
         ssl_legacy_cfg.clean()
         ssl_legacy_cfg.fetch_source()
-    zlib_cfg = build_tasks.ZlibBuildConfig(build_tasks.CURRENT_PLATFORM)
+    zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
     ssl_legacy_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
     print("OPENSSL LEGACY: All done")
 
@@ -111,12 +111,12 @@ def build_legacy_openssl(ctx: Context, do_not_clean: bool = False) -> None:
 @task
 def build_modern_openssl(ctx: Context, do_not_clean: bool = False) -> None:
     print("OPENSSL MODERN: Starting...")
-    assert build_tasks.CURRENT_PLATFORM
-    ssl_modern_cfg = build_tasks.ModernOpenSslBuildConfig(build_tasks.CURRENT_PLATFORM)
+    assert build_config.CURRENT_PLATFORM
+    ssl_modern_cfg = build_config.ModernOpenSslBuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
         ssl_modern_cfg.clean()
         ssl_modern_cfg.fetch_source()
-    zlib_cfg = build_tasks.ZlibBuildConfig(build_tasks.CURRENT_PLATFORM)
+    zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
     ssl_modern_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
     print("OPENSSL MODERN: All done")
 
@@ -125,9 +125,9 @@ def build_modern_openssl(ctx: Context, do_not_clean: bool = False) -> None:
 def build_nassl(ctx: Context) -> None:
     """Build the nassl C extension."""
     extra_args = ""
-    if build_tasks.CURRENT_PLATFORM == build_tasks.SupportedPlatformEnum.WINDOWS_32:
+    if build_config.CURRENT_PLATFORM == build_config.SupportedPlatformEnum.WINDOWS_32:
         extra_args = "--plat-name=win32"
-    elif build_tasks.CURRENT_PLATFORM == build_tasks.SupportedPlatformEnum.WINDOWS_64:
+    elif build_config.CURRENT_PLATFORM == build_config.SupportedPlatformEnum.WINDOWS_64:
         extra_args = "--plat-name=win-amd64"
 
     # Reset the ./build folder if there was a previous version of nassl
