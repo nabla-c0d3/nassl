@@ -21,10 +21,9 @@ Nassl can be installed directly via pip:
 Development environment
 -----------------------
 
-To setup a development environment:
+To setup a development environment, after installing `uv`:
 
-    $ pip install --upgrade pip setuptools wheel
-    $ pip install -r requirements-dev.txt
+    $ uv sync --dev
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
