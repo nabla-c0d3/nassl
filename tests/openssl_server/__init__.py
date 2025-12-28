@@ -8,7 +8,7 @@ import logging
 import time
 from pathlib import Path
 from threading import Thread
-from typing import Optional, List
+from typing import IO, Any, Optional, List
 
 from build_config import (
     ModernOpenSslBuildConfig,
@@ -32,16 +32,16 @@ class ClientAuthConfigEnum(Enum):
 class _OpenSslServerIOManager:
     """Thread to log all output from s_server and reply to incoming connections."""
 
-    def __init__(self, s_server_stdout, s_server_stdin):
+    def __init__(self, s_server_stdout: IO[bytes], s_server_stdin: IO[bytes]) -> None:
         self.s_server_stdout = s_server_stdout
         self.s_server_stdin = s_server_stdin
         self.is_server_ready = False
 
-        def read_and_log_and_reply():
+        def read_and_log_and_reply() -> None:
             while True:
                 s_server_out = self.s_server_stdout.readline()
                 if s_server_out:
-                    _logger.warning(f"s_server output: {s_server_out}")
+                    _logger.warning(f"s_server output:\n{s_server_out!r}")
 
                     if b"ACCEPT" in s_server_out:
                         # S_server is ready to receive connections
@@ -61,7 +61,7 @@ class _OpenSslServerIOManager:
         self.thread.daemon = True
         self.thread.start()
 
-    def close(self):
+    def close(self) -> None:
         pass
         # TODO(AD): This hangs on Linux; figure it out
         # self.s_server_stdout.close()
@@ -125,8 +125,8 @@ class _OpenSslServer(ABC):
 
         # Retrieve one of the available local ports; set.pop() is thread safe
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
-        self._process = None
-        self._server_io_manager = None
+        self._process: subprocess.Popen | None = None
+        self._server_io_manager: _OpenSslServerIOManager | None = None
         final_cipher = cipher if cipher else "ALL:COMPLEMENTOFALL"
 
         self._command_line = self._S_SERVER_CMD.format(
@@ -139,8 +139,9 @@ class _OpenSslServer(ABC):
             cipher=final_cipher,
         )
 
-    def __enter__(self):
+    def __enter__(self) -> "_OpenSslServer":
         _logger.warning(f'Running s_server with command: "{self._command_line}"')
+        args: str | list[str]
         if CURRENT_PLATFORM in [
             SupportedPlatformEnum.WINDOWS_64,
             SupportedPlatformEnum.WINDOWS_32,
@@ -155,6 +156,8 @@ class _OpenSslServer(ABC):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
+            assert self._process.stdin
+            assert self._process.stdout
             self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
 
             # Block until s_server is ready to accept requests
@@ -173,9 +176,9 @@ class _OpenSslServer(ABC):
 
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: Any) -> None:
         self._terminate_process()
-        return False
+        return
 
     def _terminate_process(self) -> None:
         if self._server_io_manager:
@@ -208,7 +211,8 @@ class LegacyOpenSslServer(_OpenSslServer):
         super().__init__(client_auth_config, extra_args, cipher)
 
     @classmethod
-    def get_openssl_path(cls):
+    def get_openssl_path(cls) -> Path:
+        assert CURRENT_PLATFORM
         return LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
 
     @classmethod
@@ -225,9 +229,11 @@ class ModernOpenSslServer(_OpenSslServer):
     """A wrapper around the OpenSSL 1.1.1 s_server binary."""
 
     @classmethod
-    def get_openssl_path(cls):
+    def get_openssl_path(cls) -> Path:
+        assert CURRENT_PLATFORM
         return ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
 
+    @classmethod
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
         # The verify argument has subtly changed in OpenSSL 1.1.1
         options = {

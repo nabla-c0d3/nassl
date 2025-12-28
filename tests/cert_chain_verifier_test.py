@@ -43,11 +43,11 @@ cS0chWBNKPFNpvDKdrdKRe+oAkr2jU+ubgIxAODheSr2XhcA7oz9HmedGdMhlrd9
 
 
 class TestCertificateChainVerifier:
-    def test_valid_certificate_chain(self, certificate_chain_as_x509):
+    def test_valid_certificate_chain(self, certificate_chain_as_x509: list[X509]) -> None:
         path_validator = CertificateChainVerifier.from_file(Path(__file__).absolute().parent / "mozilla.pem")
         path_validator.verify(certificate_chain_as_x509)
 
-    def test_expired_certificate_chain(self):
+    def test_expired_certificate_chain(self) -> None:
         expired_leaf = """-----BEGIN CERTIFICATE-----
 MIIFSzCCBDOgAwIBAgIQSueVSfqavj8QDxekeOFpCTANBgkqhkiG9w0BAQsFADCB
 kDELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G

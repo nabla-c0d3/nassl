@@ -29,43 +29,34 @@ class TestEphemeralKeyInfo:
             assert ec_nid in _OPENSSL_NID_TO_SECG_ANSI_X9_62
 
     def test_ec_dh(self) -> None:
-        # Given some key info returned by OpenSSL
-        openssl_key_info = dict(
+        # Given some key info returned by OpenSSL, when parsing it, it succeeds
+        key_info = EcDhEphemeralKeyInfo(
             type=OpenSslEvpPkeyEnum.EC,
             size=12,
             public_bytes=bytearray(b"123"),
             curve=OpenSslEcNidEnum.X448,
         )
-
-        # When parsing it, it succeeds
-        key_info = EcDhEphemeralKeyInfo(**openssl_key_info)
         assert key_info
 
     def test_ec_dh_unknown_curve(self) -> None:
-        # Given some key info returned by OpenSSL with an unknown curve ID
-        openssl_key_info = dict(
-            curve=12345,
+        # Given some key info returned by OpenSSL with an unknown curve ID, when parsing it, it succeeds
+        key_info = EcDhEphemeralKeyInfo(
+            curve=12345,  # type: ignore
             type=OpenSslEvpPkeyEnum.EC,
             size=12,
             public_bytes=bytearray(b"123"),
         )
-
-        # When parsing it, it succeeds
-        key_info = EcDhEphemeralKeyInfo(**openssl_key_info)
         assert key_info
         assert "unknown" in key_info.curve_name
 
     def test_dh_unknown_type(self) -> None:
-        # Given some key info returned by OpenSSL with an unknown type
-        openssl_key_info = dict(
-            type=12345,
+        # Given some key info returned by OpenSSL with an unknown type, when parsing it, it succeeds
+        key_info = DhEphemeralKeyInfo(
+            type=12345,  # type: ignore
             size=12,
             public_bytes=bytearray(b"123"),
             prime=bytearray(b"123"),
             generator=bytearray(b"123"),
         )
-
-        # When parsing it, it succeeds
-        key_info = DhEphemeralKeyInfo(**openssl_key_info)
         assert key_info
         assert "UNKNOWN" in key_info.type_name

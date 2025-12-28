@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Type
 
 import pytest
 
@@ -9,6 +10,8 @@ from nassl.legacy_ssl_client import LegacySslClient
 from nassl.ocsp_response import OcspResponseNotTrustedError, verify_ocsp_response
 from nassl.ssl_client import SslClient, OpenSslVerifyEnum
 
+
+_SslClientTypes = Type[SslClient] | Type[LegacySslClient]
 
 _CERTIFICATE_AS_PEM = """-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
@@ -33,7 +36,7 @@ Pd2eQ9+DkopOz3UGU7c=
 
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestCommonOcspResponseOnline:
-    def test(self, ssl_client_cls):
+    def test(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a website that support OCSP stapling
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
@@ -48,6 +51,7 @@ class TestCommonOcspResponseOnline:
         ssl_client.shutdown()
 
         # And the OCSP response is valid
+        assert ocsp_response
         assert ocsp_response.as_text()
         assert ocsp_response.as_der_bytes()
 

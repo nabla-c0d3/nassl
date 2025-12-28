@@ -19,7 +19,7 @@ def test(ctx: Context) -> None:
 def lint(ctx: Context) -> None:
     ctx.run("ruff format .")
     ctx.run("ruff check . --fix")
-    ctx.run("mypy build_config.py sample_client.py nassl")
+    ctx.run("mypy build_config.py sample_client.py nassl tests")
 
 
 @task

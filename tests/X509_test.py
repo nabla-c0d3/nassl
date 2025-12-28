@@ -1,3 +1,4 @@
+from types import ModuleType
 import pytest
 
 from nassl import _nassl
@@ -6,7 +7,7 @@ from nassl import _nassl_legacy
 
 @pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
 class TestX509:
-    def test_from_pem(self, nassl_module):
+    def test_from_pem(self, nassl_module: ModuleType) -> None:
         # Given a PEM-formatted certificate
         pem_cert = """-----BEGIN CERTIFICATE-----
 MIIDdTCCAl2gAwIBAgILBAAAAAABFUtaw5QwDQYJKoZIhvcNAQEFBQAwVzELMAkG
@@ -39,10 +40,10 @@ HMUfpIBvFSDJ3gyICh3WZlXi/EjJKSZp4A==
         assert certificate.as_text()
         assert pem_cert == certificate.as_pem()
 
-    def test_from_pem_bad(self, nassl_module):
+    def test_from_pem_bad(self, nassl_module: ModuleType) -> None:
         pem_cert = "123123"
         with pytest.raises(ValueError):
             nassl_module.X509(pem_cert)
 
-    def test_verify_cert_error_string(self, nassl_module):
+    def test_verify_cert_error_string(self, nassl_module: ModuleType) -> None:
         assert nassl_module.X509.verify_cert_error_string(1)
