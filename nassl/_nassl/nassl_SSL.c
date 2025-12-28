@@ -705,7 +705,7 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
     certChain = SSL_get_peer_cert_chain(self->ssl); // automatically freed
     if (certChain == NULL)
     {
-        PyErr_SetString(PyExc_ValueError, "Error getting the peer's certificate chain.");
+        PyErr_SetString(PyExc_ValueError, "The peer did not present a certificate");
         return NULL;
     }
 
@@ -759,7 +759,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
     certChain = SSL_get_peer_cert_chain(self->ssl); // automatically freed
     if (certChain == NULL)
     {
-        PyErr_SetString(PyExc_ValueError, "Error getting the peer's certificate chain.");
+        PyErr_SetString(PyExc_ValueError, "The peer did not present a certificate");
         return NULL;
     }
 
