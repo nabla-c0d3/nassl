@@ -1,5 +1,6 @@
 import socket
 from pathlib import Path
+from typing import Type
 
 import pytest
 
@@ -29,11 +30,13 @@ from tests.openssl_server import (
     LegacyOpenSslServer,
 )
 
+_SslClientTypes = Type[SslClient] | Type[LegacySslClient]
+
 
 # TODO(AD): Switch to legacy server and add a TODO; skip tests for TLS 1.3
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestSslClientClientAuthentication:
-    def test_client_authentication_no_certificate_supplied(self, ssl_client_cls) -> None:
+    def test_client_authentication_no_certificate_supplied(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
         with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client does NOT provide a client certificate
@@ -52,7 +55,7 @@ class TestSslClientClientAuthentication:
 
             ssl_client.shutdown()
 
-    def test_client_authentication_no_certificate_supplied_but_ignore(self, ssl_client_cls) -> None:
+    def test_client_authentication_no_certificate_supplied_but_ignore(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that accepts optional client authentication
         with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.OPTIONAL) as server:
             # And the client does NOT provide a client cert but is configured to ignore the client auth request
@@ -72,7 +75,7 @@ class TestSslClientClientAuthentication:
             finally:
                 ssl_client.shutdown()
 
-    def test_client_authentication_succeeds(self, ssl_client_cls) -> None:
+    def test_client_authentication_succeeds(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
         with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides a client certificate
@@ -97,7 +100,7 @@ class TestSslClientClientAuthentication:
 
 @pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
 class TestSslClientOnline:
-    def test(self, ssl_client_cls) -> None:
+    def test(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given an SslClient connecting to Google
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
@@ -124,7 +127,7 @@ class TestSslClientOnline:
         finally:
             ssl_client.shutdown()
 
-    def test_get_dh_info_ecdh(self, ssl_client_cls) -> None:
+    def test_get_dh_info_ecdh(self, ssl_client_cls: _SslClientTypes) -> None:
         with LegacyOpenSslServer(cipher="ECDHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -150,7 +153,7 @@ class TestSslClientOnline:
             assert len(dh_info.x) > 0
             assert len(dh_info.y) > 0
 
-    def test_get_dh_info_dh(self, ssl_client_cls) -> None:
+    def test_get_dh_info_dh(self, ssl_client_cls: _SslClientTypes) -> None:
         with LegacyOpenSslServer(cipher="DHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -176,7 +179,7 @@ class TestSslClientOnline:
             assert len(dh_info.prime) > 0
             assert len(dh_info.generator) > 0
 
-    def test_get_dh_info_no_dh(self, ssl_client_cls) -> None:
+    def test_get_dh_info_no_dh(self, ssl_client_cls: _SslClientTypes) -> None:
         with LegacyOpenSslServer(cipher="AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)

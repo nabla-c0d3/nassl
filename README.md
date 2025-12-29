@@ -6,7 +6,7 @@ nassl
 [![PyPI wheel](https://img.shields.io/pypi/wheel/nassl.svg)](https://pypi.org/project/nassl/)
 [![PyPI version](https://img.shields.io/pypi/pyversions/nassl.svg)](https://pypi.org/project/nassl/)
 
-Experimental OpenSSL wrapper for Python 3.9+ and [SSLyze](https://github.com/nabla-c0d3/sslyze).
+Experimental OpenSSL wrapper for Python 3.10+ and [SSLyze](https://github.com/nabla-c0d3/sslyze).
 
 **Do NOT use for anything serious**. This code has not been properly tested/reviewed and is not production ready.
 
@@ -21,18 +21,17 @@ Nassl can be installed directly via pip:
 Development environment
 -----------------------
 
-To setup a development environment:
+To setup a development environment, after installing `uv`:
 
-    $ pip install --upgrade pip setuptools wheel
-    $ pip install -r requirements-dev.txt
+    $ uv sync --dev
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
-    $ invoke build.all
+    $ uv run invoke build.all
 
 Then, the tests can be run using:
 
-    $ invoke test
+    $ uv run invoke test
 
 
 Project structure

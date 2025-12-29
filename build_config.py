@@ -6,19 +6,12 @@ from pathlib import Path
 from tempfile import TemporaryFile
 from platform import architecture, machine
 from sys import platform
-from typing import Optional, Any, List
+from typing import TYPE_CHECKING, Optional, List
 from urllib.request import urlopen
 
-try:
-    from invoke import task, Context
-except ImportError:
-    # This will happen when doing pip install nassl in an environment that does not have invoke pre-installed
-    # We still want this script to be usable directly by pip
-    def task(*args, **kwargs):  # type: ignore
-        # Return a function - anything will do
-        return repr
-
-    Context = Any
+if TYPE_CHECKING:
+    # We want this script to be usable directly by pip ie. when invoke has not been installed yet
+    from invoke import Context
 
 
 # Where we store the src packages of OpenSSL and Zlib
@@ -48,7 +41,7 @@ class SupportedPlatformEnum(Enum):
         ]
 
 
-CURRENT_PLATFORM = None
+CURRENT_PLATFORM: Optional[SupportedPlatformEnum] = None
 if architecture()[0] == "64bit":
     if platform == "darwin":
         if machine() == "x86_64":
@@ -110,7 +103,7 @@ class BuildConfig(ABC):
             tar_file.extractall(path=_DEPS_PATH)
 
     @abstractmethod
-    def build(self, ctx: Context) -> None:
+    def build(self, ctx: "Context") -> None:
         pass
 
     @property
@@ -181,7 +174,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
 
     def build(
         self,
-        ctx: Context,
+        ctx: "Context",
         zlib_lib_path: Optional[Path] = None,
         zlib_include_path: Optional[Path] = None,
         should_build_for_debug: bool = False,
@@ -196,11 +189,11 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             self._run_build_steps(ctx)
 
     # To be defined in subclasses
-    _OPENSSL_CONF_CMD: str = None
+    _OPENSSL_CONF_CMD: str
 
     def _run_configure_command(
         self,
-        ctx: Context,
+        ctx: "Context",
         openssl_target: str,
         zlib_lib_path: Path,
         zlib_include_path: Path,
@@ -231,7 +224,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             )
         )
 
-    def _run_build_steps(self, ctx: Context) -> None:
+    def _run_build_steps(self, ctx: "Context") -> None:
         if self.platform in [
             SupportedPlatformEnum.WINDOWS_32,
             SupportedPlatformEnum.WINDOWS_64,
@@ -324,7 +317,7 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
         "--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args} no-async"
     )
 
-    def _run_build_steps(self, ctx: Context) -> None:
+    def _run_build_steps(self, ctx: "Context") -> None:
         if self.platform in [
             SupportedPlatformEnum.WINDOWS_32,
             SupportedPlatformEnum.WINDOWS_64,
@@ -378,7 +371,7 @@ class ZlibBuildConfig(BuildConfig):
     def src_path(self) -> Path:
         return _DEPS_PATH / "zlib-1.2.13"
 
-    def build(self, ctx: Context) -> None:
+    def build(self, ctx: "Context") -> None:
         if self.platform in [
             SupportedPlatformEnum.WINDOWS_32,
             SupportedPlatformEnum.WINDOWS_64,
@@ -420,70 +413,3 @@ class ZlibBuildConfig(BuildConfig):
     @property
     def include_path(self) -> Path:
         return self.src_path
-
-
-@task
-def build_zlib(ctx, do_not_clean=False):
-    print("ZLIB: Starting...")
-    zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
-    if not do_not_clean:
-        zlib_cfg.clean()
-        zlib_cfg.fetch_source()
-    zlib_cfg.build(ctx)
-    print("ZLIB: All done")
-
-
-@task
-def build_legacy_openssl(ctx, do_not_clean=False):
-    print("OPENSSL LEGACY: Starting...")
-    ssl_legacy_cfg = LegacyOpenSslBuildConfig(CURRENT_PLATFORM)
-    if not do_not_clean:
-        ssl_legacy_cfg.clean()
-        ssl_legacy_cfg.fetch_source()
-    zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
-    ssl_legacy_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
-    print("OPENSSL LEGACY: All done")
-
-
-@task
-def build_modern_openssl(ctx, do_not_clean=False):
-    print("OPENSSL MODERN: Starting...")
-    ssl_modern_cfg = ModernOpenSslBuildConfig(CURRENT_PLATFORM)
-    if not do_not_clean:
-        ssl_modern_cfg.clean()
-        ssl_modern_cfg.fetch_source()
-    zlib_cfg = ZlibBuildConfig(CURRENT_PLATFORM)
-    ssl_modern_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
-    print("OPENSSL MODERN: All done")
-
-
-@task
-def build_nassl(ctx):
-    """Build the nassl C extension."""
-    extra_args = ""
-    if CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_32:
-        extra_args = "--plat-name=win32"
-    elif CURRENT_PLATFORM == SupportedPlatformEnum.WINDOWS_64:
-        extra_args = "--plat-name=win-amd64"
-
-    # Reset the ./build folder if there was a previous version of nassl
-    build_path = Path(__file__).parent.absolute() / "build"
-    if build_path.exists():
-        shutil.rmtree(build_path)
-
-    ctx.run(f"python setup.py build_ext -i {extra_args}")
-
-
-@task
-def build_deps(ctx, do_not_clean=False):
-    """Build the C libraries the nassl C extension depends on."""
-    build_zlib(ctx, do_not_clean)
-    build_legacy_openssl(ctx, do_not_clean)
-    build_modern_openssl(ctx, do_not_clean)
-
-
-@task
-def build_all(ctx, do_not_clean=False):
-    """Build the nassl C extension and the C libraries from scratch."""
-    build_deps(ctx, do_not_clean)
-    build_nassl(ctx)

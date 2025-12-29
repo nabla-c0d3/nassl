@@ -23,7 +23,19 @@ PyObject* raise_OpenSSL_error()
     PyObject *pyNewLineString = NULL;
     unsigned long iterateOpenSslError = 0;
 
-    pyFinalErrorString = PyUnicode_FromString("");
+    iterateOpenSslError = ERR_get_error();
+    if (iterateOpenSslError == 0) 
+    {
+        // No actual errors in the OpenSSL error queue; this usually means that the function that returned a 0
+        // to indicate an error had an invalid input; return a generic error message
+        pyFinalErrorString = PyUnicode_FromString("Unknown error: invalid input, usage, or OpenSSL build configuration?");
+    }
+    else 
+    {
+        // We will concatenate all the errors in the error queue to create a giant error string
+        pyFinalErrorString = PyUnicode_FromString("");
+    }
+
     if (pyFinalErrorString == NULL)
     {
         return PyErr_NoMemory();
@@ -35,9 +47,6 @@ PyObject* raise_OpenSSL_error()
         return PyErr_NoMemory();
     }
 
-    // Just queue all the errors in the error queue to create a giant error string
-    // TODO: Improve error handling so we only return one single error; no sure if OpenSSL allows that...
-    iterateOpenSslError = ERR_get_error();
     while(iterateOpenSslError != 0)
     {
         PyObject *oldPyFinalErrorString = NULL;

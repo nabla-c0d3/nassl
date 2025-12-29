@@ -1,5 +1,6 @@
 import subprocess
 from sys import platform
+from types import ModuleType
 from nassl import _nassl, _nassl_legacy
 import pytest
 
@@ -12,7 +13,7 @@ can_only_run_on_linux_64 = pytest.mark.skipif(
 class TestBuildConfig:
     @can_only_run_on_linux_64
     @pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
-    def test_internal_openssl_symbols_are_hidden(self, nassl_module):
+    def test_internal_openssl_symbols_are_hidden(self, nassl_module: ModuleType) -> None:
         # Given the compiled _nassl module
         # When looking at the module's shared library's symbol table
         symbol_table = subprocess.run(["nm", "-gD", f"{nassl_module.__file__}"], capture_output=True).stdout
