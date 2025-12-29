@@ -41,7 +41,7 @@ class SupportedPlatformEnum(Enum):
         ]
 
 
-CURRENT_PLATFORM: SupportedPlatformEnum | None = None
+CURRENT_PLATFORM: Optional[SupportedPlatformEnum] = None
 if architecture()[0] == "64bit":
     if platform == "darwin":
         if machine() == "x86_64":
