@@ -27,11 +27,11 @@ To setup a development environment, after installing `uv`:
 
 Nassl relies on a C extension to call into OpenSSL; you can compile everything using:
 
-    $ invoke build.all
+    $ uv run invoke build.all
 
 Then, the tests can be run using:
 
-    $ invoke test
+    $ uv run invoke test
 
 
 Project structure
