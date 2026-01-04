@@ -15,6 +15,7 @@ from nassl.ssl_client import (
     OpenSSLError,
     OpenSslEarlyDataStatusEnum,
     OpenSslDigestNidEnum,
+    CertificateChainVerificationFailed,
 )
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
@@ -23,7 +24,6 @@ from nassl.ephemeral_key_info import (
     NistEcDhKeyExchangeInfo,
     EcDhEphemeralKeyInfo,
 )
-from nassl.cert_chain_verifier import CertificateChainVerificationFailed
 from tests.openssl_server import (
     ModernOpenSslServer,
     ClientAuthConfigEnum,

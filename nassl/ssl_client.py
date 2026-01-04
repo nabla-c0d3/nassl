@@ -3,7 +3,7 @@ from abc import ABC
 from pathlib import Path
 
 from nassl import _nassl
-from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError
+from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
 
 from enum import IntEnum
 from typing import List, Any, Tuple
@@ -20,7 +20,15 @@ from nassl.ephemeral_key_info import (
     NistEcDhKeyExchangeInfo,
     OpenSslEcNidEnum,
 )
-from nassl.cert_chain_verifier import CertificateChainVerificationFailed
+
+
+class CertificateChainVerificationFailed(Exception):
+    def __init__(self, openssl_error_code: int) -> None:
+        self.openssl_error_code = openssl_error_code
+        self.openssl_error_string = X509.verify_cert_error_string(self.openssl_error_code)
+        super().__init__(
+            f'Verification failed with OpenSSL error code {self.openssl_error_code}: "{self.openssl_error_string}"'
+        )
 
 
 class OpenSslVerifyEnum(IntEnum):
@@ -83,7 +91,6 @@ class NasslModuleProtocol(Protocol):
     SSL: Any
     BIO: Any
     X509: Any
-    X509_STORE_CTX: Any
     OCSP_RESPONSE: Any
     OpenSSLError: Any
     WantReadError: Any
