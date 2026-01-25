@@ -49,9 +49,9 @@ static struct PyModuleDef moduledef =
         PyModuleDef_HEAD_INIT,
 
 #ifdef LEGACY_OPENSSL
-        "_nassl_legacy",
+        "openssl_1_0_2._nassl",
 #else
-        "_nassl",
+        "openssl_1_1_1._nassl",
 #endif
 
         NULL,
@@ -71,12 +71,7 @@ static struct PyModuleDef moduledef =
 #endif
 
 
-#ifdef LEGACY_OPENSSL
-PyMODINIT_FUNC PyInit__nassl_legacy(void)
-#else
 PyMODINIT_FUNC PyInit__nassl(void)
-#endif
-
 {
     PyObject* module;
     struct module_state *state;

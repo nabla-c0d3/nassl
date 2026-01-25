@@ -96,29 +96,42 @@ def build_zlib(ctx: Context, do_not_clean: bool = False) -> None:
 
 
 @task
-def build_legacy_openssl(ctx: Context, do_not_clean: bool = False) -> None:
-    print("OPENSSL LEGACY: Starting...")
+def build_openssl_1_0_2(ctx: Context, do_not_clean: bool = False) -> None:
+    print("OpenSSL 1.0.2: Starting...")
     assert build_config.CURRENT_PLATFORM
-    ssl_legacy_cfg = build_config.LegacyOpenSslBuildConfig(build_config.CURRENT_PLATFORM)
+    ossl_1_0_2_cfg = build_config.OpenSsl_1_0_2_BuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
-        ssl_legacy_cfg.clean()
-        ssl_legacy_cfg.fetch_source()
+        ossl_1_0_2_cfg.clean()
+        ossl_1_0_2_cfg.fetch_source()
     zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
-    ssl_legacy_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
-    print("OPENSSL LEGACY: All done")
+    ossl_1_0_2_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
+    print("OpenSSL 1.0.2: All done")
 
 
 @task
-def build_modern_openssl(ctx: Context, do_not_clean: bool = False) -> None:
-    print("OPENSSL MODERN: Starting...")
+def build_openssl_1_1_1(ctx: Context, do_not_clean: bool = False) -> None:
+    print("OpenSSL 1.1.1: Starting...")
     assert build_config.CURRENT_PLATFORM
-    ssl_modern_cfg = build_config.ModernOpenSslBuildConfig(build_config.CURRENT_PLATFORM)
+    ossl_1_1_1_cfg = build_config.OpenSsl_1_1_1_BuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
-        ssl_modern_cfg.clean()
-        ssl_modern_cfg.fetch_source()
+        ossl_1_1_1_cfg.clean()
+        ossl_1_1_1_cfg.fetch_source()
     zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
-    ssl_modern_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
-    print("OPENSSL MODERN: All done")
+    ossl_1_1_1_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
+    print("OpenSSL 1.1.1: All done")
+
+
+@task
+def build_openssl_3_5(ctx: Context, do_not_clean: bool = False) -> None:
+    print("OpenSSL 3.5: Starting...")
+    assert build_config.CURRENT_PLATFORM
+    ossl_3_5_cfg = build_config.OpenSSL_3_5_BuildConfig(build_config.CURRENT_PLATFORM)
+    if not do_not_clean:
+        ossl_3_5_cfg.clean()
+        ossl_3_5_cfg.fetch_source()
+    zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
+    ossl_3_5_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
+    print("OpenSSL 3.5: All done")
 
 
 @task
@@ -142,8 +155,8 @@ def build_nassl(ctx: Context) -> None:
 def build_deps(ctx: Context, do_not_clean: bool = False) -> None:
     """Build the C libraries the nassl C extension depends on."""
     build_zlib(ctx, do_not_clean)
-    build_legacy_openssl(ctx, do_not_clean)
-    build_modern_openssl(ctx, do_not_clean)
+    build_openssl_1_0_2(ctx, do_not_clean)
+    build_openssl_1_1_1(ctx, do_not_clean)
 
 
 @task
@@ -154,8 +167,9 @@ def build_all(ctx: Context, do_not_clean: bool = False) -> None:
 
 
 build.add_task(build_zlib, "zlib")
-build.add_task(build_legacy_openssl, "legacy_openssl")
-build.add_task(build_modern_openssl, "modern_openssl")
+build.add_task(build_openssl_1_0_2, "openssl_1_0_2")
+build.add_task(build_openssl_1_1_1, "openssl_1_1_1")
+build.add_task(build_openssl_3_5, "openssl_3_5")
 build.add_task(build_nassl, "nassl")
 build.add_task(build_deps, "deps")
 build.add_task(build_all, "all")

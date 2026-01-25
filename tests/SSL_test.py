@@ -1,12 +1,15 @@
 from types import ModuleType
 import pytest
 
-from nassl import _nassl
-from nassl import _nassl_legacy
-from nassl.ssl_client import SslClient, OpenSslVersionEnum, OpenSslVerifyEnum
+from nassl._low_level_errors import OpenSSLError, SslError
+from nassl.base_ssl_client import BaseSslClient, OpenSslVersionEnum, OpenSslVerifyEnum
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+import nassl.openssl_1_0_2._nassl
+import nassl.openssl_1_1_1._nassl
+
+
+@pytest.mark.parametrize("nassl_module", [nassl.openssl_1_0_2._nassl, nassl.openssl_1_1_1._nassl])
 class TestCommonSSL:
     def test_new(self, nassl_module: ModuleType) -> None:
         nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
@@ -45,7 +48,7 @@ class TestCommonSSL:
     def test_do_handshake_bad(self, nassl_module: ModuleType) -> None:
         # Connection type not set
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError, match="connection type not set"):
+        with pytest.raises(OpenSSLError, match="connection type not set"):
             test_ssl.do_handshake()
 
     def test_pending(self, nassl_module: ModuleType) -> None:
@@ -80,7 +83,7 @@ class TestCommonSSL:
 
     def test_shutdown_bad(self, nassl_module: ModuleType) -> None:
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError, match="uninitialized"):
+        with pytest.raises(OpenSSLError, match="uninitialized"):
             test_ssl.shutdown()
 
     def test_get_cipher_list(self, nassl_module: ModuleType) -> None:
@@ -122,46 +125,52 @@ class TestCommonSSL:
 
     def test_set_tlsext_status_type(self, nassl_module: ModuleType) -> None:
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        test_ssl.set_tlsext_status_type(SslClient._TLSEXT_STATUSTYPE_ocsp)
+        test_ssl.set_tlsext_status_type(BaseSslClient._TLSEXT_STATUSTYPE_ocsp)
 
     def test_get_tlsext_status_type(self, nassl_module: ModuleType) -> None:
         test_ssl = nassl_module.SSL(nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
         assert None is test_ssl.get_tlsext_status_ocsp_resp()
 
 
-class TestModernSSL:
+_SSL_CTX_OpenSSL_1_1_1 = nassl.openssl_1_1_1._nassl.SSL_CTX
+
+
+class TestSSL_OpenSSL_1_1_1:
     def test_set_ciphersuites_bad_string(self) -> None:
         # Invalid cipher string
-        test_ssl = _nassl.SSL(_nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_2.value))
-        with pytest.raises(_nassl.OpenSSLError, match="no cipher match"):
+        test_ssl = nassl.openssl_1_1_1._nassl.SSL(_SSL_CTX_OpenSSL_1_1_1(OpenSslVersionEnum.TLSV1_2.value))
+        with pytest.raises(OpenSSLError, match="no cipher match"):
             test_ssl.set_ciphersuites("lol")
 
 
-class TestLegacySSL:
-    # The following tests don't pass with modern OpenSSL - the API might have changed
+_SSL_CTX_OpenSSL_1_0_2 = nassl.openssl_1_0_2._nassl.SSL_CTX
+
+
+class TestSSL_OpenSSL_1_0_2:
+    # The following tests don't pass with OpenSSL 1.1.1 - the API might have changed
     def test_set_cipher_list_bad(self) -> None:
         # Invalid cipher string
-        test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
-        with pytest.raises(_nassl.OpenSSLError):
+        test_ssl = nassl.openssl_1_0_2._nassl.SSL(_SSL_CTX_OpenSSL_1_0_2(OpenSslVersionEnum.SSLV23.value))
+        with pytest.raises(OpenSSLError):
             test_ssl.set_cipher_list("badcipherstring")
 
     def test_do_handshake_bad_eof(self) -> None:
         # No BIO attached to the SSL object
-        test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
+        test_ssl = nassl.openssl_1_0_2._nassl.SSL(_SSL_CTX_OpenSSL_1_0_2(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        with pytest.raises(_nassl.SslError, match="An EOF was observed that violates the protocol"):
+        with pytest.raises(SslError, match="An EOF was observed that violates the protocol"):
             test_ssl.do_handshake()
 
     def test_read_bad(self) -> None:
         # No BIO attached to the SSL object
-        test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
+        test_ssl = nassl.openssl_1_0_2._nassl.SSL(_SSL_CTX_OpenSSL_1_0_2(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        with pytest.raises(_nassl.OpenSSLError, match="ssl handshake failure"):
+        with pytest.raises(OpenSSLError, match="ssl handshake failure"):
             test_ssl.read(128)
 
     def test_write_bad(self) -> None:
         # No BIO attached to the SSL object
-        test_ssl = _nassl_legacy.SSL(_nassl_legacy.SSL_CTX(OpenSslVersionEnum.SSLV23.value))
+        test_ssl = nassl.openssl_1_0_2._nassl.SSL(_SSL_CTX_OpenSSL_1_0_2(OpenSslVersionEnum.SSLV23.value))
         test_ssl.set_connect_state()
-        with pytest.raises(_nassl.OpenSSLError, match="ssl handshake failure"):
+        with pytest.raises(OpenSSLError, match="ssl handshake failure"):
             test_ssl.write("tests")

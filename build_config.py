@@ -242,7 +242,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             ctx.run("make")  # Only build the libs as it is faster - not available on Windows
 
 
-class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
+class OpenSsl_1_0_2_BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
         return "OpenSSL_1_0_2e"
@@ -306,7 +306,7 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
-class ModernOpenSslBuildConfig(OpenSslBuildConfig):
+class OpenSsl_1_1_1_BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
         return "OpenSSL_1_1_1w"
@@ -362,14 +362,71 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
+class OpenSSL_3_5_BuildConfig(OpenSslBuildConfig):
+    @property
+    def _openssl_git_tag(self) -> str:
+        return "openssl-3.5.4"
+
+    _OPENSSL_CONF_CMD = (
+        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost "
+        "enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_include_path} "
+        "--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args} no-async"
+    )
+
+    def _run_build_steps(self, ctx: "Context") -> None:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            ctx.run("nmake clean", warn=True)
+            ctx.run("nmake")
+        else:
+            return super()._run_build_steps(ctx)
+
+    @property
+    def libcrypto_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "libcrypto.lib"
+        else:
+            return self.src_path / "libcrypto.a"
+
+    @property
+    def libssl_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "libssl.lib"
+        else:
+            return self.src_path / "libssl.a"
+
+    @property
+    def include_path(self) -> Path:
+        return self.src_path / "include"
+
+    @property
+    def exe_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "apps" / "openssl.exe"
+        else:
+            return self.src_path / "apps" / "openssl"
+
+
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
-        return "https://www.zlib.net/fossils/zlib-1.2.13.tar.gz"
+        # TODO OpenSSL 3 switch back
+        return "https://www.zlib.net/fossils/zlib-1.3.1.tar.gz"
 
     @property
     def src_path(self) -> Path:
-        return _DEPS_PATH / "zlib-1.2.13"
+        return _DEPS_PATH / "zlib-1.3.1"
 
     def build(self, ctx: "Context") -> None:
         if self.platform in [

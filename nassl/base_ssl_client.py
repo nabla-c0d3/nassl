@@ -2,11 +2,10 @@ import socket
 from abc import ABC
 from pathlib import Path
 
-from nassl import _nassl
-from nassl._nassl import WantReadError, OpenSSLError, WantX509LookupError, X509
+from nassl._low_level_errors import WantReadError, OpenSSLError, WantX509LookupError
 
 from enum import IntEnum
-from typing import List, Any, Tuple
+from typing import List, Any
 
 from typing import Protocol
 
@@ -18,17 +17,7 @@ from nassl.ephemeral_key_info import (
     DhEphemeralKeyInfo,
     EcDhEphemeralKeyInfo,
     NistEcDhKeyExchangeInfo,
-    OpenSslEcNidEnum,
 )
-
-
-class CertificateChainVerificationFailed(Exception):
-    def __init__(self, openssl_error_code: int) -> None:
-        self.openssl_error_code = openssl_error_code
-        self.openssl_error_string = X509.verify_cert_error_string(self.openssl_error_code)
-        super().__init__(
-            f'Verification failed with OpenSSL error code {self.openssl_error_code}: "{self.openssl_error_string}"'
-        )
 
 
 class OpenSslVerifyEnum(IntEnum):
@@ -92,18 +81,15 @@ class NasslModuleProtocol(Protocol):
     BIO: Any
     X509: Any
     OCSP_RESPONSE: Any
-    OpenSSLError: Any
-    WantReadError: Any
-    WantX509LookupError: Any
     SSL_SESSION: Any
 
 
 class BaseSslClient(ABC):
-    """Common code and methods to the modern and legacy SSL clients."""
+    """Common code and methods to the SSL clients."""
 
     _DEFAULT_BUFFER_SIZE = 4096
 
-    # The version of OpenSSL/nassl to use (modern VS legacy)
+    # The version of OpenSSL/nassl to use
     _NASSL_MODULE: NasslModuleProtocol
 
     def __init__(
@@ -392,7 +378,7 @@ class BaseSslClient(ABC):
         """Enable the OCSP Stapling extension."""
         self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
 
-    def get_tlsext_status_ocsp_resp(self) -> Optional[_nassl.OCSP_RESPONSE]:
+    def get_tlsext_status_ocsp_resp(self) -> Optional["NasslModuleProtocol.OCSP_RESPONSE"]:
         """Retrieve the server's OCSP response.
 
         Will return None if OCSP Stapling was not enabled before the handshake or if the server did not return
@@ -406,11 +392,11 @@ class BaseSslClient(ABC):
     def get_client_CA_list(self) -> List[str]:
         return self._ssl.get_client_CA_list()
 
-    def get_session(self) -> _nassl.SSL_SESSION:
+    def get_session(self) -> "NasslModuleProtocol.SSL_SESSION":
         """Get the SSL connection's Session object."""
         return self._ssl.get_session()
 
-    def set_session(self, ssl_session: _nassl.SSL_SESSION) -> None:
+    def set_session(self, ssl_session: "NasslModuleProtocol.SSL_SESSION") -> None:
         """Set the SSL connection's Session object."""
         self._ssl.set_session(ssl_session)
 
@@ -440,75 +426,3 @@ class ExtendedMasterSecretSupportEnum(IntEnum):
     NOT_USED_IN_CURRENT_SESSION = 0
     USED_IN_CURRENT_SESSION = 1
     UNKNOWN = -1
-
-
-class SslClient(BaseSslClient):
-    """High level API implementing an SSL client.
-
-    Hostname validation is NOT performed by the SslClient and MUST be implemented at the end of the SSL handshake on the
-    server's certificate.
-    """
-
-    # The default client uses the modern OpenSSL
-    _NASSL_MODULE = _nassl
-
-    def write_early_data(self, data: bytes) -> int:
-        """Returns the number of (encrypted) bytes sent."""
-        if self._is_handshake_completed:
-            raise IOError("SSL Handshake was completed; cannot send early data.")
-
-        # Pass the cleartext data to the SSL engine
-        self._ssl.write_early_data(data)
-
-        # Recover the corresponding encrypted data
-        final_length = self._flush_ssl_engine()
-        return final_length
-
-    def get_early_data_status(self) -> OpenSslEarlyDataStatusEnum:
-        return OpenSslEarlyDataStatusEnum(self._ssl.get_early_data_status())
-
-    def set_ciphersuites(self, cipher_suites: str) -> None:
-        """https://github.com/openssl/openssl/pull/5392
-        ."""
-        # TODO(AD): Eventually merge this method with get/set_cipher_list()
-        self._ssl.set_ciphersuites(cipher_suites)
-
-    def set_signature_algorithms(self, algorithms: List[Tuple[OpenSslDigestNidEnum, OpenSslEvpPkeyEnum]]) -> None:
-        """Set the enabled signature algorithms for the key exchange.
-
-        The algorithms parameter is a list of a public key algorithm and a digest."""
-        flattened_sigalgs = [item for sublist in algorithms for item in sublist]
-        self._ssl.set1_sigalgs(flattened_sigalgs)
-
-    def get_peer_signature_nid(self) -> OpenSslDigestNidEnum:
-        """Get the digest used for TLS message signing."""
-        return OpenSslDigestNidEnum(self._ssl.get_peer_signature_nid())
-
-    def set_groups(self, supported_groups: List[OpenSslEcNidEnum]) -> None:
-        """Specify elliptic curves or DH groups that are supported by the client in descending order."""
-        self._ssl.set1_groups(supported_groups)
-
-    def get_verified_chain(self) -> List[str]:
-        """Returns the verified PEM-formatted certificate chain.
-
-        If certificate validation failed, CertificateChainValidationFailed will be raised.
-        The leaf certificate is at index 0.
-        Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
-        """
-        verify_code = self._ssl.get_verify_result()
-        if verify_code != 0:  # X509_V_OK
-            raise CertificateChainVerificationFailed(verify_code)
-
-        return [x509.as_pem() for x509 in self._ssl.get0_verified_chain()]
-
-    def get_extended_master_secret_support(self) -> ExtendedMasterSecretSupportEnum:
-        """Indicates whether the current session used extended master secret."""
-        support = self._ssl.get_extms_support()
-        if support == 1:
-            return ExtendedMasterSecretSupportEnum.USED_IN_CURRENT_SESSION
-        elif support == 0:
-            return ExtendedMasterSecretSupportEnum.NOT_USED_IN_CURRENT_SESSION
-        elif support == -1:
-            return ExtendedMasterSecretSupportEnum.UNKNOWN
-        else:
-            raise ValueError(f"Unexpected return value get_extms_support(): {support}")

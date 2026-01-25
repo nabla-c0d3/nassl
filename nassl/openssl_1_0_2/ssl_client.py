@@ -1,9 +1,8 @@
 import socket
 from pathlib import Path
 
-from nassl._nassl import WantReadError, WantX509LookupError
 
-from nassl.ssl_client import (
+from nassl.base_ssl_client import (
     ClientCertificateRequested,
     OpenSslVersionEnum,
     OpenSslVerifyEnum,
@@ -12,17 +11,13 @@ from nassl.ssl_client import (
 )
 from typing import List
 from typing import Optional
-import sys
+
+import nassl.openssl_1_0_2._nassl
+from nassl._low_level_errors import WantReadError, WantX509LookupError
 
 
-from nassl import _nassl_legacy  # type: ignore
-
-
-class LegacySslClient(BaseSslClient):
-    """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.)."""
-
-    # The legacy client uses the legacy OpenSSL
-    _NASSL_MODULE = _nassl_legacy
+class SslClient_OpenSSL_1_0_2(BaseSslClient):
+    _NASSL_MODULE = nassl.openssl_1_0_2._nassl
 
     def __init__(
         self,
@@ -67,7 +62,7 @@ class LegacySslClient(BaseSslClient):
     @staticmethod
     def get_available_compression_methods() -> List[str]:
         """Returns the list of SSL compression methods supported by SslClient."""
-        return _nassl_legacy.SSL.get_available_compression_methods()
+        return nassl.openssl_1_0_2._nassl.SSL.get_available_compression_methods()
 
     def do_renegotiate(self) -> None:
         """Initiate an SSL renegotiation."""
@@ -111,18 +106,10 @@ class LegacySslClient(BaseSslClient):
                         # response, and then send the data packet
                         # if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
                         message_type = handshake_data_out[2]
-                        IS_PYTHON_2 = sys.version_info < (3, 0)
-                        if IS_PYTHON_2:
-                            message_type = ord(message_type)
-
                         if message_type == 2:  # Make sure we're looking at the CMK message
                             # cmk_size = handshake_data_out[0:2]
-                            if IS_PYTHON_2:
-                                first_byte = ord(handshake_data_out[0])
-                                second_byte = ord(handshake_data_out[1])
-                            else:
-                                first_byte = int(handshake_data_out[0])
-                                second_byte = int(handshake_data_out[1])
+                            first_byte = int(handshake_data_out[0])
+                            second_byte = int(handshake_data_out[1])
                             first_byte = (first_byte & 0x7F) << 8
                             size = first_byte + second_byte
                             # Manually split the two records to force them to be sent separately

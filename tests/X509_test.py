@@ -1,11 +1,11 @@
 from types import ModuleType
 import pytest
 
-from nassl import _nassl
-from nassl import _nassl_legacy
+import nassl.openssl_1_0_2._nassl
+import nassl.openssl_1_1_1._nassl
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+@pytest.mark.parametrize("nassl_module", [nassl.openssl_1_0_2._nassl, nassl.openssl_1_1_1._nassl])
 class TestX509:
     def test_from_pem(self, nassl_module: ModuleType) -> None:
         # Given a PEM-formatted certificate

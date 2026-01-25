@@ -11,8 +11,8 @@ from threading import Thread
 from typing import IO, Any, Optional, List
 
 from build_config import (
-    ModernOpenSslBuildConfig,
-    LegacyOpenSslBuildConfig,
+    OpenSsl_1_1_1_BuildConfig,
+    OpenSsl_1_0_2_BuildConfig,
     CURRENT_PLATFORM,
     SupportedPlatformEnum,
 )
@@ -213,7 +213,7 @@ class LegacyOpenSslServer(_OpenSslServer):
     @classmethod
     def get_openssl_path(cls) -> Path:
         assert CURRENT_PLATFORM
-        return LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+        return OpenSsl_1_0_2_BuildConfig(CURRENT_PLATFORM).exe_path
 
     @classmethod
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
@@ -231,7 +231,7 @@ class ModernOpenSslServer(_OpenSslServer):
     @classmethod
     def get_openssl_path(cls) -> Path:
         assert CURRENT_PLATFORM
-        return ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+        return OpenSsl_1_1_1_BuildConfig(CURRENT_PLATFORM).exe_path
 
     @classmethod
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:

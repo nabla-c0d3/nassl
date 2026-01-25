@@ -3,11 +3,15 @@ from types import ModuleType
 
 import pytest
 
-from nassl import _nassl, _nassl_legacy
-from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
+from nassl._low_level_errors import OpenSSLError
+from nassl.base_ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+import nassl.openssl_1_0_2._nassl
+import nassl.openssl_1_1_1._nassl
+
+
+@pytest.mark.parametrize("nassl_module", [nassl.openssl_1_0_2._nassl, nassl.openssl_1_1_1._nassl])
 class TestCommonSSL_CTX:
     def test_new(self, nassl_module: ModuleType) -> None:
         assert nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
@@ -57,7 +61,7 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
     def test_load_verify_locations_bad(self, nassl_module: ModuleType) -> None:
         # Certificate file doesn't exist
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError):
+        with pytest.raises(OpenSSLError):
             test_ssl_ctx.load_verify_locations("tests")
 
     def test_set_private_key_password_null_byte(self, nassl_module: ModuleType) -> None:
@@ -116,7 +120,7 @@ Pd2eQ9+DkopOz3UGU7c=
     def test_use_certificate_file_bad(self, nassl_module: ModuleType) -> None:
         # Bad filename
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError, match="system lib"):
+        with pytest.raises(OpenSSLError, match="system lib"):
             test_ssl_ctx.use_certificate_chain_file("invalidPath")
 
     def test_use_PrivateKey_file(self, nassl_module: ModuleType) -> None:
@@ -146,7 +150,7 @@ jsXbhxAIkrdmpg==
     def test_use_PrivateKey_file_bad(self, nassl_module: ModuleType) -> None:
         # Bad filename
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError, match="No such file"):
+        with pytest.raises(OpenSSLError, match="No such file"):
             test_ssl_ctx.use_PrivateKey_file("invalidPath", OpenSslFileTypeEnum.PEM.value)
 
     def test_check_private_key(self, nassl_module: ModuleType) -> None:
@@ -219,13 +223,13 @@ Pd2eQ9+DkopOz3UGU7c=
 
     def test_check_private_key_bad(self, nassl_module: ModuleType) -> None:
         test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError, match="no certificate assigned"):
+        with pytest.raises(OpenSSLError, match="no certificate assigned"):
             test_ssl_ctx.check_private_key()
 
     # TODO: add get_ca_list tests
 
 
-class TestModernSSL_CTX:
+class Test_SSL_CTX_OpenSSL_1_1_1:
     def test_tlsv1_3(self) -> None:
-        ssl_ctx = _nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
+        ssl_ctx = nassl.openssl_1_1_1._nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
         assert ssl_ctx

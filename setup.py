@@ -3,9 +3,9 @@ import sys
 from pathlib import Path
 
 from build_config import (
-    ModernOpenSslBuildConfig,
+    OpenSsl_1_0_2_BuildConfig,
+    OpenSsl_1_1_1_BuildConfig,
     ZlibBuildConfig,
-    LegacyOpenSslBuildConfig,
     SupportedPlatformEnum,
     CURRENT_PLATFORM,
 )
@@ -52,8 +52,8 @@ NASSL_SETUP = {
     "keywords": "ssl tls scan security library",
 }
 
-# There are two native extensions: the "legacy" OpenSSL one and the "modern" OpenSSL one
-# First setup the common settings for both legacy and modern nassl
+# There are two native extensions: one wrapping OpenSSL 1.0.2  and one wrapping OpenSSL 1.1.1
+# First setup the common settings for both extensions
 BASE_NASSL_EXT_SETUP = {
     "extra_compile_args": [],
     "extra_link_args": [],
@@ -107,36 +107,36 @@ else:
 zlib_config = ZlibBuildConfig(CURRENT_PLATFORM)
 
 
-# The configure the setup for legacy nassl
-legacy_openssl_config = LegacyOpenSslBuildConfig(CURRENT_PLATFORM)
+# The configure the setup for 1.0.2
+openssl_1_0_2_config = OpenSsl_1_0_2_BuildConfig(CURRENT_PLATFORM)
 
-LEGACY_NASSL_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
-LEGACY_NASSL_EXT_SETUP["name"] = "nassl._nassl_legacy"
-LEGACY_NASSL_EXT_SETUP["define_macros"] = [("LEGACY_OPENSSL", "1")]
-LEGACY_NASSL_EXT_SETUP.update(
+NASSL_OSSL_1_0_2_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
+NASSL_OSSL_1_0_2_EXT_SETUP["name"] = "nassl.openssl_1_0_2._nassl"
+NASSL_OSSL_1_0_2_EXT_SETUP["define_macros"] = [("LEGACY_OPENSSL", "1")]  # TODO OpenSSL 3
+NASSL_OSSL_1_0_2_EXT_SETUP.update(
     {
-        "include_dirs": [str(legacy_openssl_config.include_path)],
+        "include_dirs": [str(openssl_1_0_2_config.include_path)],
         "extra_objects": [
             # The order matters on some flavors of Linux
-            str(legacy_openssl_config.libssl_path),
-            str(legacy_openssl_config.libcrypto_path),
+            str(openssl_1_0_2_config.libssl_path),
+            str(openssl_1_0_2_config.libcrypto_path),
             str(zlib_config.libz_path),
         ],
     }
 )
 
-# The configure the setup for modern nassl
-modern_openssl_config = ModernOpenSslBuildConfig(CURRENT_PLATFORM)
+# The configure the setup for 1.1.1
+openssl_1_1_1_config = OpenSsl_1_1_1_BuildConfig(CURRENT_PLATFORM)
 
-MODERN_NASSL_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
-MODERN_NASSL_EXT_SETUP["name"] = "nassl._nassl"
-MODERN_NASSL_EXT_SETUP.update(
+NASSL_OSSL_1_1_1_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
+NASSL_OSSL_1_1_1_EXT_SETUP["name"] = "nassl.openssl_1_1_1._nassl"
+NASSL_OSSL_1_1_1_EXT_SETUP.update(
     {
-        "include_dirs": [str(modern_openssl_config.include_path)],
+        "include_dirs": [str(openssl_1_1_1_config.include_path)],
         "extra_objects": [
             # The order matters on some flavors of Linux
-            str(modern_openssl_config.libssl_path),
-            str(modern_openssl_config.libcrypto_path),
+            str(openssl_1_1_1_config.libssl_path),
+            str(openssl_1_1_1_config.libcrypto_path),
             str(zlib_config.libz_path),
         ],
     }
@@ -148,19 +148,19 @@ if CURRENT_PLATFORM in [
     SupportedPlatformEnum.WINDOWS_64,
 ]:
     if SHOULD_BUILD_FOR_DEBUG:
-        LEGACY_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
-        MODERN_NASSL_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
+        NASSL_OSSL_1_0_2_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
+        NASSL_OSSL_1_1_1_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
 else:
     # Add arguments specific to Unix builds
-    LEGACY_NASSL_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
-    MODERN_NASSL_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
+    NASSL_OSSL_1_0_2_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
+    NASSL_OSSL_1_1_1_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
 
 
 NASSL_SETUP.update(
     {
         "ext_modules": [
-            Extension(**LEGACY_NASSL_EXT_SETUP),
-            Extension(**MODERN_NASSL_EXT_SETUP),
+            Extension(**NASSL_OSSL_1_0_2_EXT_SETUP),
+            Extension(**NASSL_OSSL_1_1_1_EXT_SETUP),
         ]
     }
 )
