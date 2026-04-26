@@ -422,11 +422,11 @@ class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
         # TODO OpenSSL 3 switch back
-        return "https://www.zlib.net/fossils/zlib-1.3.1.tar.gz"
+        return "https://www.zlib.net/fossils/zlib-1.3.tar.gz"
 
     @property
     def src_path(self) -> Path:
-        return _DEPS_PATH / "zlib-1.3.1"
+        return _DEPS_PATH / "zlib-1.3"
 
     def build(self, ctx: "Context") -> None:
         if self.platform in [
@@ -438,10 +438,14 @@ class ZlibBuildConfig(BuildConfig):
             else:
                 build_platform = "x64"
 
-            # Assuming default path for Visual Studio 2022
+            # Assuming default paths for Visual Studio 2022
             msbuild_path = Path(
                 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe"
             )
+            if not msbuild_path.exists():
+                msbuild_path = Path(
+                    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
+                )
             assert msbuild_path.exists()
 
             vs_contrib_path = self.src_path / "contrib" / "vstudio"
