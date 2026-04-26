@@ -9,6 +9,10 @@
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
 
+#include "../nassl_errors.h"
+#include "../nassl_BIO.h"
+#include "../nassl_SSL_CTX.h"
+
 
 static PyMethodDef nassl_methods[] =
 {
@@ -79,7 +83,12 @@ PyMODINIT_FUNC PyInit__nassl(void)
         INITERROR;
     }
 
-    // TODO: add modules here
+    if (!module_add_errors(module))
+    {
+        INITERROR;
+    }
+    module_add_BIO(module);
+    module_add_SSL_CTX(module);
 
     state = GETSTATE(module);
     state->error = PyErr_NewException("nassl._nassl.Error", NULL, NULL);
