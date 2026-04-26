@@ -41,9 +41,7 @@ class OpenSslDigestNidEnum(IntEnum):
 
 
 class OpenSslVersionEnum(IntEnum):
-    """SSL version constants."""
-
-    SSLV23 = 0
+    # The values here must match SslProtocolVersion in nassl_SSL_CTX.c
     SSLV2 = 1
     SSLV3 = 2
     TLSV1 = 3
@@ -95,7 +93,7 @@ class BaseSslClient(ABC):
     def __init__(
         self,
         underlying_socket: Optional[socket.socket] = None,
-        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.TLSV1_2,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
         ssl_verify_locations: Optional[Path] = None,
         client_certificate_chain: Optional[Path] = None,
