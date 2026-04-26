@@ -122,16 +122,16 @@ def build_openssl_1_1_1(ctx: Context, do_not_clean: bool = False) -> None:
 
 
 @task
-def build_openssl_3_5(ctx: Context, do_not_clean: bool = False) -> None:
-    print("OpenSSL 3.5: Starting...")
+def build_openssl_4_0_0(ctx: Context, do_not_clean: bool = False) -> None:
+    print("OpenSSL 4.0.0: Starting...")
     assert build_config.CURRENT_PLATFORM
-    ossl_3_5_cfg = build_config.OpenSSL_3_5_BuildConfig(build_config.CURRENT_PLATFORM)
+    ossl_4_0_0_cfg = build_config.OpenSSL_4_0_0_BuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
-        ossl_3_5_cfg.clean()
-        ossl_3_5_cfg.fetch_source()
+        ossl_4_0_0_cfg.clean()
+        ossl_4_0_0_cfg.fetch_source()
     zlib_cfg = build_config.ZlibBuildConfig(build_config.CURRENT_PLATFORM)
-    ossl_3_5_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
-    print("OpenSSL 3.5: All done")
+    ossl_4_0_0_cfg.build(ctx, zlib_lib_path=zlib_cfg.libz_path, zlib_include_path=zlib_cfg.include_path)
+    print("OpenSSL 4.0.0: All done")
 
 
 @task
@@ -157,6 +157,7 @@ def build_deps(ctx: Context, do_not_clean: bool = False) -> None:
     build_zlib(ctx, do_not_clean)
     build_openssl_1_0_2(ctx, do_not_clean)
     build_openssl_1_1_1(ctx, do_not_clean)
+    build_openssl_4_0_0(ctx, do_not_clean)
 
 
 @task
@@ -169,7 +170,7 @@ def build_all(ctx: Context, do_not_clean: bool = False) -> None:
 build.add_task(build_zlib, "zlib")
 build.add_task(build_openssl_1_0_2, "openssl_1_0_2")
 build.add_task(build_openssl_1_1_1, "openssl_1_1_1")
-build.add_task(build_openssl_3_5, "openssl_3_5")
+build.add_task(build_openssl_4_0_0, "openssl_4_0_0")
 build.add_task(build_nassl, "nassl")
 build.add_task(build_deps, "deps")
 build.add_task(build_all, "all")

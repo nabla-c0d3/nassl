@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 from build_config import (
+    OpenSSL_4_0_0_BuildConfig,
     OpenSsl_1_0_2_BuildConfig,
     OpenSsl_1_1_1_BuildConfig,
     ZlibBuildConfig,
@@ -52,8 +53,11 @@ NASSL_SETUP = {
     "keywords": "ssl tls scan security library",
 }
 
-# There are two native extensions: one wrapping OpenSSL 1.0.2  and one wrapping OpenSSL 1.1.1
-# First setup the common settings for both extensions
+# There are multiple native extensions:
+#   * one wrapping OpenSSL 1.0.2
+#   * one wrapping OpenSSL 1.1.1
+#   * one wrapping OpenSSL 4.0.0
+# First setup the common settings for all extensions
 BASE_NASSL_EXT_SETUP = {
     "extra_compile_args": [],
     "extra_link_args": [],
@@ -142,6 +146,26 @@ NASSL_OSSL_1_1_1_EXT_SETUP.update(
     }
 )
 
+# The configure the setup for 4.0.0
+openssl_4_0_0_config = OpenSSL_4_0_0_BuildConfig(CURRENT_PLATFORM)
+
+NASSL_OSSL_4_0_0_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
+# Override sources which are completely different for OpenSSL 4.0.0
+NASSL_OSSL_4_0_0_EXT_SETUP["sources"] = ["nassl/_nassl/openssl_4_0_0/nassl.c"]
+
+NASSL_OSSL_4_0_0_EXT_SETUP["name"] = "nassl.openssl_4_0_0._nassl"
+NASSL_OSSL_4_0_0_EXT_SETUP.update(
+    {
+        "include_dirs": [str(openssl_4_0_0_config.include_path)],
+        "extra_objects": [
+            # The order matters on some flavors of Linux
+            str(openssl_1_1_1_config.libssl_path),
+            str(openssl_1_1_1_config.libcrypto_path),
+            str(zlib_config.libz_path),
+        ],
+    }
+)
+
 
 if CURRENT_PLATFORM in [
     SupportedPlatformEnum.WINDOWS_32,
@@ -150,10 +174,12 @@ if CURRENT_PLATFORM in [
     if SHOULD_BUILD_FOR_DEBUG:
         NASSL_OSSL_1_0_2_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
         NASSL_OSSL_1_1_1_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
+        NASSL_OSSL_4_0_0_EXT_SETUP.update({"extra_compile_args": ["/Zi"], "extra_link_args": ["/DEBUG"]})
 else:
     # Add arguments specific to Unix builds
     NASSL_OSSL_1_0_2_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
     NASSL_OSSL_1_1_1_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
+    NASSL_OSSL_4_0_0_EXT_SETUP["include_dirs"].append(str(Path("nassl") / "_nassl"))
 
 
 NASSL_SETUP.update(
@@ -161,6 +187,7 @@ NASSL_SETUP.update(
         "ext_modules": [
             Extension(**NASSL_OSSL_1_0_2_EXT_SETUP),
             Extension(**NASSL_OSSL_1_1_1_EXT_SETUP),
+            Extension(**NASSL_OSSL_4_0_0_EXT_SETUP),
         ]
     }
 )

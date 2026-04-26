@@ -362,15 +362,15 @@ class OpenSsl_1_1_1_BuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
-class OpenSSL_3_5_BuildConfig(OpenSslBuildConfig):
+class OpenSSL_4_0_0_BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
-        return "openssl-3.5.4"
+        return "openssl-4.0.0"
 
     _OPENSSL_CONF_CMD = (
-        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 enable-gost "
-        "enable-cast enable-idea enable-ripemd enable-mdc2 --with-zlib-include={zlib_include_path} "
-        "--with-zlib-lib={zlib_lib_path} enable-weak-ssl-ciphers enable-tls1_3 {extra_args} no-async"
+        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 "
+        "--with-zlib-include={zlib_include_path} "
+        "--with-zlib-lib={zlib_lib_path} enable-tls-deprecated-ec enable-weak-ssl-ciphers {extra_args} no-async"
     )
 
     def _run_build_steps(self, ctx: "Context") -> None:
@@ -421,7 +421,6 @@ class OpenSSL_3_5_BuildConfig(OpenSslBuildConfig):
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
-        # TODO OpenSSL 3 switch back
         return "https://www.zlib.net/fossils/zlib-1.3.tar.gz"
 
     @property
