@@ -48,7 +48,7 @@ static struct PyModuleDef moduledef =
 {
         PyModuleDef_HEAD_INIT,
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
         "openssl_1_0_2._nassl",
 #else
         "openssl_1_1_1._nassl",
@@ -77,7 +77,7 @@ PyMODINIT_FUNC PyInit__nassl(void)
     struct module_state *state;
 
     // Initialize OpenSSL
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
     SSL_library_init();
     SSL_load_error_strings();
 #else

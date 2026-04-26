@@ -116,7 +116,7 @@ openssl_1_0_2_config = OpenSsl_1_0_2_BuildConfig(CURRENT_PLATFORM)
 
 NASSL_OSSL_1_0_2_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 NASSL_OSSL_1_0_2_EXT_SETUP["name"] = "nassl.openssl_1_0_2._nassl"
-NASSL_OSSL_1_0_2_EXT_SETUP["define_macros"] = [("LEGACY_OPENSSL", "1")]  # TODO OpenSSL 3
+NASSL_OSSL_1_0_2_EXT_SETUP["define_macros"] = [("NASSL_OSSL_1_0_2", "1")]
 NASSL_OSSL_1_0_2_EXT_SETUP.update(
     {
         "include_dirs": [str(openssl_1_0_2_config.include_path)],

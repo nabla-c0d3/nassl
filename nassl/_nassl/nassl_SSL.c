@@ -217,7 +217,7 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
     return res;
 }
 
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
 static PyObject* nassl_SSL_write_early_data(nassl_SSL_Object *self, PyObject *args)
 {
     int returnValue;
@@ -374,7 +374,7 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
             return NULL;
         }
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
         methodPyString = PyUnicode_FromString(method->name);
 #else
         methodPyString = PyUnicode_FromString(SSL_COMP_get0_name(method));
@@ -512,7 +512,7 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
 // https://github.com/nabla-c0d3/nassl/pull/15
 static const SSL_CIPHER* get_tmp_new_cipher(nassl_SSL_Object *self)
 {
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
     // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if (self->ssl == NULL || self->ssl->s3 == NULL)
     {
@@ -739,7 +739,7 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
 }
 
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
 static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args)
 {
     // This is only used for fixing SSLv2 connections when connecting to IIS7 (like in the 90s)
@@ -800,7 +800,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
 }
 
 
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
 // SSL_set_ciphersuites() is only available in OpenSSL 1.1.1
 static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *args)
 {
@@ -921,7 +921,7 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
         // Common variables to store the parameters
         const BIGNUM *p, *g, *pub_key;
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
         // Get the DH params from the pkey directly in legacy OpenSSL
         DH *dh = key->pkey.dh;
         p = dh->p;
@@ -1099,7 +1099,7 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
         EVP_PKEY_free(key);
         return return_dict;
     }
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
     else if(key_id == EVP_PKEY_X25519 || key_id == EVP_PKEY_X448){
         
         // If the connection uses X25519 or X448
@@ -1230,7 +1230,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_tlsext_status_ocsp_resp", (PyCFunction)nassl_SSL_get_tlsext_status_ocsp_resp, METH_NOARGS,
      "OpenSSL's SSL_get_tlsext_status_ocsp_resp(). Returns an _nassl.OCSP_RESPONSE object."
     },
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
     {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
      "OpenSSL's SSL_state_string_long()."
     },

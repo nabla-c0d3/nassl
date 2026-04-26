@@ -57,20 +57,20 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 			sslCtx = SSL_CTX_new(SSLv23_method());
 			break;
 		case sslv2:
-		#ifdef LEGACY_OPENSSL
+		#ifdef NASSL_OSSL_1_0_2
 			sslCtx = SSL_CTX_new(SSLv2_method());
             break;
         #else
-            PyErr_SetString(PyExc_NotImplementedError, "SSL 2.0 is disabled; re-compile with -DLEGACY_OPENSSL");
+            PyErr_SetString(PyExc_NotImplementedError, "SSL 2.0 is disabled; re-compile with -DNASSL_OSSL_1_0_2");
             Py_DECREF(self);
             return NULL;
         #endif
 		case sslv3:
-		#ifdef LEGACY_OPENSSL
+		#ifdef NASSL_OSSL_1_0_2
 			sslCtx = SSL_CTX_new(SSLv3_method());
             break;
         #else
-            PyErr_SetString(PyExc_NotImplementedError, "SSL 3.0 is disabled; re-compile with -DLEGACY_OPENSSL");
+            PyErr_SetString(PyExc_NotImplementedError, "SSL 3.0 is disabled; re-compile with -DNASSL_OSSL_1_0_2");
             Py_DECREF(self);
             return NULL;
         #endif
@@ -83,7 +83,7 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 		case tlsv1_2:
 			sslCtx = SSL_CTX_new(TLSv1_2_method());
 			break;
-        #ifndef LEGACY_OPENSSL
+        #ifndef NASSL_OSSL_1_0_2
 		case tlsv1_3:
 		    // Replicate the pre-1.1.0 OpenSSL API to avoid breaking _nassl's API
 		    // TODO(AD): Break modern _nassl's API to make it nicer by exposing min/max_proto_version
