@@ -150,23 +150,13 @@ openssl_4_0_0_config = OpenSSL_4_0_0_BuildConfig(CURRENT_PLATFORM)
 
 NASSL_OSSL_4_0_0_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 NASSL_OSSL_4_0_0_EXT_SETUP["name"] = "nassl.openssl_4_0_0._nassl"
-# TODO
-# Override sources which are completely different for OpenSSL 4.0.0
-NASSL_OSSL_4_0_0_EXT_SETUP["sources"] = [
-    "nassl/_nassl/openssl_4_0_0/nassl.c",
-    "nassl/_nassl/nassl_SSL_CTX.c",
-    "nassl/_nassl/nassl_errors.c",
-    "nassl/_nassl/nassl_BIO.c",
-    "nassl/_nassl/python_utils.c",
-]
-
 NASSL_OSSL_4_0_0_EXT_SETUP.update(
     {
         "include_dirs": [str(openssl_4_0_0_config.include_path)],
         "extra_objects": [
             # The order matters on some flavors of Linux
-            str(openssl_1_1_1_config.libssl_path),
-            str(openssl_1_1_1_config.libcrypto_path),
+            str(openssl_4_0_0_config.libssl_path),
+            str(openssl_4_0_0_config.libcrypto_path),
             str(zlib_config.libz_path),
         ],
     }

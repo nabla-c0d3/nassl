@@ -2,7 +2,7 @@ from pathlib import Path
 
 from nassl.ocsp_response import verify_ocsp_response
 from nassl.base_ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum
-from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1
+from nassl.openssl_4_0_0.ssl_client import SslClient_OpenSSL_4_0_0
 import socket
 
 mozilla_store = Path("tests") / "mozilla.pem"
@@ -12,7 +12,7 @@ sock.settimeout(5)
 hostname = "www.cloudflare.com"
 sock.connect((hostname, 443))
 
-ssl_client = SslClient_OpenSSL_1_1_1(
+ssl_client = SslClient_OpenSSL_4_0_0(
     ssl_version=OpenSslVersionEnum.TLSV1_2,
     underlying_socket=sock,
     ssl_verify=OpenSslVerifyEnum.PEER,

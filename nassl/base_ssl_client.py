@@ -29,17 +29,6 @@ class OpenSslVerifyEnum(IntEnum):
     CLIENT_ONCE = 4
 
 
-class OpenSslDigestNidEnum(IntEnum):
-    """SSL digest algorithms used for the signature algorithm, per obj_mac.h."""
-
-    MD5 = 4
-    SHA1 = 64
-    SHA224 = 675
-    SHA256 = 672
-    SHA384 = 673
-    SHA512 = 674
-
-
 class OpenSslVersionEnum(IntEnum):
     # The values here must match SslProtocolVersion in nassl_SSL_CTX.c
     SSLV2 = 1
@@ -409,17 +398,3 @@ class BaseSslClient(ABC):
         Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
         """
         return self._ssl.get_peer_cert_chain()
-
-
-class OpenSslEarlyDataStatusEnum(IntEnum):
-    """Early data status constants."""
-
-    NOT_SENT = 0
-    REJECTED = 1
-    ACCEPTED = 2
-
-
-class ExtendedMasterSecretSupportEnum(IntEnum):
-    NOT_USED_IN_CURRENT_SESSION = 0
-    USED_IN_CURRENT_SESSION = 1
-    UNKNOWN = -1

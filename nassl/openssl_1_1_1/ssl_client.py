@@ -1,13 +1,25 @@
-import nassl.openssl_1_1_1._nassl
-from nassl.base_ssl_client import BaseSslClient, OpenSslDigestNidEnum
-
 from enum import IntEnum
+
+import nassl.openssl_1_1_1._nassl
+from nassl.base_ssl_client import BaseSslClient
+
 from typing import List, Tuple
 
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
     OpenSslEcNidEnum,
 )
+
+
+class OpenSslDigestNidEnum(IntEnum):
+    """SSL digest algorithms used for the signature algorithm, per obj_mac.h."""
+
+    MD5 = 4
+    SHA1 = 64
+    SHA224 = 675
+    SHA256 = 672
+    SHA384 = 673
+    SHA512 = 674
 
 
 class OpenSslEarlyDataStatusEnum(IntEnum):
