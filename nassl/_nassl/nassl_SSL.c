@@ -15,7 +15,6 @@
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
-#include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
 #include "openssl_utils.h"
@@ -763,7 +762,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
         return NULL;
     }
 
-    // We'll return a Python list containing each certificate
+    // We'll return a Python list containing each certificate as a PEM string
     certChainCount = sk_X509_num(certChain);
     certChainPyList = PyList_New(certChainCount);
     if (certChainPyList == NULL)
@@ -773,7 +772,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
 
     for (i=0; i<certChainCount; i++)
     {
-        nassl_X509_Object *x509_Object = NULL;
+        PyObject* certAsPem;
         // Copy the certificate as the cert chain is freed automatically
         X509 *cert = X509_dup(sk_X509_value(certChain, i));
         if (cert == NULL)
@@ -782,18 +781,11 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
             PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
             return NULL;
         }
+        // Convert the cert to a PEM string
+        certAsPem = generic_print_to_string((int (*)(BIO *, const void *)) &PEM_write_bio_X509, cert);
 
-        // Store the cert in an _nassl.X509 object
-        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
-        if (x509_Object == NULL)
-        {
-            Py_DECREF(certChainPyList);
-            return PyErr_NoMemory();
-        }
-        x509_Object->x509 = cert;
-
-        // Add the X509 object to the final list
-        PyList_SET_ITEM(certChainPyList, i,  (PyObject *)x509_Object);
+        // Add the PEM string to the final list
+        PyList_SET_ITEM(certChainPyList, i, certAsPem);
     }
 
     return certChainPyList;
@@ -801,7 +793,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
 
 
 #ifndef NASSL_OSSL_1_0_2
-// SSL_set_ciphersuites() is only available in OpenSSL 1.1.1
+// SSL_set_ciphersuites() is only available in OpenSSL 1.1.1+
 static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *args)
 {
     char *cipherList;
@@ -819,7 +811,7 @@ static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *ar
 }
 
 
-// SSL_set1_sigalgs() is only available in OpenSSL 1.1.1
+// SSL_set1_sigalgs() is only available in OpenSSL 1.1.1+
 static PyObject* nassl_SSL_set1_sigalgs(nassl_SSL_Object *self, PyObject *args)
 {
     int i = 0;
@@ -878,28 +870,6 @@ static PyObject* nassl_get_peer_signature_nid(nassl_SSL_Object *self)
     return PyLong_FromUnsignedLong((long)psig_nid);
 }
 
-
-static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject *args)
-{
-    STACK_OF(X509) *verifiedCertChain = NULL;
-    PyObject* certChainPyList = NULL;
-
-    // Get the peer's certificate chain
-    verifiedCertChain = SSL_get0_verified_chain(self->ssl); // automatically freed
-    if (verifiedCertChain == NULL)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error getting the peer's verified certificate chain.");
-        return NULL;
-    }
-
-    // We'll return a Python list containing each certificate
-    certChainPyList = stackOfX509ToPyList(verifiedCertChain);
-    if (certChainPyList == NULL)
-    {
-        return NULL;
-    }
-    return certChainPyList;
-}
 #endif
 
 
@@ -1252,9 +1222,6 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"get_peer_signature_nid", (PyCFunction)nassl_get_peer_signature_nid, METH_NOARGS,
      "OpenSSL's get_peer_signature_nid(). Returns a digest NID"
-    },
-    {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
-     "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
     },
     {"set1_groups", (PyCFunction)nassl_SSL_set1_groups, METH_VARARGS,
     "OpenSSL's SSL_set1_groups()"

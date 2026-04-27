@@ -77,7 +77,6 @@ class NasslModuleProtocol(Protocol):
     SSL_CTX: Any
     SSL: Any
     BIO: Any
-    X509: Any
     OCSP_RESPONSE: Any
     SSL_SESSION: Any
 
@@ -409,7 +408,7 @@ class BaseSslClient(ABC):
         The leaf certificate is at index 0.
         Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
         """
-        return [x509.as_pem() for x509 in self._ssl.get_peer_cert_chain()]
+        return self._ssl.get_peer_cert_chain()
 
 
 class OpenSslEarlyDataStatusEnum(IntEnum):

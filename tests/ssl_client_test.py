@@ -1,5 +1,4 @@
 import socket
-from pathlib import Path
 from typing import Any
 
 import pytest
@@ -24,7 +23,7 @@ from nassl.ephemeral_key_info import (
     EcDhEphemeralKeyInfo,
 )
 from nassl.openssl_1_0_2.ssl_client import SslClient_OpenSSL_1_0_2
-from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1, CertificateChainVerificationFailed
+from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1
 from tests.openssl_server import (
     ModernOpenSslServer,
     ClientAuthConfigEnum,
@@ -203,54 +202,6 @@ class TestSslClientOnline:
 
 
 class TestOnline_SslClient_OpenSSL_1_1_1:
-    def test_get_verified_chain(self) -> None:
-        # Given an SslClient connecting to Google
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect(("www.yahoo.com", 443))
-        print(str(Path(__file__).absolute().parent / "google_roots.pem"))
-        ssl_client = SslClient_OpenSSL_1_1_1(
-            ssl_version=OpenSslVersionEnum.TLSV1_2,
-            underlying_socket=sock,
-            # That is configured to properly validate certificates
-            ssl_verify=OpenSslVerifyEnum.PEER,
-            ssl_verify_locations=Path(__file__).absolute().parent / "mozilla.pem",
-        )
-
-        # When doing a TLS handshake, it succeeds
-        try:
-            ssl_client.do_handshake()
-
-            # And when requesting the verified certificate chain, it returns it
-            assert ssl_client.get_verified_chain()
-
-        finally:
-            ssl_client.shutdown()
-
-    def test_get_verified_chain_but_validation_failed(self) -> None:
-        # Given an SslClient connecting to Google
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(5)
-        sock.connect(("www.google.com", 443))
-
-        ssl_client = SslClient_OpenSSL_1_1_1(
-            ssl_version=OpenSslVersionEnum.TLSV1_2,
-            underlying_socket=sock,
-            # That is configured to silently fail validation
-            ssl_verify=OpenSslVerifyEnum.NONE,
-        )
-
-        # When doing a TLS handshake, it succeeds
-        try:
-            ssl_client.do_handshake()
-
-            # And when requesting the verified certificate chain
-            with pytest.raises(CertificateChainVerificationFailed):
-                # It fails because certificate validation failed
-                ssl_client.get_verified_chain()
-        finally:
-            ssl_client.shutdown()
-
     def test_get_dh_info_ecdh_p256(self) -> None:
         with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="P-256") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

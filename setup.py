@@ -65,7 +65,6 @@ BASE_NASSL_EXT_SETUP = {
         "nassl/_nassl/nassl.c",
         "nassl/_nassl/nassl_SSL_CTX.c",
         "nassl/_nassl/nassl_SSL.c",
-        "nassl/_nassl/nassl_X509.c",
         "nassl/_nassl/nassl_errors.c",
         "nassl/_nassl/nassl_BIO.c",
         "nassl/_nassl/nassl_SSL_SESSION.c",

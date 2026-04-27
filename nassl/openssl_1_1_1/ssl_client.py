@@ -1,6 +1,5 @@
 import nassl.openssl_1_1_1._nassl
 from nassl.base_ssl_client import BaseSslClient, OpenSslDigestNidEnum
-from nassl.openssl_1_1_1._nassl import X509
 
 from enum import IntEnum
 from typing import List, Tuple
@@ -9,15 +8,6 @@ from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
     OpenSslEcNidEnum,
 )
-
-
-class CertificateChainVerificationFailed(Exception):
-    def __init__(self, openssl_error_code: int) -> None:
-        self.openssl_error_code = openssl_error_code
-        self.openssl_error_string = X509.verify_cert_error_string(self.openssl_error_code)
-        super().__init__(
-            f'Verification failed with OpenSSL error code {self.openssl_error_code}: "{self.openssl_error_string}"'
-        )
 
 
 class OpenSslEarlyDataStatusEnum(IntEnum):
@@ -72,19 +62,6 @@ class SslClient_OpenSSL_1_1_1(BaseSslClient):
     def set_groups(self, supported_groups: List[OpenSslEcNidEnum]) -> None:
         """Specify elliptic curves or DH groups that are supported by the client in descending order."""
         self._ssl.set1_groups(supported_groups)
-
-    def get_verified_chain(self) -> List[str]:
-        """Returns the verified PEM-formatted certificate chain.
-
-        If certificate validation failed, CertificateChainValidationFailed will be raised.
-        The leaf certificate is at index 0.
-        Each certificate can be parsed using the cryptography module at https://github.com/pyca/cryptography.
-        """
-        verify_code = self._ssl.get_verify_result()
-        if verify_code != 0:  # X509_V_OK
-            raise CertificateChainVerificationFailed(verify_code)
-
-        return [x509.as_pem() for x509 in self._ssl.get0_verified_chain()]
 
     def get_extended_master_secret_support(self) -> ExtendedMasterSecretSupportEnum:
         """Indicates whether the current session used extended master secret."""

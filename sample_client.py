@@ -25,10 +25,6 @@ print("Received certificate chain")
 for pem_cert in ssl_client.get_received_chain():
     print(pem_cert)
 
-print("Verified certificate chain")
-for pem_cert in ssl_client.get_verified_chain():
-    print(pem_cert)
-
 ocsp_resp = ssl_client.get_tlsext_status_ocsp_resp()
 if ocsp_resp:
     print("OCSP Stapling")

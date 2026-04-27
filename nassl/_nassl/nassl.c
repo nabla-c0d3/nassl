@@ -13,7 +13,6 @@
 #include "nassl_SSL_CTX.h"
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
-#include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
 
@@ -104,7 +103,6 @@ PyMODINIT_FUNC PyInit__nassl(void)
     module_add_SSL_CTX(module);
     module_add_SSL(module);
     module_add_BIO(module);
-    module_add_X509(module);
     module_add_SSL_SESSION(module);
     module_add_OCSP_RESPONSE(module);
 
