@@ -21,6 +21,7 @@ ssl_client = SslClient_OpenSSL_4_0_0(
 ssl_client.set_tlsext_status_ocsp()
 ssl_client.do_handshake()
 
+
 print("Received certificate chain")
 for pem_cert in ssl_client.get_received_chain():
     print(pem_cert)
@@ -35,6 +36,9 @@ print(ssl_client.get_current_cipher_name())
 
 print("\nEphemeral Key")
 print(ssl_client.get_ephemeral_key())
+
+print("\nGroup name:")
+print(ssl_client.get_group_name())
 
 print("\nHTTP response")
 ssl_client.write(f"GET / HTTP/1.0\r\nUser-Agent: Test\r\nHost: {hostname}\r\n\r\n".encode("ascii"))

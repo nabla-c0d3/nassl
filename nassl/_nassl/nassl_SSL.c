@@ -1120,6 +1120,15 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
     }
 }
 
+#ifdef NASSL_OSSL_4_0_0
+    static PyObject* nassl_SSL_get0_group_name(nassl_SSL_Object *self, PyObject *args)
+    {
+        const char *groupNameString = SSL_get0_group_name(self->ssl);
+        return PyUnicode_FromString(groupNameString);
+    }
+#endif
+
+
 static PyMethodDef nassl_SSL_Object_methods[] =
 {
     {"set_bio", (PyCFunction)nassl_SSL_set_bio, METH_VARARGS,
@@ -1236,6 +1245,11 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_dh_info", (PyCFunction)nassl_SSL_get_dh_info, METH_NOARGS,
      "Returns Diffie-Hellman / Elliptic curve Diffie-Hellman parameters as a dictionary."
     },
+#ifdef NASSL_OSSL_4_0_0
+    {"get0_group_name", (PyCFunction)nassl_SSL_get0_group_name, METH_NOARGS,
+     "OpenSSL's SSL_get0_group_name(). Returns a string with the negotiated group name."
+    },
+#endif
     {NULL}  // Sentinel
 };
 /*

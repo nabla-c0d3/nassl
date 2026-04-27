@@ -150,6 +150,7 @@ openssl_4_0_0_config = OpenSSL_4_0_0_BuildConfig(CURRENT_PLATFORM)
 
 NASSL_OSSL_4_0_0_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 NASSL_OSSL_4_0_0_EXT_SETUP["name"] = "nassl.openssl_4_0_0._nassl"
+NASSL_OSSL_4_0_0_EXT_SETUP["define_macros"] = [("NASSL_OSSL_4_0_0", "1")]
 NASSL_OSSL_4_0_0_EXT_SETUP.update(
     {
         "include_dirs": [str(openssl_4_0_0_config.include_path)],
