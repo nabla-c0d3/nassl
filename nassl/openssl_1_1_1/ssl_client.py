@@ -39,6 +39,11 @@ class ExtendedMasterSecretSupportEnum(IntEnum):
 class SslClient_OpenSSL_1_1_1(BaseSslClient):
     _NASSL_MODULE = nassl.openssl_1_1_1._nassl
 
+    def _init_ssl_ctx(self) -> None:
+        self._ssl_ctx = self._NASSL_MODULE.SSL_CTX()
+        self._ssl_ctx.set_min_proto_version(self._ssl_version.value)
+        self._ssl_ctx.set_max_proto_version(self._ssl_version.value)
+
     def write_early_data(self, data: bytes) -> int:
         """Returns the number of (encrypted) bytes sent."""
         if self._is_handshake_completed:

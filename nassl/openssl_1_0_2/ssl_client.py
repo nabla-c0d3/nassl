@@ -22,7 +22,7 @@ class SslClient_OpenSSL_1_0_2(BaseSslClient):
     def __init__(
         self,
         underlying_socket: Optional[socket.socket] = None,
-        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.TLSV1_2,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
         ssl_verify_locations: Optional[Path] = None,
         client_certificate_chain: Optional[Path] = None,

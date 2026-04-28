@@ -108,6 +108,10 @@ class BaseSslClient(ABC):
         if server_name_indication is not None:
             self._ssl.set_tlsext_host_name(server_name_indication)
 
+    def _init_ssl_ctx(self) -> None:
+        """Initialize the SSL_CTX object. It is different depending on the version of OpenSSL."""
+        self._ssl_ctx = self._NASSL_MODULE.SSL_CTX(self._ssl_version.value)
+
     def _init_base_objects(
         self,
         ssl_version: OpenSslVersionEnum,
@@ -116,7 +120,7 @@ class BaseSslClient(ABC):
         """Setup the socket and SSL_CTX objects."""
         self._is_handshake_completed = False
         self._ssl_version = ssl_version
-        self._ssl_ctx = self._NASSL_MODULE.SSL_CTX(ssl_version.value)
+        self._init_ssl_ctx()
 
         # A Python socket handles transmission of the data
         self._sock = underlying_socket

@@ -49,6 +49,11 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 #ifndef NASSL_OSSL_1_0_2
 // The init function for OpenSSL 1.1.1+ doesn't take any arguments;
 // SSL/TLS version should be set using SSL_CTX_set_min_proto_version() & SSL_CTX_set_max_proto_version()
+    if (!PyArg_ParseTuple(args, ""))
+    {
+        Py_DECREF(self);
+        return NULL;
+    }
     sslCtx = SSL_CTX_new(TLS_client_method());
 #else
 // The init function for OpenSSL 1.0.2 takes the SSL/TLS version as an argument

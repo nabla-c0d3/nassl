@@ -9,11 +9,8 @@ from nassl.openssl_1_1_1 import _nassl
 from nassl._low_level_errors import OpenSSLError
 from nassl.base_ssl_client import (
     ClientCertificateRequested,
-    ExtendedMasterSecretSupportEnum,
     OpenSslVersionEnum,
     OpenSslVerifyEnum,
-    OpenSslEarlyDataStatusEnum,
-    OpenSslDigestNidEnum,
 )
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
@@ -23,7 +20,13 @@ from nassl.ephemeral_key_info import (
     EcDhEphemeralKeyInfo,
 )
 from nassl.openssl_1_0_2.ssl_client import SslClient_OpenSSL_1_0_2
-from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1
+from nassl.openssl_1_1_1.ssl_client import (
+    ExtendedMasterSecretSupportEnum,
+    OpenSslDigestNidEnum,
+    OpenSslEarlyDataStatusEnum,
+    SslClient_OpenSSL_1_1_1,
+)
+from nassl.openssl_4_0_0.ssl_client import SslClient_OpenSSL_4_0_0
 from tests.openssl_server import (
     ModernOpenSslServer,
     ClientAuthConfigEnum,
@@ -34,7 +37,7 @@ _SslClientTypes = Any
 
 
 # TODO(AD): Switch to legacy server and add a TODO; skip tests for TLS 1.3
-@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_0_2, SslClient_OpenSSL_1_1_1])
+@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_0_2, SslClient_OpenSSL_1_1_1, SslClient_OpenSSL_4_0_0])
 class TestSslClientClientAuthentication:
     def test_client_authentication_no_certificate_supplied(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
@@ -98,7 +101,7 @@ class TestSslClientClientAuthentication:
                 ssl_client.shutdown()
 
 
-@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_0_2, SslClient_OpenSSL_1_1_1])
+@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_0_2, SslClient_OpenSSL_1_1_1, SslClient_OpenSSL_4_0_0])
 class TestSslClientOnline:
     def test(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given an SslClient connecting to Google
@@ -107,7 +110,7 @@ class TestSslClientOnline:
         sock.connect(("www.google.com", 443))
 
         ssl_client = ssl_client_cls(
-            ssl_version=OpenSslVersionEnum.SSLV23,
+            ssl_version=OpenSslVersionEnum.TLSV1_2,
             underlying_socket=sock,
             ssl_verify=OpenSslVerifyEnum.NONE,
         )
@@ -201,14 +204,15 @@ class TestSslClientOnline:
             assert dh_info is None
 
 
-class TestOnline_SslClient_OpenSSL_1_1_1:
-    def test_get_dh_info_ecdh_p256(self) -> None:
+@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_1_1, SslClient_OpenSSL_4_0_0])
+class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
+    def test_get_dh_info_ecdh_p256(self, ssl_client_cls: _SslClientTypes) -> None:
         with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="P-256") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -229,13 +233,13 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             assert len(dh_info.x) == 32
             assert len(dh_info.y) == 32
 
-    def test_get_dh_info_ecdh_x25519(self) -> None:
+    def test_get_dh_info_ecdh_x25519(self, ssl_client_cls: _SslClientTypes) -> None:
         with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -254,7 +258,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             assert dh_info.curve == OpenSslEcNidEnum.X25519
             assert len(dh_info.public_bytes) == 32
 
-    def test_set_groups_curve_secp192k1(self) -> None:
+    def test_set_groups_curve_secp192k1(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA",
@@ -265,7 +269,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # And a client that only supports a specific curve: SECP192K1
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -284,7 +288,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.curve == configured_curve
 
-    def test_set_groups_curve_x448(self) -> None:
+    def test_set_groups_curve_x448(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports a bunch of curves
         with ModernOpenSslServer(
             cipher="ECDHE-RSA-AES256-SHA",
@@ -295,7 +299,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # And a client that only supports a specific curve: X448
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -317,7 +321,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             assert dh_info.size == 448
             assert len(dh_info.public_bytes) == 56
 
-    def test_get_extended_master_secret_not_used(self) -> None:
+    def test_get_extended_master_secret_not_used(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server that does NOT support the Extended Master Secret extension
         with LegacyOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -325,7 +329,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # When a client connects to it
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -344,7 +348,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             exms_support = ssl_client.get_extended_master_secret_support()
             assert exms_support == ExtendedMasterSecretSupportEnum.NOT_USED_IN_CURRENT_SESSION
 
-    def test_get_extended_master_secret_used(self) -> None:
+    def test_get_extended_master_secret_used(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server that DOES support the Extended Master Secret extension
         with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -352,7 +356,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # When a client connects to it
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -371,7 +375,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             exms_support = ssl_client.get_extended_master_secret_support()
             assert exms_support == ExtendedMasterSecretSupportEnum.USED_IN_CURRENT_SESSION
 
-    def test_set_signature_algorithms(self) -> None:
+    def test_set_signature_algorithms(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server
         with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -379,7 +383,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # And a client
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -396,7 +400,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             # And the configured signature algorithm was used
             assert ssl_client.get_peer_signature_nid() == OpenSslDigestNidEnum.SHA256
 
-    def test_set_signature_algorithms_but_not_supported(self) -> None:
+    def test_set_signature_algorithms_but_not_supported(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server
         with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -404,7 +408,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # And a client
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -417,7 +421,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
                 ssl_client.do_handshake()
             ssl_client.shutdown()
 
-    def test_client_authentication(self) -> None:
+    def test_client_authentication(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
         with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides an invalid client certificate (actually the server cert)
@@ -425,7 +429,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1:
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -475,15 +479,16 @@ class TestOnline_SslClient_OpenSSL_1_0_2:
                 ssl_client.do_handshake()
 
 
-class TestOnlineTls13_SslClient_Openssl_1_1_1:
-    def test(self) -> None:
+@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_1_1, SslClient_OpenSSL_4_0_0])
+class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
+    def test(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3
         with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -494,7 +499,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
             finally:
                 ssl_client.shutdown()
 
-    def test_set_ciphersuites(self) -> None:
+    def test_set_ciphersuites(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3
         with ModernOpenSslServer() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -502,7 +507,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # And a client that only supports a specific TLS 1.3 cipher suite
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -519,12 +524,14 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
         assert "TLS_CHACHA20_POLY1305_SHA256" == ssl_client.get_current_cipher_name()
 
     @staticmethod
-    def _create_tls_1_3_session(server_host: str, server_port: int) -> _nassl.SSL_SESSION:
+    def _create_tls_1_3_session(
+        server_host: str, server_port: int, ssl_client_cls: _SslClientTypes
+    ) -> _nassl.SSL_SESSION:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(5)
         sock.connect((server_host, server_port))
 
-        ssl_client = SslClient_OpenSSL_1_1_1(
+        ssl_client = ssl_client_cls(
             ssl_version=OpenSslVersionEnum.TLSV1_3,
             underlying_socket=sock,
             ssl_verify=OpenSslVerifyEnum.NONE,
@@ -540,11 +547,11 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
             ssl_client.shutdown()
         return session
 
-    def test_write_early_data_does_not_finish_handshake(self) -> None:
+    def test_write_early_data_does_not_finish_handshake(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=512) as server:
             # That has a previous TLS 1.3 session with the server
-            session = self._create_tls_1_3_session(server.hostname, server.port)
+            session = self._create_tls_1_3_session(server.hostname, server.port, ssl_client_cls)
             assert session
 
             # And the server accepts early data
@@ -556,7 +563,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
             sock_early_data.settimeout(5)
             sock_early_data.connect((server.hostname, server.port))
 
-            ssl_client_early_data = SslClient_OpenSSL_1_1_1(
+            ssl_client_early_data = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock_early_data,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -579,7 +586,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
 
             ssl_client_early_data.shutdown()
 
-    def test_write_early_data_fail_when_used_on_non_reused_session(self) -> None:
+    def test_write_early_data_fail_when_used_on_non_reused_session(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=512) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -587,7 +594,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
             sock.connect((server.hostname, server.port))
 
             # That does NOT have a previous session with the server
-            ssl_client = SslClient_OpenSSL_1_1_1(
+            ssl_client = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
@@ -600,11 +607,13 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
 
             ssl_client.shutdown()
 
-    def test_write_early_data_fail_when_trying_to_send_more_than_max_early_data(self) -> None:
+    def test_write_early_data_fail_when_trying_to_send_more_than_max_early_data(
+        self, ssl_client_cls: _SslClientTypes
+    ) -> None:
         # Given a server that supports TLS 1.3 and early data
         with ModernOpenSslServer(max_early_data=1) as server:
             # That has a previous TLS 1.3 session with the server
-            session = self._create_tls_1_3_session(server.hostname, server.port)
+            session = self._create_tls_1_3_session(server.hostname, server.port, ssl_client_cls)
             assert session
 
             # And the server only accepts 1 byte of early data
@@ -616,7 +625,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1:
             sock_early_data.settimeout(5)
             sock_early_data.connect((server.hostname, server.port))
 
-            ssl_client_early_data = SslClient_OpenSSL_1_1_1(
+            ssl_client_early_data = ssl_client_cls(
                 ssl_version=OpenSslVersionEnum.TLSV1_3,
                 underlying_socket=sock_early_data,
                 ssl_verify=OpenSslVerifyEnum.NONE,
