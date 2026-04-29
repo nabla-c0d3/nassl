@@ -298,7 +298,12 @@ class BaseSslClient(ABC):
             self._ssl.shutdown()
         except OpenSSLError as e:
             # Ignore "uninitialized" exception
-            if "SSL_shutdown:uninitialized" not in str(e) and "shutdown while in init" not in str(e):
+            if "SSL_shutdown:uninitialized" in str(e) or "shutdown while in init" in str(e):
+                pass
+            # Ignore error when shutdown() is called before the handshake is completed
+            elif "invalid input" in str(e):
+                pass
+            else:
                 raise
         if self._sock:
             self._sock.close()

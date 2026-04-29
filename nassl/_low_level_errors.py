@@ -1,6 +1,3 @@
-# TODO OpenSSL3
-
-
 class OpenSSLError(Exception):
     pass
 
