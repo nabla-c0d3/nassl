@@ -29,7 +29,7 @@ class ClientAuthConfigEnum(Enum):
     REQUIRED = 3
 
 
-class _OpenSslServerIOManager:
+class _S_Server_IOManager:
     """Thread to log all output from s_server and reply to incoming connections."""
 
     def __init__(self, s_server_stdout: IO[bytes], s_server_stdin: IO[bytes]) -> None:
@@ -50,7 +50,7 @@ class _OpenSslServerIOManager:
                         self.s_server_stdin.write(b"\n")
                         self.s_server_stdin.flush()
 
-                    if _OpenSslServer.HELLO_MSG in s_server_out:
+                    if _S_Server.HELLO_MSG in s_server_out:
                         # When receiving the special message, we want s_server to reply
                         self.s_server_stdin.write(b"Hey there")
                         self.s_server_stdin.flush()
@@ -69,7 +69,7 @@ class _OpenSslServerIOManager:
         # self.thread.join()
 
 
-class _OpenSslServer(ABC):
+class _S_Server(ABC):
     """A wrapper around OpenSSL's s_server CLI."""
 
     # On Windows with modern OpenSSL, trying to use ports below 10k will fail for some reason
@@ -126,7 +126,7 @@ class _OpenSslServer(ABC):
         # Retrieve one of the available local ports; set.pop() is thread safe
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
         self._process: subprocess.Popen | None = None
-        self._server_io_manager: _OpenSslServerIOManager | None = None
+        self._server_io_manager: _S_Server_IOManager | None = None
         final_cipher = cipher if cipher else "ALL:COMPLEMENTOFALL"
 
         self._command_line = self._S_SERVER_CMD.format(
@@ -139,7 +139,7 @@ class _OpenSslServer(ABC):
             cipher=final_cipher,
         )
 
-    def __enter__(self) -> "_OpenSslServer":
+    def __enter__(self) -> "_S_Server":
         _logger.warning(f'Running s_server with command: "{self._command_line}"')
         args: str | list[str]
         if CURRENT_PLATFORM in [
@@ -158,7 +158,7 @@ class _OpenSslServer(ABC):
             )
             assert self._process.stdin
             assert self._process.stdout
-            self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
+            self._server_io_manager = _S_Server_IOManager(self._process.stdout, self._process.stdin)
 
             # Block until s_server is ready to accept requests
             attempts_count = 0
@@ -194,8 +194,7 @@ class _OpenSslServer(ABC):
         self._AVAILABLE_LOCAL_PORTS.add(self.port)
 
 
-class LegacyOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.0.0e s_server binary."""
+class S_Server_OpenSSL_1_0_2(_S_Server):
 
     def __init__(
         self,
@@ -225,8 +224,7 @@ class LegacyOpenSslServer(_OpenSslServer):
         return options[client_auth_config]
 
 
-class ModernOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.1.1 s_server binary."""
+class S_Server_OpenSSL_1_1_1(_S_Server):
 
     @classmethod
     def get_openssl_path(cls) -> Path:

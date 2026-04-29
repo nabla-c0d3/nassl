@@ -28,9 +28,9 @@ from nassl.openssl_1_1_1.ssl_client import (
 )
 from nassl.openssl_4_0_0.ssl_client import SslClient_OpenSSL_4_0_0
 from tests.openssl_server import (
-    ModernOpenSslServer,
+    S_Server_OpenSSL_1_1_1,
     ClientAuthConfigEnum,
-    LegacyOpenSslServer,
+    S_Server_OpenSSL_1_0_2,
 )
 
 _SslClientTypes = Any
@@ -41,7 +41,7 @@ _SslClientTypes = Any
 class TestSslClientClientAuthentication:
     def test_client_authentication_no_certificate_supplied(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
-        with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+        with S_Server_OpenSSL_1_0_2(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client does NOT provide a client certificate
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -60,7 +60,7 @@ class TestSslClientClientAuthentication:
 
     def test_client_authentication_no_certificate_supplied_but_ignore(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that accepts optional client authentication
-        with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.OPTIONAL) as server:
+        with S_Server_OpenSSL_1_0_2(client_auth_config=ClientAuthConfigEnum.OPTIONAL) as server:
             # And the client does NOT provide a client cert but is configured to ignore the client auth request
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -80,7 +80,7 @@ class TestSslClientClientAuthentication:
 
     def test_client_authentication_succeeds(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
-        with LegacyOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+        with S_Server_OpenSSL_1_0_2(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides a client certificate
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -131,7 +131,7 @@ class TestSslClientOnline:
             ssl_client.shutdown()
 
     def test_get_dh_info_ecdh(self, ssl_client_cls: _SslClientTypes) -> None:
-        with LegacyOpenSslServer(cipher="ECDHE-RSA-AES256-SHA") as server:
+        with S_Server_OpenSSL_1_0_2(cipher="ECDHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -157,7 +157,7 @@ class TestSslClientOnline:
             assert len(dh_info.y) > 0
 
     def test_get_dh_info_dh(self, ssl_client_cls: _SslClientTypes) -> None:
-        with LegacyOpenSslServer(cipher="DHE-RSA-AES256-SHA") as server:
+        with S_Server_OpenSSL_1_0_2(cipher="DHE-RSA-AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -183,7 +183,7 @@ class TestSslClientOnline:
             assert len(dh_info.generator) > 0
 
     def test_get_dh_info_no_dh(self, ssl_client_cls: _SslClientTypes) -> None:
-        with LegacyOpenSslServer(cipher="AES256-SHA") as server:
+        with S_Server_OpenSSL_1_0_2(cipher="AES256-SHA") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -207,7 +207,7 @@ class TestSslClientOnline:
 @pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_1_1, SslClient_OpenSSL_4_0_0])
 class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
     def test_get_dh_info_ecdh_p256(self, ssl_client_cls: _SslClientTypes) -> None:
-        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="P-256") as server:
+        with S_Server_OpenSSL_1_1_1(cipher="ECDHE-RSA-AES256-SHA", groups="P-256") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -234,7 +234,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
             assert len(dh_info.y) == 32
 
     def test_get_dh_info_ecdh_x25519(self, ssl_client_cls: _SslClientTypes) -> None:
-        with ModernOpenSslServer(cipher="ECDHE-RSA-AES256-SHA", groups="X25519") as server:
+        with S_Server_OpenSSL_1_1_1(cipher="ECDHE-RSA-AES256-SHA", groups="X25519") as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -260,7 +260,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_set_groups_curve_secp192k1(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports a bunch of curves
-        with ModernOpenSslServer(
+        with S_Server_OpenSSL_1_1_1(
             cipher="ECDHE-RSA-AES256-SHA",
             groups="X25519:prime256v1:secp384r1:secp192k1",
         ) as server:
@@ -290,7 +290,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_set_groups_curve_x448(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports a bunch of curves
-        with ModernOpenSslServer(
+        with S_Server_OpenSSL_1_1_1(
             cipher="ECDHE-RSA-AES256-SHA",
             groups="X25519:prime256v1:X448:secp384r1:secp192k1",
         ) as server:
@@ -323,7 +323,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_get_extended_master_secret_not_used(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server that does NOT support the Extended Master Secret extension
-        with LegacyOpenSslServer() as server:
+        with S_Server_OpenSSL_1_0_2() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -350,7 +350,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_get_extended_master_secret_used(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server that DOES support the Extended Master Secret extension
-        with ModernOpenSslServer() as server:
+        with S_Server_OpenSSL_1_1_1() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -377,7 +377,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_set_signature_algorithms(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server
-        with ModernOpenSslServer() as server:
+        with S_Server_OpenSSL_1_1_1() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -402,7 +402,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_set_signature_algorithms_but_not_supported(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server
-        with ModernOpenSslServer() as server:
+        with S_Server_OpenSSL_1_1_1() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -423,7 +423,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
     def test_client_authentication(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that requires client authentication
-        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+        with S_Server_OpenSSL_1_1_1(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides an invalid client certificate (actually the server cert)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -443,7 +443,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 class TestOnline_SslClient_OpenSSL_1_0_2:
     def test_ssl_2(self) -> None:
         # Given a server that supports SSL 2.0
-        with LegacyOpenSslServer() as server:
+        with S_Server_OpenSSL_1_0_2() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -462,7 +462,7 @@ class TestOnline_SslClient_OpenSSL_1_0_2:
 
     def test_client_authentication(self) -> None:
         # Given a server that requires client authentication
-        with ModernOpenSslServer(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
+        with S_Server_OpenSSL_1_1_1(client_auth_config=ClientAuthConfigEnum.REQUIRED) as server:
             # And the client provides an invalid client certificate (actually the server cert)
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -483,7 +483,7 @@ class TestOnline_SslClient_OpenSSL_1_0_2:
 class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
     def test(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3
-        with ModernOpenSslServer() as server:
+        with S_Server_OpenSSL_1_1_1() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -501,7 +501,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
     def test_set_ciphersuites(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3
-        with ModernOpenSslServer() as server:
+        with S_Server_OpenSSL_1_1_1() as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -539,7 +539,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
         try:
             ssl_client.do_handshake()
-            ssl_client.write(ModernOpenSslServer.HELLO_MSG)
+            ssl_client.write(S_Server_OpenSSL_1_1_1.HELLO_MSG)
             ssl_client.read(2048)
             session = ssl_client.get_session()
 
@@ -549,7 +549,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
     def test_write_early_data_does_not_finish_handshake(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3 and early data
-        with ModernOpenSslServer(max_early_data=512) as server:
+        with S_Server_OpenSSL_1_1_1(max_early_data=512) as server:
             # That has a previous TLS 1.3 session with the server
             session = self._create_tls_1_3_session(server.hostname, server.port, ssl_client_cls)
             assert session
@@ -588,7 +588,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
     def test_write_early_data_fail_when_used_on_non_reused_session(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a server that supports TLS 1.3 and early data
-        with ModernOpenSslServer(max_early_data=512) as server:
+        with S_Server_OpenSSL_1_1_1(max_early_data=512) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
@@ -611,7 +611,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
         self, ssl_client_cls: _SslClientTypes
     ) -> None:
         # Given a server that supports TLS 1.3 and early data
-        with ModernOpenSslServer(max_early_data=1) as server:
+        with S_Server_OpenSSL_1_1_1(max_early_data=1) as server:
             # That has a previous TLS 1.3 session with the server
             session = self._create_tls_1_3_session(server.hostname, server.port, ssl_client_cls)
             assert session
