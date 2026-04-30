@@ -362,7 +362,7 @@ class OpenSsl_1_1_1_BuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
-class OpenSSL_4_0_0_BuildConfig(OpenSslBuildConfig):
+class OpenSsl_4_0_0_BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
         return "openssl-4.0.0"

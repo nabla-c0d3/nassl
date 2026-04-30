@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 
 from build_config import (
-    OpenSSL_4_0_0_BuildConfig,
+    OpenSsl_4_0_0_BuildConfig,
     OpenSsl_1_0_2_BuildConfig,
     OpenSsl_1_1_1_BuildConfig,
     ZlibBuildConfig,
@@ -146,7 +146,7 @@ NASSL_OSSL_1_1_1_EXT_SETUP.update(
 )
 
 # The configure the setup for 4.0.0
-openssl_4_0_0_config = OpenSSL_4_0_0_BuildConfig(CURRENT_PLATFORM)
+openssl_4_0_0_config = OpenSsl_4_0_0_BuildConfig(CURRENT_PLATFORM)
 
 NASSL_OSSL_4_0_0_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 NASSL_OSSL_4_0_0_EXT_SETUP["name"] = "nassl.openssl_4_0_0._nassl"

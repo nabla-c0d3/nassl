@@ -125,7 +125,7 @@ def build_openssl_1_1_1(ctx: Context, do_not_clean: bool = False) -> None:
 def build_openssl_4_0_0(ctx: Context, do_not_clean: bool = False) -> None:
     print("OpenSSL 4.0.0: Starting...")
     assert build_config.CURRENT_PLATFORM
-    ossl_4_0_0_cfg = build_config.OpenSSL_4_0_0_BuildConfig(build_config.CURRENT_PLATFORM)
+    ossl_4_0_0_cfg = build_config.OpenSsl_4_0_0_BuildConfig(build_config.CURRENT_PLATFORM)
     if not do_not_clean:
         ossl_4_0_0_cfg.clean()
         ossl_4_0_0_cfg.fetch_source()
