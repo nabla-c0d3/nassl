@@ -104,6 +104,7 @@ class BaseSslClient(ABC):
             ignore_client_authentication_requests,
         )
         # Now create the SSL object
+        self._ssl: NasslModuleProtocol.SSL  # created in _init_ssl_objects()
         self._init_ssl_objects()
         if server_name_indication is not None:
             self._ssl.set_tlsext_host_name(server_name_indication)
