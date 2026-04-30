@@ -60,3 +60,28 @@ class TestEphemeralKeyInfo:
         )
         assert key_info
         assert "UNKNOWN" in key_info.type_name
+
+    def test_raw_int_type_is_coerced_to_enum(self) -> None:
+        # Regression for #132: dh_info from the C extension carries raw ints,
+        # so DhEphemeralKeyInfo(**dh_info) used to leave .type as an int.
+        # The dataclass should coerce known values to the IntEnum.
+        key_info = DhEphemeralKeyInfo(
+            type=int(OpenSslEvpPkeyEnum.DH),  # type: ignore
+            size=12,
+            public_bytes=bytearray(b"123"),
+            prime=bytearray(b"123"),
+            generator=bytearray(b"123"),
+        )
+        assert isinstance(key_info.type, OpenSslEvpPkeyEnum)
+        assert key_info.type is OpenSslEvpPkeyEnum.DH
+
+    def test_raw_int_curve_is_coerced_to_enum(self) -> None:
+        # Same coercion for EcDhEphemeralKeyInfo.curve.
+        key_info = EcDhEphemeralKeyInfo(
+            type=int(OpenSslEvpPkeyEnum.EC),  # type: ignore
+            size=12,
+            public_bytes=bytearray(b"123"),
+            curve=int(OpenSslEcNidEnum.X448),  # type: ignore
+        )
+        assert isinstance(key_info.curve, OpenSslEcNidEnum)
+        assert key_info.curve is OpenSslEcNidEnum.X448

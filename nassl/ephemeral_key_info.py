@@ -138,6 +138,17 @@ class EphemeralKeyInfo(ABC):
     public_bytes: bytearray
 
     def __post_init__(self) -> None:
+        # `dh_info["type"]` from the C extension is a raw int, so callers
+        # constructing this dataclass via `**dh_info` would otherwise leave
+        # `type` as an int despite the annotation. Coerce here so JSON
+        # serialisation and IntEnum-aware code paths see the expected type.
+        # Unknown values (not in the enum) are left as ints; the type_name
+        # lookup below handles that path with an "UNKNOWN" fallback.
+        if not isinstance(self.type, OpenSslEvpPkeyEnum):
+            try:
+                object.__setattr__(self, "type", OpenSslEvpPkeyEnum(self.type))
+            except ValueError:
+                pass
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(
             self,
@@ -153,6 +164,14 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
 
     def __post_init__(self) -> None:
         super().__post_init__()
+        # Same int → IntEnum coercion as in the parent — `curve` arrives
+        # as a raw NID from OpenSSL. Unknown NIDs stay as ints so the
+        # "unknown-curve-with-openssl-id-{n}" fallback below still works.
+        if not isinstance(self.curve, OpenSslEcNidEnum):
+            try:
+                object.__setattr__(self, "curve", OpenSslEcNidEnum(self.curve))
+            except ValueError:
+                pass
         curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62.get(self.curve, f"unknown-curve-with-openssl-id-{self.curve}")
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(self, "curve_name", curve_name)
