@@ -3,32 +3,40 @@ from types import ModuleType
 
 import pytest
 
-from nassl import _nassl, _nassl_legacy
-from nassl.ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
+from nassl._low_level_errors import OpenSSLError
+from nassl.base_ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 
 
-@pytest.mark.parametrize("nassl_module", [_nassl, _nassl_legacy])
+import nassl.openssl_1_0_2._nassl
+import nassl.openssl_1_1_1._nassl
+import nassl.openssl_4_0_0._nassl
+
+
+@pytest.mark.parametrize(
+    "nassl_module, SSL_CTX_args",
+    [
+        # Not the same arguments with OpenSSL 1.0.2 VS 1.1.1 and 4.0.0
+        (nassl.openssl_1_0_2._nassl, [OpenSslVersionEnum.TLSV1_2.value]),
+        (nassl.openssl_1_1_1._nassl, []),
+        (nassl.openssl_4_0_0._nassl, []),
+    ],
+)
 class TestCommonSSL_CTX:
-    def test_new(self, nassl_module: ModuleType) -> None:
-        assert nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+    def test_new(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        assert nassl_module.SSL_CTX(*SSL_CTX_args)
 
-    def test_new_bad(self, nassl_module: ModuleType) -> None:
-        # Invalid protocol constant
-        with pytest.raises(ValueError):
-            nassl_module.SSL_CTX(1234)
-
-    def test_set_verify(self, nassl_module: ModuleType) -> None:
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+    def test_set_verify(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         test_ssl_ctx.set_verify(OpenSslVerifyEnum.PEER.value)
 
-    def test_set_verify_bad(self, nassl_module: ModuleType) -> None:
+    def test_set_verify_bad(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
         # Invalid verify constant
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         with pytest.raises(ValueError):
             test_ssl_ctx.set_verify(1235)
 
-    def test_load_verify_locations(self, nassl_module: ModuleType) -> None:
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+    def test_load_verify_locations(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode="wt")
         test_file.write(
             """-----BEGIN CERTIFICATE-----
@@ -54,73 +62,58 @@ A4GBAFjOKer89961zgK5F7WF0bnj4JXMJTENAKaSbn+2kmOeUJXRmm/kEd5jhW6Y
         test_file.close()
         test_ssl_ctx.load_verify_locations(test_file.name)
 
-    def test_load_verify_locations_bad(self, nassl_module: ModuleType) -> None:
+    def test_load_verify_locations_bad(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
         # Certificate file doesn't exist
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError):
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
+        with pytest.raises(OpenSSLError):
             test_ssl_ctx.load_verify_locations("tests")
 
-    def test_set_private_key_password_null_byte(self, nassl_module: ModuleType) -> None:
+    def test_set_private_key_password_null_byte(
+        self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]
+    ) -> None:
         # NULL byte embedded in the password
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         # It raises a TypeError on Python 2.7 and 3.4, and a ValueError on 3.5
         with pytest.raises(Exception, match=" null"):
             test_ssl_ctx.set_private_key_password("AAA\x00AAAA")
 
-    def test_use_certificate_file(self, nassl_module: ModuleType) -> None:
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+    def test_use_certificate_file(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode="wt")
         test_file.write(
             """-----BEGIN CERTIFICATE-----
-MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
-DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
-ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
-9w0BCQEWC2xvbEBsb2wuY29tMB4XDTEzMDEyNzAwMDM1OFoXDTE0MDEyNzAwMDM1
-OFowgZcxCzAJBgNVBAYTAkZSMQwwCgYDVQQIDAMxMjMxDTALBgNVBAcMBFRlc3Qx
-IjAgBgNVBAoMGUludHJvc3B5IFRlc3QgQ2xpZW50IENlcnQxCzAJBgNVBAsMAjEy
-MRUwEwYDVQQDDAxBbGJhbiBEaXF1ZXQxIzAhBgkqhkiG9w0BCQEWFG5hYmxhLWMw
-ZDNAZ21haWwuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlnvP1ltVO
-8JDNT3AA99QqtiqCi/7BeEcFDm2al46mv7looz6CmB84osrusNVFsS5ICLbrCmeo
-w5sxW7VVveGueBQyWynngl2PmmufA5Mhwq0ZY8CvwV+O7m0hEXxzwbyGa23ai16O
-zIiaNlBAb0mC2vwJbsc3MTMovE6dHUgmzQIDAQABo3sweTAJBgNVHRMEAjAAMCwG
-CWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNV
-HQ4EFgQUYR45okpFsqTYB1wlQQblLH9cRdgwHwYDVR0jBBgwFoAUP0X2HQlaca7D
-NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
-gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
-dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
-Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
-DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
-ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
-9w0BCQEWC2xvbEBsb2wuY29tMB4XDTEzMDEyNzAwMDM1OFoXDTE0MDEyNzAwMDM1
-OFowgZcxCzAJBgNVBAYTAkZSMQwwCgYDVQQIDAMxMjMxDTALBgNVBAcMBFRlc3Qx
-IjAgBgNVBAoMGUludHJvc3B5IFRlc3QgQ2xpZW50IENlcnQxCzAJBgNVBAsMAjEy
-MRUwEwYDVQQDDAxBbGJhbiBEaXF1ZXQxIzAhBgkqhkiG9w0BCQEWFG5hYmxhLWMw
-ZDNAZ21haWwuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlnvP1ltVO
-8JDNT3AA99QqtiqCi/7BeEcFDm2al46mv7looz6CmB84osrusNVFsS5ICLbrCmeo
-w5sxW7VVveGueBQyWynngl2PmmufA5Mhwq0ZY8CvwV+O7m0hEXxzwbyGa23ai16O
-zIiaNlBAb0mC2vwJbsc3MTMovE6dHUgmzQIDAQABo3sweTAJBgNVHRMEAjAAMCwG
-CWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNV
-HQ4EFgQUYR45okpFsqTYB1wlQQblLH9cRdgwHwYDVR0jBBgwFoAUP0X2HQlaca7D
-NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
-gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
-dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
-Pd2eQ9+DkopOz3UGU7c=
+MIIDazCCAlOgAwIBAgIUUWfzyGnF+G0KRPNS7c6iMaXkSX4wDQYJKoZIhvcNAQEL
+BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yNjA0MzAxNjU2MTFaFw0yNzA0
+MzAxNjU2MTFaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw
+HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQDTnAP5w077B0K9dpJsMkTAiNHI21EYXn2LCwLKb3YL
+0cHpwkzc4T4+q7ahIiSlwHMp5wT0MhhuJUYZVJ/YQH9bPdLDuN5SoreBspVwbe5m
+Ncf6DVduBdBn0vhLa+RinpEHb4EYS1rJVIsrvdLqx3yQtDaURCgm0xQfdVAoahkg
+ENj+cl2IgKvdL4KX82cCerchHj6zpxgELF8EOGuLmjLslZmGnTwK4oZFWjbKLqgp
+YgTyjlGK5S0LXcWr5a34XCCK3M4Bd4+IaPMyMAnqfiMkzM/bGYdyYqRboiF9Ri+U
+p6i0Sl/Gs3bhXxsiKodQhXT8bc26BZQ3lj/uhpelQIpRAgMBAAGjUzBRMB0GA1Ud
+DgQWBBTm2UcUD9M9eoNgTIuwwFJLwIc1+TAfBgNVHSMEGDAWgBTm2UcUD9M9eoNg
+TIuwwFJLwIc1+TAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQC4
+AHVSPPJ9kX2XZO6mNUspRwcBM9DDuFiGTi6dQF8fQggXzm9+KPepLa/3Oat2pvIG
+j5SQdd/ePyp2OLIMkryiVk9uHkpXoZNZktf+xiae3iOZpf3iIpOryGUsPim/8oDU
+Bor7kPn3Iy35hSLmx/cIPvGAdS3k+ia8c8WVXXUspYJVWLyWYgBGKHuapbCeDVNd
+HcHpn/2Adg+bvn9onArcNx3bPVyio+Jox7ui4Zu8UFHdfBxA0Q1unHWIP5ovvg8z
+0zniDzNPuom+YSZ6KQ3Q0PenePFveDwTFuxOuHg+Ph66pmXE8mrcScNUGPdahj/0
+Aa90JFIAvU4MWQCKNoWp
 -----END CERTIFICATE-----"""
         )
         test_file.close()
         test_ssl_ctx.use_certificate_chain_file(test_file.name)
 
-    def test_use_certificate_file_bad(self, nassl_module: ModuleType) -> None:
+    def test_use_certificate_file_bad(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
         # Bad filename
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError, match="system lib"):
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
+        with pytest.raises(OpenSSLError, match="system lib"):
             test_ssl_ctx.use_certificate_chain_file("invalidPath")
 
-    def test_use_PrivateKey_file(self, nassl_module: ModuleType) -> None:
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+    def test_use_PrivateKey_file(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode="wt")
         test_file.write(
             """-----BEGIN PRIVATE KEY-----
@@ -143,73 +136,68 @@ jsXbhxAIkrdmpg==
         test_file.close()
         test_ssl_ctx.use_PrivateKey_file(test_file.name, OpenSslFileTypeEnum.PEM.value)
 
-    def test_use_PrivateKey_file_bad(self, nassl_module: ModuleType) -> None:
+    def test_use_PrivateKey_file_bad(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
         # Bad filename
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError, match="No such file"):
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
+        with pytest.raises(OpenSSLError, match="No such file"):
             test_ssl_ctx.use_PrivateKey_file("invalidPath", OpenSslFileTypeEnum.PEM.value)
 
-    def test_check_private_key(self, nassl_module: ModuleType) -> None:
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
+    def test_check_private_key(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
         test_file = tempfile.NamedTemporaryFile(delete=False, mode="wt")
         test_file.write(
             """-----BEGIN PRIVATE KEY-----
-MIICdgIBADANBgkqhkiG9w0BAQEFAASCAmAwggJcAgEAAoGBAOWe8/WW1U7wkM1P
-cAD31Cq2KoKL/sF4RwUObZqXjqa/uWijPoKYHziiyu6w1UWxLkgItusKZ6jDmzFb
-tVW94a54FDJbKeeCXY+aa58DkyHCrRljwK/BX47ubSERfHPBvIZrbdqLXo7MiJo2
-UEBvSYLa/AluxzcxMyi8Tp0dSCbNAgMBAAECgYAl0ZpItsEHMWQIDK9b2XWeW0aB
-HeGlp9O6p3ex4IhkOmulKk3fYIKz50wZKBLYWahPwO+vopUUHLNw27PwHUgQDmOY
-QKAZowO3X5RT5URNzeiI2KTE431uNFqeMR9+XrnjQIZPDDaltACTTZpFp1rFqM+C
-/WbZ2VHS/52Vrrj7wQJBAPW64ts+UHNQn1Y+CyYQGVERICdPwC4nSu/+MYpvo0r+
-XX1bali8kTdBs2ByoWQOaFr3B4qffd4vb8lIMxt6f3kCQQDvN7ZUsyM/HcSw/4go
-pGakZx1OJKBCet6uNA6ymglhDzmFoiAR3QAIxYTVQlc87m0v4ExjVC/nlbdNa4MX
-m2j1AkAHgagAbozimOnlJowMo51CXrWOvd7vCgA+CJPW2MYyOkb811gOUeRVvcoO
-/jFz7wS9EqLGV0zvBp/xlCULh9hxAkEA2x+tZOiy4J3kDj4D+zaczvulXG8wXbUv
-RWNqEzAGZ2IKzt4zgiluXpqPksmyH55HZhOP5Wy4dOovfjt9WaKCAQJAEzgPLx+6
-iuiRanrS8dy8Q5UXavmPgBeHXZ4gxWbXD3vC5Qzorgp+P04GhofSCFklXokTPrKN
-jsXbhxAIkrdmpg==
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDTnAP5w077B0K9
+dpJsMkTAiNHI21EYXn2LCwLKb3YL0cHpwkzc4T4+q7ahIiSlwHMp5wT0MhhuJUYZ
+VJ/YQH9bPdLDuN5SoreBspVwbe5mNcf6DVduBdBn0vhLa+RinpEHb4EYS1rJVIsr
+vdLqx3yQtDaURCgm0xQfdVAoahkgENj+cl2IgKvdL4KX82cCerchHj6zpxgELF8E
+OGuLmjLslZmGnTwK4oZFWjbKLqgpYgTyjlGK5S0LXcWr5a34XCCK3M4Bd4+IaPMy
+MAnqfiMkzM/bGYdyYqRboiF9Ri+Up6i0Sl/Gs3bhXxsiKodQhXT8bc26BZQ3lj/u
+hpelQIpRAgMBAAECggEAPbpFqJ6SFAUmsVj81oYFazqeI57idZ7etWg1XLMN9t2t
+2NA+lrI385UolbF9ikJs9by3w7o3SS4jWDFI3Y7W99k9ea2cYPOpXzKmiCDxSayH
+lMg+iFA23op6tpmXCjOiL86VlG4q4g8A9/YMKEOf8SA4yaBmLAkn1hNlGhz1DlaD
+ohAEC1ptqLhWFRYff2IHazvDQN21lqkgt/X3bU5hu9uNELLwyE6ZKRfUa7ceR0dj
+dk9h5q7DsD8BR0c/oOtDF6AOpLMPbGEPOrt7lfLb+Md3ZhumFnnZK9DvlNv08Eit
+AOwi7/2Nt+gIR2GLv2kXNJKACaIJmHb2elej08UX/wKBgQD63jQYduzBX3zfhOm+
+9a/FEaKThHA+V+kKrWjIcjT9dvfxh7/tFJ/SDb4SwOpIquKqWtuRL2OfIfZxr+Qw
+NWWvQQB78NdK3jqLz2Q6lZ5tDI6d/x0WoXyiM6K1uFAyP+lmvfpmxKuBncHnE0+B
+Zbfeci0SRrugs2JMcQerzSSpcwKBgQDX8DcCsR30o6k2ZSQfVD8ADOjbqFyqreuq
+78rpYKaW12KvEb0k0UvxsTFGVGH10knjOULeKibcFK/hJa2IH7WVbOAxkYz2sMbI
+qPYiWWMoPJR01TCJBmjEsJ+VeKcKKbd/hMhfNJM2sUTBEKiy0GRJkS/Dt6liikSp
+6PS5plKcKwKBgHa5wp3xaor5zfdax+UAEXeKqQ53l0dqA3hyKSz0H+/05dMBE+v3
+3stihZoKgtZxSWSmK1PCwbsGL8QOIkhOfRk8AiamDL35/ms8c4rmVFv3nWdY3UNg
+mcOJ/G9UE2A0rxlYv7DzUte8+Y+KrA3pPeOg1YPYxeOAAf17YM4GAFvRAoGAHjlk
+Kb9KtxQ1OgTcEnqDOumTqjMdjVI8mzdnClVZ2+EX0fNEqyOUYqbvg62J7JNbfi9k
+mZ4CxGks2PGiIVx22QxdMPLzbQ//MtTbZqFmTJp2GQhB+9vmzCkAnTY/AyAlq/aU
+6SZ9uHkFa5R+WFDsyJNGwTkyvzUlOTb/EgEirPMCgYEApk1MXlSZ3fOwWmoUR50l
+ITZxcc5j1eqYMuJ//cU0pJ3Wm7ASoyDaDV6pZDPG1gga2X95JpMmcx+hDZUnwUQK
+LVZGDxernMwpy+S+/mFu9gcilngVPZUeL/muEWBgasZO4xrUfxaTHiF8p3fBqU+O
+5WLKp0UZT2fkDEZxVp0M8h0=
 -----END PRIVATE KEY-----"""
         )
         test_file.close()
         test_file2 = tempfile.NamedTemporaryFile(delete=False, mode="wt")
         test_file2.write(
             """-----BEGIN CERTIFICATE-----
-MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
-DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
-ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
-9w0BCQEWC2xvbEBsb2wuY29tMB4XDTEzMDEyNzAwMDM1OFoXDTE0MDEyNzAwMDM1
-OFowgZcxCzAJBgNVBAYTAkZSMQwwCgYDVQQIDAMxMjMxDTALBgNVBAcMBFRlc3Qx
-IjAgBgNVBAoMGUludHJvc3B5IFRlc3QgQ2xpZW50IENlcnQxCzAJBgNVBAsMAjEy
-MRUwEwYDVQQDDAxBbGJhbiBEaXF1ZXQxIzAhBgkqhkiG9w0BCQEWFG5hYmxhLWMw
-ZDNAZ21haWwuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlnvP1ltVO
-8JDNT3AA99QqtiqCi/7BeEcFDm2al46mv7looz6CmB84osrusNVFsS5ICLbrCmeo
-w5sxW7VVveGueBQyWynngl2PmmufA5Mhwq0ZY8CvwV+O7m0hEXxzwbyGa23ai16O
-zIiaNlBAb0mC2vwJbsc3MTMovE6dHUgmzQIDAQABo3sweTAJBgNVHRMEAjAAMCwG
-CWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNV
-HQ4EFgQUYR45okpFsqTYB1wlQQblLH9cRdgwHwYDVR0jBBgwFoAUP0X2HQlaca7D
-NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
-gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
-dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
-Pd2eQ9+DkopOz3UGU7c=
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
-DjAMBgNVBAgMBVBhcmlzMQ4wDAYDVQQHDAVQYXJpczEWMBQGA1UECgwNRGFzdGFy
-ZGx5IEluYzEMMAoGA1UECwwDMTIzMQ8wDQYDVQQDDAZBbCBCYW4xGjAYBgkqhkiG
-9w0BCQEWC2xvbEBsb2wuY29tMB4XDTEzMDEyNzAwMDM1OFoXDTE0MDEyNzAwMDM1
-OFowgZcxCzAJBgNVBAYTAkZSMQwwCgYDVQQIDAMxMjMxDTALBgNVBAcMBFRlc3Qx
-IjAgBgNVBAoMGUludHJvc3B5IFRlc3QgQ2xpZW50IENlcnQxCzAJBgNVBAsMAjEy
-MRUwEwYDVQQDDAxBbGJhbiBEaXF1ZXQxIzAhBgkqhkiG9w0BCQEWFG5hYmxhLWMw
-ZDNAZ21haWwuY29tMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDlnvP1ltVO
-8JDNT3AA99QqtiqCi/7BeEcFDm2al46mv7looz6CmB84osrusNVFsS5ICLbrCmeo
-w5sxW7VVveGueBQyWynngl2PmmufA5Mhwq0ZY8CvwV+O7m0hEXxzwbyGa23ai16O
-zIiaNlBAb0mC2vwJbsc3MTMovE6dHUgmzQIDAQABo3sweTAJBgNVHRMEAjAAMCwG
-CWCGSAGG+EIBDQQfFh1PcGVuU1NMIEdlbmVyYXRlZCBDZXJ0aWZpY2F0ZTAdBgNV
-HQ4EFgQUYR45okpFsqTYB1wlQQblLH9cRdgwHwYDVR0jBBgwFoAUP0X2HQlaca7D
-NBzVbsjsdhzOqUQwDQYJKoZIhvcNAQEFBQADgYEAWEOxpRjvKvTurDXK/sEUw2KY
-gmbbGP3tF+fQ/6JS1VdCdtLxxJAHHTW62ugVTlmJZtpsEGlg49BXAEMblLY/K7nm
-dWN8oZL+754GaBlJ+wK6/Nz4YcuByJAnN8OeTY4Acxjhks8PrAbZgcf0FdpJaAlk
-Pd2eQ9+DkopOz3UGU7c=
+MIIDazCCAlOgAwIBAgIUUWfzyGnF+G0KRPNS7c6iMaXkSX4wDQYJKoZIhvcNAQEL
+BQAwRTELMAkGA1UEBhMCQVUxEzARBgNVBAgMClNvbWUtU3RhdGUxITAfBgNVBAoM
+GEludGVybmV0IFdpZGdpdHMgUHR5IEx0ZDAeFw0yNjA0MzAxNjU2MTFaFw0yNzA0
+MzAxNjU2MTFaMEUxCzAJBgNVBAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEw
+HwYDVQQKDBhJbnRlcm5ldCBXaWRnaXRzIFB0eSBMdGQwggEiMA0GCSqGSIb3DQEB
+AQUAA4IBDwAwggEKAoIBAQDTnAP5w077B0K9dpJsMkTAiNHI21EYXn2LCwLKb3YL
+0cHpwkzc4T4+q7ahIiSlwHMp5wT0MhhuJUYZVJ/YQH9bPdLDuN5SoreBspVwbe5m
+Ncf6DVduBdBn0vhLa+RinpEHb4EYS1rJVIsrvdLqx3yQtDaURCgm0xQfdVAoahkg
+ENj+cl2IgKvdL4KX82cCerchHj6zpxgELF8EOGuLmjLslZmGnTwK4oZFWjbKLqgp
+YgTyjlGK5S0LXcWr5a34XCCK3M4Bd4+IaPMyMAnqfiMkzM/bGYdyYqRboiF9Ri+U
+p6i0Sl/Gs3bhXxsiKodQhXT8bc26BZQ3lj/uhpelQIpRAgMBAAGjUzBRMB0GA1Ud
+DgQWBBTm2UcUD9M9eoNgTIuwwFJLwIc1+TAfBgNVHSMEGDAWgBTm2UcUD9M9eoNg
+TIuwwFJLwIc1+TAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQC4
+AHVSPPJ9kX2XZO6mNUspRwcBM9DDuFiGTi6dQF8fQggXzm9+KPepLa/3Oat2pvIG
+j5SQdd/ePyp2OLIMkryiVk9uHkpXoZNZktf+xiae3iOZpf3iIpOryGUsPim/8oDU
+Bor7kPn3Iy35hSLmx/cIPvGAdS3k+ia8c8WVXXUspYJVWLyWYgBGKHuapbCeDVNd
+HcHpn/2Adg+bvn9onArcNx3bPVyio+Jox7ui4Zu8UFHdfBxA0Q1unHWIP5ovvg8z
+0zniDzNPuom+YSZ6KQ3Q0PenePFveDwTFuxOuHg+Ph66pmXE8mrcScNUGPdahj/0
+Aa90JFIAvU4MWQCKNoWp
 -----END CERTIFICATE-----"""
         )
         test_file2.close()
@@ -217,15 +205,9 @@ Pd2eQ9+DkopOz3UGU7c=
         test_ssl_ctx.use_PrivateKey_file(test_file.name, OpenSslFileTypeEnum.PEM.value)
         test_ssl_ctx.check_private_key()
 
-    def test_check_private_key_bad(self, nassl_module: ModuleType) -> None:
-        test_ssl_ctx = nassl_module.SSL_CTX(OpenSslVersionEnum.SSLV23.value)
-        with pytest.raises(_nassl.OpenSSLError, match="no certificate assigned"):
+    def test_check_private_key_bad(self, nassl_module: ModuleType, SSL_CTX_args: list[OpenSslVersionEnum]) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX(*SSL_CTX_args)
+        with pytest.raises(OpenSSLError, match="no certificate assigned"):
             test_ssl_ctx.check_private_key()
 
     # TODO: add get_ca_list tests
-
-
-class TestModernSSL_CTX:
-    def test_tlsv1_3(self) -> None:
-        ssl_ctx = _nassl.SSL_CTX(OpenSslVersionEnum.TLSV1_3)
-        assert ssl_ctx

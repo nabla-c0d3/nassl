@@ -13,13 +13,8 @@
 #include "nassl_SSL_CTX.h"
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
-#include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
-
-#ifndef LEGACY_OPENSSL
-#include "nassl_X509_STORE_CTX.h"
-#endif
 
 
 static PyMethodDef nassl_methods[] =
@@ -52,10 +47,10 @@ static struct PyModuleDef moduledef =
 {
         PyModuleDef_HEAD_INIT,
 
-#ifdef LEGACY_OPENSSL
-        "_nassl_legacy",
+#ifdef NASSL_OSSL_1_0_2
+        "openssl_1_0_2._nassl",
 #else
-        "_nassl",
+        "openssl_1_1_1._nassl",
 #endif
 
         NULL,
@@ -75,18 +70,13 @@ static struct PyModuleDef moduledef =
 #endif
 
 
-#ifdef LEGACY_OPENSSL
-PyMODINIT_FUNC PyInit__nassl_legacy(void)
-#else
 PyMODINIT_FUNC PyInit__nassl(void)
-#endif
-
 {
     PyObject* module;
     struct module_state *state;
 
     // Initialize OpenSSL
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
     SSL_library_init();
     SSL_load_error_strings();
 #else
@@ -113,15 +103,8 @@ PyMODINIT_FUNC PyInit__nassl(void)
     module_add_SSL_CTX(module);
     module_add_SSL(module);
     module_add_BIO(module);
-    module_add_X509(module);
     module_add_SSL_SESSION(module);
     module_add_OCSP_RESPONSE(module);
-
-
-#ifndef LEGACY_OPENSSL
-    // Only available in modern nassl
-    module_add_X509_STORE_CTX(module);
-#endif
 
     state = GETSTATE(module);
     state->error = PyErr_NewException("nassl._nassl.Error", NULL, NULL);

@@ -6,14 +6,14 @@ from nassl.ephemeral_key_info import (
     _OPENSSL_EVP_PKEY_TO_NAME_MAPPING,
     DhEphemeralKeyInfo,
 )
-from nassl.ssl_client import SslClient
+from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1
 
 
 class TestOpenSslEcNidEnum:
     def test_supported_by_ssl_client(self) -> None:
         # Ensure the expected NIDs can be used to configure an SslClient
         for ec_nid in OpenSslEcNidEnum.get_supported_by_ssl_client():
-            ssl_client = SslClient()
+            ssl_client = SslClient_OpenSSL_1_1_1()
             ssl_client.set_groups([ec_nid])
 
 

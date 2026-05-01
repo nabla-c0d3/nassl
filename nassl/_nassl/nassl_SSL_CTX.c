@@ -8,15 +8,16 @@
 #include "python_utils.h"
 
 
+// The values here must match OpenSslVersionEnum
 typedef enum
 {
-	sslv23,
+	unused,
 	sslv2,
 	sslv3,
 	tlsv1,
 	tlsv1_1,
 	tlsv1_2,
-	tlsv1_3
+    tlsv1_3,
 } SslProtocolVersion;
 
 
@@ -33,7 +34,6 @@ static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
 	nassl_SSL_CTX_Object *self;
-	int sslVersion;
 	SSL_CTX *sslCtx;
 
     self = (nassl_SSL_CTX_Object *)type->tp_alloc(type, 0);
@@ -45,6 +45,19 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
     self->sslCtx = NULL;
     self->pkeyPasswordBuf = NULL;
 
+
+#ifndef NASSL_OSSL_1_0_2
+// The init function for OpenSSL 1.1.1+ doesn't take any arguments;
+// SSL/TLS version should be set using SSL_CTX_set_min_proto_version() & SSL_CTX_set_max_proto_version()
+    if (!PyArg_ParseTuple(args, ""))
+    {
+        Py_DECREF(self);
+        return NULL;
+    }
+    sslCtx = SSL_CTX_new(TLS_client_method());
+#else
+// The init function for OpenSSL 1.0.2 takes the SSL/TLS version as an argument
+	int sslVersion;
 	if (!PyArg_ParseTuple(args, "I", &sslVersion))
 	{
 		Py_DECREF(self);
@@ -53,27 +66,12 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 
     switch (sslVersion)
     {
-		case sslv23:
-			sslCtx = SSL_CTX_new(SSLv23_method());
-			break;
 		case sslv2:
-		#ifdef LEGACY_OPENSSL
 			sslCtx = SSL_CTX_new(SSLv2_method());
             break;
-        #else
-            PyErr_SetString(PyExc_NotImplementedError, "SSL 2.0 is disabled; re-compile with -DLEGACY_OPENSSL");
-            Py_DECREF(self);
-            return NULL;
-        #endif
 		case sslv3:
-		#ifdef LEGACY_OPENSSL
 			sslCtx = SSL_CTX_new(SSLv3_method());
             break;
-        #else
-            PyErr_SetString(PyExc_NotImplementedError, "SSL 3.0 is disabled; re-compile with -DLEGACY_OPENSSL");
-            Py_DECREF(self);
-            return NULL;
-        #endif
 		case tlsv1:
 			sslCtx = SSL_CTX_new(TLSv1_method());
 			break;
@@ -83,21 +81,17 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
 		case tlsv1_2:
 			sslCtx = SSL_CTX_new(TLSv1_2_method());
 			break;
-        #ifndef LEGACY_OPENSSL
 		case tlsv1_3:
-		    // Replicate the pre-1.1.0 OpenSSL API to avoid breaking _nassl's API
-		    // TODO(AD): Break modern _nassl's API to make it nicer by exposing min/max_proto_version
-		    sslCtx = SSL_CTX_new(TLS_client_method());
-		    // Force TLS 1.3
-		    SSL_CTX_set_min_proto_version(sslCtx, TLS1_3_VERSION);
-		    SSL_CTX_set_max_proto_version(sslCtx, 0);
-			break;
-		#endif
+        	PyErr_SetString(PyExc_ValueError, "TLS v1.3 is not supported by this version of OpenSSL");
+        	Py_DECREF(self);
+			return NULL;
 		default:
-        	PyErr_SetString(PyExc_ValueError, "Invalid value for ssl version");
+        	PyErr_SetString(PyExc_ValueError, "Invalid value for SSL/TLS version");
         	Py_DECREF(self);
 			return NULL;
 	}
+#endif
+
 	if (sslCtx == NULL)
 	{
         raise_OpenSSL_error();
@@ -111,6 +105,98 @@ static PyObject* nassl_SSL_CTX_new(PyTypeObject *type, PyObject *args, PyObject 
     self->sslCtx = sslCtx;
     return (PyObject *)self;
 }
+
+
+#ifndef NASSL_OSSL_1_0_2
+
+static int convertProtoVersion(int sslVersion)
+{
+    switch (sslVersion)
+    {
+		case sslv2:
+        	PyErr_SetString(PyExc_ValueError, "SSL v2 is not supported by this version of OpenSSL");
+			return -1;
+		case sslv3:
+            return SSL3_VERSION;
+		case tlsv1:
+            return TLS1_VERSION;
+		case tlsv1_1:
+            return TLS1_1_VERSION;
+		case tlsv1_2:
+            return TLS1_2_VERSION;
+		case tlsv1_3:
+            return TLS1_3_VERSION;
+		default:
+        	PyErr_SetString(PyExc_ValueError, "Invalid value for SSL/TLS version");
+			return -1;
+	}
+}
+
+
+static PyObject* nassl_SSL_CTX_set_min_proto_version(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+	int sslVersion;
+    int sslVersionForOpenssl;
+	if (!PyArg_ParseTuple(args, "I", &sslVersion))
+	{
+		Py_DECREF(self);
+	    Py_RETURN_NONE;
+    }
+
+    sslVersionForOpenssl = convertProtoVersion(sslVersion);
+    if (sslVersionForOpenssl == -1)
+    {
+        Py_DECREF(self);
+	    Py_RETURN_NONE;
+    }
+
+    if (SSL_CTX_set_min_proto_version(self->sslCtx, sslVersionForOpenssl) != 1)
+    {
+        return raise_OpenSSL_error();
+    }
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* nassl_SSL_CTX_set_max_proto_version(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+	int sslVersion;
+    int sslVersionForOpenssl;
+	if (!PyArg_ParseTuple(args, "I", &sslVersion))
+	{
+		Py_DECREF(self);
+	    Py_RETURN_NONE;
+    }
+
+    sslVersionForOpenssl = convertProtoVersion(sslVersion);
+    if (sslVersionForOpenssl == -1)
+    {
+        Py_DECREF(self);
+	    Py_RETURN_NONE;
+    }
+
+    if (SSL_CTX_set_max_proto_version(self->sslCtx, sslVersionForOpenssl) != 1)
+    {
+        return raise_OpenSSL_error();
+    }
+
+	Py_RETURN_NONE;
+}
+
+static PyObject* nassl_SSL_CTX_set_security_level(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+	int securityLvl;
+	if (!PyArg_ParseTuple(args, "I", &securityLvl))
+	{
+		Py_DECREF(self);
+	    Py_RETURN_NONE;
+    }
+
+    SSL_CTX_set_security_level(self->sslCtx, securityLvl);
+	Py_RETURN_NONE;
+}
+
+#endif
 
 
 static void nassl_SSL_CTX_dealloc(nassl_SSL_CTX_Object *self)
@@ -310,14 +396,20 @@ static PyMethodDef nassl_SSL_CTX_Object_methods[] =
     {"set_client_cert_cb_NULL", (PyCFunction)nassl_SSL_CTX_set_client_cert_cb_NULL, METH_NOARGS,
      "Configure a NULL client certificate callback in order to ignore client certificate requests from the server and continue even if no certificate was provided."
     },
+#ifndef NASSL_OSSL_1_0_2
+    {"set_min_proto_version", (PyCFunction)nassl_SSL_CTX_set_min_proto_version, METH_VARARGS,
+     "OpenSSL's SSL_CTX_set_min_proto_version()."
+    },
+    {"set_max_proto_version", (PyCFunction)nassl_SSL_CTX_set_max_proto_version, METH_VARARGS,
+     "OpenSSL's SSL_CTX_set_max_proto_version()."
+    },
+    {"set_security_level", (PyCFunction)nassl_SSL_CTX_set_security_level, METH_VARARGS,
+     "OpenSSL's SSL_CTX_set_security_level()."
+    },
+#endif
     {NULL}  // Sentinel
 };
-/*
 
-static PyMemberDef nassl_SSL_CTX_Object_members[] = {
-    {NULL}  // Sentinel
-};
-*/
 
 PyTypeObject nassl_SSL_CTX_Type =
 {
@@ -374,4 +466,3 @@ void module_add_SSL_CTX(PyObject* m)
     Py_INCREF(&nassl_SSL_CTX_Type);
     PyModule_AddObject(m, "SSL_CTX", (PyObject *)&nassl_SSL_CTX_Type);
 }
-

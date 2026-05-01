@@ -6,12 +6,13 @@ import pytest
 import socket
 import tempfile
 
-from nassl.legacy_ssl_client import LegacySslClient
+from nassl.base_ssl_client import OpenSslVerifyEnum
 from nassl.ocsp_response import OcspResponseNotTrustedError, verify_ocsp_response
-from nassl.ssl_client import SslClient, OpenSslVerifyEnum
+from nassl.openssl_1_0_2.ssl_client import SslClient_OpenSSL_1_0_2
+from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1
 
 
-_SslClientTypes = Type[SslClient] | Type[LegacySslClient]
+_SslClientTypes = Type[SslClient_OpenSSL_1_1_1] | Type[SslClient_OpenSSL_1_0_2]
 
 _CERTIFICATE_AS_PEM = """-----BEGIN CERTIFICATE-----
 MIIDCjCCAnOgAwIBAgIBAjANBgkqhkiG9w0BAQUFADCBgDELMAkGA1UEBhMCRlIx
@@ -34,7 +35,7 @@ Pd2eQ9+DkopOz3UGU7c=
 -----END CERTIFICATE-----"""
 
 
-@pytest.mark.parametrize("ssl_client_cls", [SslClient, LegacySslClient])
+@pytest.mark.parametrize("ssl_client_cls", [SslClient_OpenSSL_1_1_1, SslClient_OpenSSL_1_0_2])
 class TestCommonOcspResponseOnline:
     def test(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a website that support OCSP stapling
