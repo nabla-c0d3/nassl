@@ -368,9 +368,10 @@ class OpenSsl_4_0_0_BuildConfig(OpenSslBuildConfig):
         return "openssl-4.0.0"
 
     _OPENSSL_CONF_CMD = (
-        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-rc5 enable-md2 "
+        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-weak-ssl-ciphers enable-rc5 enable-md2 "
+        "enable-tls-deprecated-ec enable-ec_explicit_curves  "
         "--with-zlib-include={zlib_include_path} "
-        "--with-zlib-lib={zlib_lib_path} enable-tls-deprecated-ec enable-weak-ssl-ciphers {extra_args} no-async"
+        "--with-zlib-lib={zlib_lib_path} {extra_args} no-async"
     )
 
     def _run_build_steps(self, ctx: "Context") -> None:

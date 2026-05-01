@@ -183,6 +183,19 @@ static PyObject* nassl_SSL_CTX_set_max_proto_version(nassl_SSL_CTX_Object *self,
 	Py_RETURN_NONE;
 }
 
+static PyObject* nassl_SSL_CTX_set_security_level(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+	int securityLvl;
+	if (!PyArg_ParseTuple(args, "I", &securityLvl))
+	{
+		Py_DECREF(self);
+	    Py_RETURN_NONE;
+    }
+
+    SSL_CTX_set_security_level(self->sslCtx, securityLvl);
+	Py_RETURN_NONE;
+}
+
 #endif
 
 
@@ -389,6 +402,9 @@ static PyMethodDef nassl_SSL_CTX_Object_methods[] =
     },
     {"set_max_proto_version", (PyCFunction)nassl_SSL_CTX_set_max_proto_version, METH_VARARGS,
      "OpenSSL's SSL_CTX_set_max_proto_version()."
+    },
+    {"set_security_level", (PyCFunction)nassl_SSL_CTX_set_security_level, METH_VARARGS,
+     "OpenSSL's SSL_CTX_set_security_level()."
     },
 #endif
     {NULL}  // Sentinel

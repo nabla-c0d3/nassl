@@ -43,6 +43,7 @@ class SslClient_OpenSSL_1_1_1(BaseSslClient):
         self._ssl_ctx = self._NASSL_MODULE.SSL_CTX()
         self._ssl_ctx.set_min_proto_version(self._ssl_version.value)
         self._ssl_ctx.set_max_proto_version(self._ssl_version.value)
+        self._ssl_ctx.set_security_level(0)  # Needed by SSLyze to test bad ciphers, etc.
 
     def write_early_data(self, data: bytes) -> int:
         """Returns the number of (encrypted) bytes sent."""

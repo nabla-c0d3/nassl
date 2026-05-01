@@ -195,7 +195,6 @@ class _S_Server(ABC):
 
 
 class S_Server_OpenSSL_1_0_2(_S_Server):
-
     def __init__(
         self,
         client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
@@ -225,7 +224,6 @@ class S_Server_OpenSSL_1_0_2(_S_Server):
 
 
 class S_Server_OpenSSL_1_1_1(_S_Server):
-
     @classmethod
     def get_openssl_path(cls) -> Path:
         assert CURRENT_PLATFORM
