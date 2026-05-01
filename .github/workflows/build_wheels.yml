@@ -50,7 +50,7 @@ jobs:
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           # The C libraries (OpenSSL and Zlib) only need to be built once per OS
           # as they are not tied to a specific Python version
-          CIBW_BEFORE_ALL: "yum install -y perl-IPC-Cmd perl-Time-Piece && python -m pip install setuptools invoke && invoke build.deps"
+          CIBW_BEFORE_ALL_LINUX: "bash /io/.github/workflows/install_build_deps.sh"
           CIBW_BEFORE_ALL_MACOS: "python -m pip install setuptools invoke && invoke build.deps"
           CIBW_BEFORE_ALL_WINDOWS: '"C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat" && python -m pip install invoke && invoke build.deps'
           # However the nassl C extension is by design tied to a specific Python version
