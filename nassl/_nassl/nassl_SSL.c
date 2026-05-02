@@ -1120,12 +1120,35 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
     }
 }
 
+
 #ifdef NASSL_OSSL_4_0_0
-    static PyObject* nassl_SSL_get0_group_name(nassl_SSL_Object *self, PyObject *args)
+
+// SSL_set1_groups cannot be used to set groups such as X25519MLKEM768
+// https://github.com/openssl/openssl/issues/27834
+// Hence we also expose SSL_set1_groups_list()
+static PyObject* nassl_SSL_set1_groups_list(nassl_SSL_Object *self, PyObject *args)
+    {
+        char *groupsListAsStr;
+        if (!PyArg_ParseTuple(args, "s", &groupsListAsStr))
+        {
+            return NULL;
+        }
+
+        if (!SSL_set1_groups_list(self->ssl, groupsListAsStr))
+        {
+            return raise_OpenSSL_error();
+        }
+
+        Py_RETURN_NONE;
+    }
+
+
+static PyObject* nassl_SSL_get0_group_name(nassl_SSL_Object *self, PyObject *args)
     {
         const char *groupNameString = SSL_get0_group_name(self->ssl);
         return PyUnicode_FromString(groupNameString);
     }
+
 #endif
 
 
@@ -1246,6 +1269,10 @@ static PyMethodDef nassl_SSL_Object_methods[] =
      "Returns Diffie-Hellman / Elliptic curve Diffie-Hellman parameters as a dictionary."
     },
 #ifdef NASSL_OSSL_4_0_0
+
+    {"set1_groups_list", (PyCFunction)nassl_SSL_set1_groups_list, METH_VARARGS,
+     "OpenSSL's SSL_set1_groups_list(). Returns a string with the negotiated group name."
+    },
     {"get0_group_name", (PyCFunction)nassl_SSL_get0_group_name, METH_NOARGS,
      "OpenSSL's SSL_get0_group_name(). Returns a string with the negotiated group name."
     },

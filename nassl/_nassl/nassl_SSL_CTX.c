@@ -373,6 +373,49 @@ static PyObject* nassl_SSL_CTX_set_client_cert_cb_NULL(nassl_SSL_CTX_Object *sel
 }
 
 
+#ifdef NASSL_OSSL_4_0_0
+static PyObject* nassl_SSL_CTX_get0_implemented_groups(nassl_SSL_CTX_Object *self, PyObject *args)
+{
+    STACK_OF(OPENSSL_CSTRING) *groups = sk_OPENSSL_CSTRING_new_null();
+    if (groups == NULL)
+    {
+        return PyErr_NoMemory();
+    }
+
+    if (!SSL_CTX_get0_implemented_groups(self->sslCtx, 0, groups))
+    {
+        sk_OPENSSL_CSTRING_free(groups);
+        return raise_OpenSSL_error();
+    }
+
+    int num = sk_OPENSSL_CSTRING_num(groups);
+    PyObject *result = PyList_New(num);
+    if (result == NULL)
+    {
+        sk_OPENSSL_CSTRING_free(groups);
+        return NULL;
+    }
+
+    for (int i = 0; i < num; i++)
+    {
+        const char *name = sk_OPENSSL_CSTRING_value(groups, i);
+        PyObject *str = PyUnicode_FromString(name != NULL ? name : "");
+        if (str == NULL)
+        {
+            sk_OPENSSL_CSTRING_free(groups);
+            Py_DECREF(result);
+            return NULL;
+        }
+        PyList_SET_ITEM(result, i, str);
+    }
+
+    sk_OPENSSL_CSTRING_free(groups);
+    return result;
+}
+
+#endif
+ 
+
 static PyMethodDef nassl_SSL_CTX_Object_methods[] =
 {
     {"set_verify", (PyCFunction)nassl_SSL_CTX_set_verify, METH_VARARGS,
@@ -405,6 +448,11 @@ static PyMethodDef nassl_SSL_CTX_Object_methods[] =
     },
     {"set_security_level", (PyCFunction)nassl_SSL_CTX_set_security_level, METH_VARARGS,
      "OpenSSL's SSL_CTX_set_security_level()."
+    },
+#endif
+#ifdef NASSL_OSSL_4_0_0
+    {"get0_implemented_groups", (PyCFunction)nassl_SSL_CTX_get0_implemented_groups, METH_NOARGS,
+     "OpenSSL's SSL_CTX_get0_implemented_groups()."
     },
 #endif
     {NULL}  // Sentinel

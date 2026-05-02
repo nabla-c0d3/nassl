@@ -31,6 +31,7 @@ from tests.openssl_server import (
     S_Server_OpenSSL_1_1_1,
     ClientAuthConfigEnum,
     S_Server_OpenSSL_1_0_2,
+    S_Server_OpenSSL_4_0_0,
 )
 
 _SslClientTypes = Any
@@ -643,3 +644,62 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
                 )
 
             ssl_client_early_data.shutdown()
+
+
+class Test_SslClient_OpenSSL_4_0_0:
+    def test_group_methods(self) -> None:
+        # Given a server that supports some TLS 1.3 groups
+        with S_Server_OpenSSL_4_0_0(
+            cipher="ECDHE-RSA-AES256-SHA",
+            groups="X25519MLKEM768:SecP256r1MLKEM768",
+        ) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that that supports some groups
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+
+            # And the list of groups the client supports is what's expected
+            expected_implemented_groups = {
+                "secp256r1",
+                "secp384r1",
+                "secp521r1",
+                "x25519",
+                "x448",
+                "brainpoolP256r1tls13",
+                "brainpoolP384r1tls13",
+                "brainpoolP512r1tls13",
+                "curveSM2",
+                "ffdhe2048",
+                "ffdhe3072",
+                "ffdhe4096",
+                "ffdhe6144",
+                "ffdhe8192",
+                "MLKEM512",
+                "MLKEM768",
+                "MLKEM1024",
+                "SecP256r1MLKEM768",
+                "X25519MLKEM768",
+                "SecP384r1MLKEM1024",
+                "curveSM2MLKEM768",
+            }
+            implemented_groups = ssl_client.get_implemented_groups()
+            assert set(implemented_groups) == expected_implemented_groups
+
+            # And the client is configured to use a specific group
+            configured_group = "X25519MLKEM768"
+            ssl_client.set_groups_list(configured_group)
+
+            # When the client connects to the server
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # The group specified in the client is the one that was used
+            assert ssl_client.get_group_name() == configured_group

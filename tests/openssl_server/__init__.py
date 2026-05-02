@@ -14,6 +14,7 @@ from build_config import (
     OpenSsl_1_1_1_BuildConfig,
     OpenSsl_1_0_2_BuildConfig,
     CURRENT_PLATFORM,
+    OpenSsl_4_0_0_BuildConfig,
     SupportedPlatformEnum,
 )
 
@@ -260,3 +261,10 @@ class S_Server_OpenSSL_1_1_1(_S_Server):
             extra_args += ["-early_data", f"-max_early_data {max_early_data}"]
 
         super().__init__(client_auth_config, extra_args, cipher)
+
+
+class S_Server_OpenSSL_4_0_0(S_Server_OpenSSL_1_1_1):
+    @classmethod
+    def get_openssl_path(cls) -> Path:
+        assert CURRENT_PLATFORM
+        return OpenSsl_4_0_0_BuildConfig(CURRENT_PLATFORM).exe_path
