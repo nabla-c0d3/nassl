@@ -2,7 +2,7 @@ import socket
 from abc import ABC
 from pathlib import Path
 
-from nassl._low_level_errors import WantReadError, OpenSSLError, WantX509LookupError
+from nassl.errors import WantReadError, OpenSSLError, WantX509LookupError
 
 from enum import IntEnum
 from typing import List, Any

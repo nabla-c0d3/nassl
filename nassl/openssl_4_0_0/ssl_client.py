@@ -21,4 +21,5 @@ class SslClient_OpenSSL_4_0_0(SslClient_OpenSSL_1_1_1):
         """Set the groups to be used in the handshake, using a colon-separated list of group names.
 
         The format is described here: https://docs.openssl.org/4.0/man3/SSL_CTX_set1_curves/"""
+        # TODO: Check TLS version VS groups compatibility
         self._ssl.set1_groups_list(groups)

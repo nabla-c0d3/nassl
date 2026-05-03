@@ -149,18 +149,18 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue)
 
 int module_add_errors(PyObject* m)
 {
-    // Import all exceptions from the Python module nassl._low_level_errors
-    PyObject* errors_module = PyImport_ImportModule("nassl._low_level_errors");
+    // Import all exceptions from the Python module nassl.errors
+    PyObject* errors_module = PyImport_ImportModule("nassl.errors");
     if (!errors_module)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Could not import nassl._low_level_errors");
+        PyErr_SetString(PyExc_RuntimeError, "Could not import nassl.errors");
         return 0;
     }
 
     nassl_OpenSSLError_Exception = PyObject_GetAttrString(errors_module, "OpenSSLError");
     if (!nassl_OpenSSLError_Exception)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Could not import OpenSSLError from nassl._low_level_errors");
+        PyErr_SetString(PyExc_RuntimeError, "Could not import OpenSSLError from nassl.errors");
         Py_DECREF(errors_module);
         return 0;
     }
@@ -168,7 +168,7 @@ int module_add_errors(PyObject* m)
     nassl_SslError_Exception = PyObject_GetAttrString(errors_module, "SslError");
     if (!nassl_SslError_Exception)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Could not import SslError from nassl._low_level_errors");
+        PyErr_SetString(PyExc_RuntimeError, "Could not import SslError from nassl.errors");
         Py_DECREF(errors_module);
         return 0;
     }
@@ -176,7 +176,7 @@ int module_add_errors(PyObject* m)
     nassl_WantX509LookupError_Exception = PyObject_GetAttrString(errors_module, "WantX509LookupError");
     if (!nassl_WantX509LookupError_Exception)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Could not import WantX509LookupError from nassl._low_level_errors");
+        PyErr_SetString(PyExc_RuntimeError, "Could not import WantX509LookupError from nassl.errors");
         Py_DECREF(errors_module);
         return 0;
     }
@@ -184,7 +184,7 @@ int module_add_errors(PyObject* m)
     nassl_WantReadError_Exception = PyObject_GetAttrString(errors_module, "WantReadError");
     if (!nassl_WantReadError_Exception)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Could not import WantReadError from nassl._low_level_errors");
+        PyErr_SetString(PyExc_RuntimeError, "Could not import WantReadError from nassl.errors");
         Py_DECREF(errors_module);
         return 0;
     }
@@ -192,7 +192,7 @@ int module_add_errors(PyObject* m)
     nassl_WantWriteError_Exception = PyObject_GetAttrString(errors_module, "WantWriteError");
     if (!nassl_WantWriteError_Exception)
     {
-        PyErr_SetString(PyExc_RuntimeError, "Could not import WantWriteError from nassl._low_level_errors");
+        PyErr_SetString(PyExc_RuntimeError, "Could not import WantWriteError from nassl.errors");
         Py_DECREF(errors_module);
         return 0;
     }

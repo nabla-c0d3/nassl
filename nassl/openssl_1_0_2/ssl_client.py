@@ -13,7 +13,7 @@ from typing import List
 from typing import Optional
 
 import nassl.openssl_1_0_2._nassl
-from nassl._low_level_errors import WantReadError, WantX509LookupError
+from nassl.errors import WantReadError, WantX509LookupError
 
 
 class SslClient_OpenSSL_1_0_2(BaseSslClient):

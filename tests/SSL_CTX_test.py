@@ -3,7 +3,7 @@ from types import ModuleType
 
 import pytest
 
-from nassl._low_level_errors import OpenSSLError
+from nassl.errors import OpenSSLError
 from nassl.base_ssl_client import OpenSslVersionEnum, OpenSslVerifyEnum, OpenSslFileTypeEnum
 
 

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 # TODO OpenSSL3 : Need to differentiate the two OpenSSL versions ? Or only keep OCSP response in one ?
-from nassl._low_level_errors import OpenSSLError
+from nassl.errors import OpenSSLError
 from nassl.openssl_1_1_1 import _nassl
 
 

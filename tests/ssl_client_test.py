@@ -6,7 +6,7 @@ import pytest
 from nassl.openssl_1_1_1 import _nassl
 
 
-from nassl._low_level_errors import OpenSSLError
+from nassl.errors import OpenSSLError
 from nassl.base_ssl_client import (
     ClientCertificateRequested,
     OpenSslVersionEnum,
