@@ -29,14 +29,14 @@ class OpenSslVerifyEnum(IntEnum):
     CLIENT_ONCE = 4
 
 
-class OpenSslVersionEnum(IntEnum):
+class TlsVersionEnum(IntEnum):
     # The values here must match SslProtocolVersion in nassl_SSL_CTX.c
-    SSLV2 = 1
-    SSLV3 = 2
-    TLSV1 = 3
-    TLSV1_1 = 4
-    TLSV1_2 = 5
-    TLSV1_3 = 6
+    SSL_2_0 = 1
+    SSL_3_0 = 2
+    TLS_1_0 = 3
+    TLS_1_1 = 4
+    TLS_1_2 = 5
+    TLS_1_3 = 6
 
 
 class OpenSslFileTypeEnum(IntEnum):
@@ -81,7 +81,7 @@ class BaseSslClient(ABC):
     def __init__(
         self,
         underlying_socket: Optional[socket.socket] = None,
-        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.TLSV1_2,
+        tls_version: TlsVersionEnum = TlsVersionEnum.TLS_1_2,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
         ssl_verify_locations: Optional[Path] = None,
         client_certificate_chain: Optional[Path] = None,
@@ -90,7 +90,7 @@ class BaseSslClient(ABC):
         client_key_password: str = "",
         ignore_client_authentication_requests: bool = False,
     ) -> None:
-        self._init_base_objects(ssl_version, underlying_socket)
+        self._init_base_objects(tls_version, underlying_socket)
 
         # Warning: Anything that modifies the SSL_CTX must be done before creating the SSL object
         # Otherwise changes to the SSL_CTX do not get propagated to future SSL objects
@@ -112,7 +112,7 @@ class BaseSslClient(ABC):
 
     def _init_base_objects(
         self,
-        ssl_version: OpenSslVersionEnum,
+        ssl_version: TlsVersionEnum,
         underlying_socket: Optional[socket.socket],
     ) -> None:
         """Setup the socket and SSL_CTX objects."""

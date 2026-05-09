@@ -4,7 +4,7 @@ from pathlib import Path
 
 from nassl.base_ssl_client import (
     ClientCertificateRequested,
-    OpenSslVersionEnum,
+    TlsVersionEnum,
     OpenSslVerifyEnum,
     OpenSslFileTypeEnum,
     BaseSslClient,
@@ -22,7 +22,7 @@ class SslClient_OpenSSL_1_0_2(BaseSslClient):
     def __init__(
         self,
         underlying_socket: Optional[socket.socket] = None,
-        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.TLSV1_2,
+        tls_version: TlsVersionEnum = TlsVersionEnum.TLS_1_2,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
         ssl_verify_locations: Optional[Path] = None,
         client_certificate_chain: Optional[Path] = None,
@@ -33,7 +33,7 @@ class SslClient_OpenSSL_1_0_2(BaseSslClient):
     ) -> None:
         super().__init__(
             underlying_socket,
-            ssl_version,
+            tls_version,
             ssl_verify,
             ssl_verify_locations,
             client_certificate_chain,
@@ -46,7 +46,7 @@ class SslClient_OpenSSL_1_0_2(BaseSslClient):
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        if ssl_version != OpenSslVersionEnum.SSLV2:  # This makes SSLv2 fail
+        if tls_version != TlsVersionEnum.SSL_2_0:  # This makes SSLv2 fail
             self._ssl.set_cipher_list("HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA")
         else:
             # Handshake workaround for SSL2 + IIS 7

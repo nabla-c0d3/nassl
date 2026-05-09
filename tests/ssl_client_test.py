@@ -9,7 +9,7 @@ from nassl.openssl_1_1_1 import _nassl
 from nassl.errors import OpenSSLError
 from nassl.base_ssl_client import (
     ClientCertificateRequested,
-    OpenSslVersionEnum,
+    TlsVersionEnum,
     OpenSslVerifyEnum,
 )
 from nassl.ephemeral_key_info import (
@@ -49,7 +49,7 @@ class TestSslClientClientAuthentication:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -68,7 +68,7 @@ class TestSslClientClientAuthentication:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
                 ignore_client_authentication_requests=True,
@@ -88,7 +88,7 @@ class TestSslClientClientAuthentication:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
                 client_certificate_chain=server.get_client_certificate_path(),
@@ -111,7 +111,7 @@ class TestSslClientOnline:
         sock.connect(("www.google.com", 443))
 
         ssl_client = ssl_client_cls(
-            ssl_version=OpenSslVersionEnum.TLSV1_2,
+            tls_version=TlsVersionEnum.TLS_1_2,
             underlying_socket=sock,
             ssl_verify=OpenSslVerifyEnum.NONE,
         )
@@ -138,7 +138,7 @@ class TestSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -164,7 +164,7 @@ class TestSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -190,7 +190,7 @@ class TestSslClientOnline:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -214,7 +214,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -241,7 +241,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -271,10 +271,11 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
             # And a client that only supports a specific curve: SECP192K1
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
+
             configured_curve = OpenSslEcNidEnum.SECP192K1
             ssl_client.set_groups([configured_curve])
 
@@ -301,7 +302,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
             # And a client that only supports a specific curve: X448
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -331,7 +332,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
             # When a client connects to it
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -358,7 +359,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
             # When a client connects to it
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -385,7 +386,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
             # And a client
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -410,7 +411,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
 
             # And a client
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -431,7 +432,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -450,7 +451,7 @@ class TestOnline_SslClient_OpenSSL_1_0_2:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient_OpenSSL_1_0_2(
-                ssl_version=OpenSslVersionEnum.SSLV2,
+                tls_version=TlsVersionEnum.SSL_2_0,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
                 ignore_client_authentication_requests=True,
@@ -470,7 +471,7 @@ class TestOnline_SslClient_OpenSSL_1_0_2:
             sock.connect((server.hostname, server.port))
 
             ssl_client = SslClient_OpenSSL_1_0_2(
-                ssl_version=OpenSslVersionEnum.TLSV1_2,
+                tls_version=TlsVersionEnum.TLS_1_2,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -490,7 +491,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
             sock.connect((server.hostname, server.port))
 
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -509,7 +510,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
             # And a client that only supports a specific TLS 1.3 cipher suite
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -533,7 +534,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
         sock.connect((server_host, server_port))
 
         ssl_client = ssl_client_cls(
-            ssl_version=OpenSslVersionEnum.TLSV1_3,
+            tls_version=TlsVersionEnum.TLS_1_3,
             underlying_socket=sock,
             ssl_verify=OpenSslVerifyEnum.NONE,
         )
@@ -565,7 +566,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
             sock_early_data.connect((server.hostname, server.port))
 
             ssl_client_early_data = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock_early_data,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -596,7 +597,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
             # That does NOT have a previous session with the server
             ssl_client = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -627,7 +628,7 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
             sock_early_data.connect((server.hostname, server.port))
 
             ssl_client_early_data = ssl_client_cls(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock_early_data,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
@@ -659,7 +660,7 @@ class Test_SslClient_OpenSSL_4_0_0:
 
             # And a client that that supports some groups
             ssl_client = SslClient_OpenSSL_4_0_0(
-                ssl_version=OpenSslVersionEnum.TLSV1_3,
+                tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
