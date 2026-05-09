@@ -89,7 +89,6 @@ class BaseSslClient(ABC):
         client_key_type: OpenSslFileTypeEnum = OpenSslFileTypeEnum.PEM,
         client_key_password: str = "",
         ignore_client_authentication_requests: bool = False,
-        server_name_indication: Optional[str] = None,
     ) -> None:
         self._init_base_objects(ssl_version, underlying_socket)
 
@@ -106,8 +105,6 @@ class BaseSslClient(ABC):
         # Now create the SSL object
         self._ssl: NasslModuleProtocol.SSL  # created in _init_ssl_objects()
         self._init_ssl_objects()
-        if server_name_indication is not None:
-            self._ssl.set_tlsext_host_name(server_name_indication)
 
     def _init_ssl_ctx(self) -> None:
         """Initialize the SSL_CTX object. It is different depending on the version of OpenSSL."""
