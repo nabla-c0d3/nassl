@@ -140,14 +140,14 @@ static PyObject* nassl_SSL_CTX_set_min_proto_version(nassl_SSL_CTX_Object *self,
 	if (!PyArg_ParseTuple(args, "I", &sslVersion))
 	{
 		Py_DECREF(self);
-	    Py_RETURN_NONE;
+		return NULL;
     }
 
     sslVersionForOpenssl = convertProtoVersion(sslVersion);
     if (sslVersionForOpenssl == -1)
     {
         Py_DECREF(self);
-	    Py_RETURN_NONE;
+		return NULL;
     }
 
     if (SSL_CTX_set_min_proto_version(self->sslCtx, sslVersionForOpenssl) != 1)
@@ -165,14 +165,14 @@ static PyObject* nassl_SSL_CTX_set_max_proto_version(nassl_SSL_CTX_Object *self,
 	if (!PyArg_ParseTuple(args, "I", &sslVersion))
 	{
 		Py_DECREF(self);
-	    Py_RETURN_NONE;
+		return NULL;
     }
 
     sslVersionForOpenssl = convertProtoVersion(sslVersion);
     if (sslVersionForOpenssl == -1)
     {
         Py_DECREF(self);
-	    Py_RETURN_NONE;
+		return NULL;
     }
 
     if (SSL_CTX_set_max_proto_version(self->sslCtx, sslVersionForOpenssl) != 1)
@@ -189,7 +189,7 @@ static PyObject* nassl_SSL_CTX_set_security_level(nassl_SSL_CTX_Object *self, Py
 	if (!PyArg_ParseTuple(args, "I", &securityLvl))
 	{
 		Py_DECREF(self);
-	    Py_RETURN_NONE;
+		return NULL;
     }
 
     SSL_CTX_set_security_level(self->sslCtx, securityLvl);
