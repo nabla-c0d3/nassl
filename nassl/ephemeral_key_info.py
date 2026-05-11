@@ -164,7 +164,7 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        # Same int → IntEnum coercion as in the parent — `curve` arrives
+        # Same int → IntEnum coercion as in the parent, `curve` arrives
         # as a raw NID from OpenSSL. Unknown NIDs stay as ints so the
         # "unknown-curve-with-openssl-id-{n}" fallback below still works.
         if not isinstance(self.curve, OpenSslEcNidEnum):
