@@ -422,11 +422,24 @@ class OpenSsl_4_0_0_BuildConfig(OpenSslBuildConfig):
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
-        return "https://www.zlib.net/fossils/zlib-1.3.tar.gz"
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            # Zlib 1.3.2 does not seem to build on Windows
+            return "https://www.zlib.net/fossils/zlib-1.3.tar.gz"
+        else:
+            return "https://www.zlib.net/fossils/zlib-1.3.2.tar.gz"
 
     @property
     def src_path(self) -> Path:
-        return _DEPS_PATH / "zlib-1.3"
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return _DEPS_PATH / "zlib-1.3"
+        else:
+            return _DEPS_PATH / "zlib-1.3.2"
 
     def build(self, ctx: "Context") -> None:
         if self.platform in [
