@@ -12,6 +12,7 @@ from typing import Protocol
 
 from typing import Optional
 from nassl.ephemeral_key_info import (
+    OpenSslEcNidEnum,
     OpenSslEvpPkeyEnum,
     EphemeralKeyInfo,
     DhEphemeralKeyInfo,
@@ -328,12 +329,24 @@ class BaseSslClient(ABC):
         except TypeError:
             return None
 
-        if dh_info["type"] == OpenSslEvpPkeyEnum.DH:
-            return DhEphemeralKeyInfo(**dh_info)
-        elif dh_info["type"] == OpenSslEvpPkeyEnum.EC:
-            return NistEcDhKeyExchangeInfo(**dh_info)
-        elif dh_info["type"] in [OpenSslEvpPkeyEnum.X25519, OpenSslEvpPkeyEnum.X448]:
-            return EcDhEphemeralKeyInfo(**dh_info)
+        # Parse the type as an IntEnum
+        dh_type = dh_info.pop("type")
+        try:
+            parsed_dh_type = OpenSslEvpPkeyEnum(dh_type)
+        except ValueError:
+            # Unexpected value
+            return None
+
+        if parsed_dh_type == OpenSslEvpPkeyEnum.DH:
+            return DhEphemeralKeyInfo(**dh_info, type=parsed_dh_type)
+        elif parsed_dh_type == OpenSslEvpPkeyEnum.EC:
+            return NistEcDhKeyExchangeInfo(**dh_info, type=parsed_dh_type)
+        elif parsed_dh_type in [OpenSslEvpPkeyEnum.X25519, OpenSslEvpPkeyEnum.X448]:
+            # Parse the curve as an IntEnum
+            curve = dh_info.pop("curve")
+            parsed_curve = OpenSslEcNidEnum(curve)
+
+            return EcDhEphemeralKeyInfo(**dh_info, type=parsed_dh_type, curve=parsed_curve)
         else:
             return None
 
