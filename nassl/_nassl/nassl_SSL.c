@@ -1340,6 +1340,4 @@ void module_add_SSL(PyObject* m)
 
     Py_INCREF(&nassl_SSL_Type);
     PyModule_AddObject(m, "SSL", (PyObject *)&nassl_SSL_Type);
-
-    // TODO: Add constants
 }

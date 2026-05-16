@@ -89,7 +89,6 @@ PyObject* raise_OpenSSL_error()
 
 PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue)
 {
-    // TODO: Better error handling
     int sslError = SSL_get_error(ssl, returnValue);
     switch(sslError)
     {
@@ -140,7 +139,7 @@ PyObject* raise_OpenSSL_ssl_error(SSL *ssl, int returnValue)
             return NULL;
 
         default:
-            PyErr_SetString(nassl_SslError_Exception, "TODO: Better error handling");
+            PyErr_SetString(nassl_SslError_Exception, "Unknown error ?");
             return NULL;
     }
     Py_RETURN_NONE;
