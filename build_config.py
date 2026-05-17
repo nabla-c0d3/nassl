@@ -426,7 +426,7 @@ class ZlibBuildConfig(BuildConfig):
             SupportedPlatformEnum.WINDOWS_32,
             SupportedPlatformEnum.WINDOWS_64,
         ]:
-            # Zlib 1.3.2 does not seem to build on Windows
+            # Zlib 1.3.2 and 1.3.1 do not seem to build on Windows
             return "https://www.zlib.net/fossils/zlib-1.3.tar.gz"
         else:
             return "https://www.zlib.net/fossils/zlib-1.3.2.tar.gz"
