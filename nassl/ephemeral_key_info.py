@@ -1,8 +1,10 @@
 from abc import ABC
 
-from enum import IntEnum
+from enum import Enum, IntEnum
 from dataclasses import dataclass, field
-from typing import Dict, Set
+from typing import Dict
+
+from nassl.tls_version_enum import TlsVersionEnum
 
 
 class OpenSslEvpPkeyEnum(IntEnum):
@@ -17,70 +19,6 @@ class OpenSslEvpPkeyEnum(IntEnum):
     RSA_PSS = 912
 
 
-class OpenSslEcNidEnum(IntEnum):
-    """Maps to NID_XXX values valid for OpenSslEvpPkeyEnum.EC (obj_mac.h).
-
-    Valid values for TLS taken from https://tools.ietf.org/html/rfc4492 and https://tools.ietf.org/html/rfc8422
-    """
-
-    # RFC4492 (now deprecated)
-    SECT163K1 = 721
-    SECT163R1 = 722
-    SECT163R2 = 723
-    SECT193R1 = 724
-    SECT193R2 = 725
-    SECT233K1 = 726
-    SECT233R1 = 727
-    SECT239K1 = 728
-    SECT283K1 = 729
-    SECT283R1 = 730
-    SECT409K1 = 731
-    SECT409R1 = 732
-    SECT571K1 = 733
-    SECT571R1 = 734
-    SECP160K1 = 708
-    SECP160R1 = 709
-    SECP160R2 = 710
-    SECP192K1 = 711
-    SECP224K1 = 712
-    SECP224R1 = 713
-    SECP256K1 = 714
-
-    # RFC8422 (current)
-    SECP192R1 = 409
-    SECP256R1 = 415
-    SECP384R1 = 715
-    SECP521R1 = 716
-    X25519 = 1034
-    X448 = 1035
-
-    # RFC 7027: Brainpool curves for TLS v1.2
-    # Only specific Brainpool curves are supported (ie. have a IANA name/ID) in TLS;
-    #  see also : https://github.com/openssl/openssl/issues/9124
-    # The brainpool curves have been deprecated in TLS 1.3
-    brainpoolP256r1 = 927
-    brainpoolP384r1 = 931
-    brainpoolP512r1 = 933
-
-    # These other brainpool NIDs cannot be used with TLS ie. SSL_get1_groups() (but can be used to sign something,
-    #  for instance), so we don't make them available in nassl
-    # brainpoolP160r1 = 921
-    # brainpoolP160t1 = 922
-    # brainpoolP192r1 = 923
-    # brainpoolP192t1 = 924
-    # brainpoolP224r1 = 925
-    # brainpoolP224t1 = 926
-    # brainpoolP256t1 = 928
-    # brainpoolP320r1 = 929
-    # brainpoolP320t1 = 930
-    # brainpoolP384t1 = 932
-    # brainpoolP512t1 = 934
-
-    @classmethod
-    def get_supported_by_ssl_client(cls) -> Set["OpenSslEcNidEnum"]:
-        return {nid for nid in cls}
-
-
 # Mapping between OpenSSL EVP_PKEY_XXX value and display name
 _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
     OpenSslEvpPkeyEnum.DH: "DH",
@@ -93,38 +31,180 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
 }
 
 
-# Mapping between the OpenSSL NID_XXX value and the SECG name (https://www.rfc-editor.org/rfc/rfc8422.html#appendix-A)
-_OPENSSL_NID_TO_SECG_ANSI_X9_62: Dict[OpenSslEcNidEnum, str] = {
-    OpenSslEcNidEnum.SECT163K1: "sect163k1",
-    OpenSslEcNidEnum.SECT163R1: "sect163r1",
-    OpenSslEcNidEnum.SECT163R2: "sect163r2",
-    OpenSslEcNidEnum.SECT193R1: "sect193r1",
-    OpenSslEcNidEnum.SECT193R2: "sect193r2",
-    OpenSslEcNidEnum.SECT233K1: "sect233k1",
-    OpenSslEcNidEnum.SECT233R1: "sect233r1",
-    OpenSslEcNidEnum.SECT239K1: "sect239k1",
-    OpenSslEcNidEnum.SECT283K1: "sect283k1",
-    OpenSslEcNidEnum.SECT283R1: "sect283r1",
-    OpenSslEcNidEnum.SECT409K1: "sect409k1",
-    OpenSslEcNidEnum.SECT409R1: "sect409r1",
-    OpenSslEcNidEnum.SECT571K1: "sect571k1",
-    OpenSslEcNidEnum.SECT571R1: "sect571r1",
-    OpenSslEcNidEnum.SECP160K1: "secp160k1",
-    OpenSslEcNidEnum.SECP160R1: "secp160r1",
-    OpenSslEcNidEnum.SECP160R2: "secp160r2",
-    OpenSslEcNidEnum.SECP192K1: "secp192k1",
-    OpenSslEcNidEnum.SECP192R1: "secp192r1",
-    OpenSslEcNidEnum.SECP224K1: "secp224k1",
-    OpenSslEcNidEnum.SECP224R1: "secp224r1",
-    OpenSslEcNidEnum.SECP256K1: "secp256k1",
-    OpenSslEcNidEnum.SECP256R1: "secp256r1",
-    OpenSslEcNidEnum.SECP384R1: "secp384r1",
-    OpenSslEcNidEnum.SECP521R1: "secp521r1",
-    OpenSslEcNidEnum.X25519: "X25519",
-    OpenSslEcNidEnum.X448: "X448",
-    OpenSslEcNidEnum.brainpoolP256r1: "brainpoolP256r1",
-    OpenSslEcNidEnum.brainpoolP384r1: "brainpoolP384r1",
-    OpenSslEcNidEnum.brainpoolP512r1: "brainpoolP512r1",
+class OpenSslGroupNameEnum(str, Enum):
+    """TLS group names, which can be used with SslClient_OpenSSL_4_0_0.set_groups_list()."""
+
+    # RFC8422
+    secp192r1 = "secp192r1"
+    secp256r1 = "secp256r1"
+    secp384r1 = "secp384r1"
+    secp521r1 = "secp521r1"
+    x25519 = "x25519"
+    x448 = "x448"
+
+    # RFC4492
+    sect163k1 = "sect163k1"
+    sect163r1 = "sect163r1"
+    sect163r2 = "sect163r2"
+    sect193r1 = "sect193r1"
+    sect193r2 = "sect193r2"
+    sect233k1 = "sect233k1"
+    sect233r1 = "sect233r1"
+    sect239k1 = "sect239k1"
+    sect283k1 = "sect283k1"
+    sect283r1 = "sect283r1"
+    sect409k1 = "sect409k1"
+    sect409r1 = "sect409r1"
+    sect571k1 = "sect571k1"
+    sect571r1 = "sect571r1"
+    secp160k1 = "secp160k1"
+    secp160r1 = "secp160r1"
+    secp160r2 = "secp160r2"
+    secp192k1 = "secp192k1"
+    secp224k1 = "secp224k1"
+    secp224r1 = "secp224r1"
+    secp256k1 = "secp256k1"
+
+    # RFC 7027: Brainpool curves for TLS v1.2
+    # Only specific Brainpool curves are supported (ie. have a IANA name/ID) in TLS;
+    #  see also : https://github.com/openssl/openssl/issues/9124
+    brainpoolP256r1 = "brainpoolP256r1"
+    brainpoolP384r1 = "brainpoolP384r1"
+    brainpoolP512r1 = "brainpoolP512r1"
+
+    # RFC 8734: TLS 1.3 version of the Brainpool curves
+    brainpoolP256r1tls13 = "brainpoolP256r1tls13"
+    brainpoolP384r1tls13 = "brainpoolP384r1tls13"
+    brainpoolP512r1tls13 = "brainpoolP512r1tls13"
+
+    # RFC 7919: TLS 1.0 to TLS 1.3
+    ffdhe2048 = "ffdhe2048"
+    ffdhe3072 = "ffdhe3072"
+    ffdhe4096 = "ffdhe4096"
+    ffdhe6144 = "ffdhe6144"
+    ffdhe8192 = "ffdhe8192"
+
+    # Post-quantum ML-KEM groups (pure and hybrid with a classical curve), and the SM2 curve/hybrid -
+    # All TLS 1.3 only
+    MLKEM512 = "MLKEM512"
+    MLKEM768 = "MLKEM768"
+    MLKEM1024 = "MLKEM1024"
+    SecP256r1MLKEM768 = "SecP256r1MLKEM768"
+    SecP384r1MLKEM1024 = "SecP384r1MLKEM1024"
+    X25519MLKEM768 = "X25519MLKEM768"
+    curveSM2 = "curveSM2"
+    curveSM2MLKEM768 = "curveSM2MLKEM768"
+
+    @classmethod
+    def get_supported_by_tls_version(cls, tls_version: TlsVersionEnum) -> set["OpenSslGroupNameEnum"]:
+        """Get the subset of groups that are valid to advertise for the given TLS version."""
+        if tls_version == TlsVersionEnum.TLS_1_3:
+            return _GROUPS_FOR_TLS_1_3
+        elif tls_version in [TlsVersionEnum.TLS_1_0, TlsVersionEnum.TLS_1_1, TlsVersionEnum.TLS_1_2]:
+            return _GROUPS_FOR_TLS_1_0_TO_1_2
+        else:
+            raise ValueError(f"No groups supported for supplied TLS version {tls_version}")
+
+
+# Groups that are only supported by TLS 1.3
+# openssl list -tls1_3 -tls-groups
+# see also https://github.com/openssl/openssl/blob/60a174cd6cb271c869c1bdfcf04c2d28dcc87016/providers/common/capabilities.c
+_GROUPS_FOR_TLS_1_3: set[OpenSslGroupNameEnum] = {
+    OpenSslGroupNameEnum.secp256r1,
+    OpenSslGroupNameEnum.secp384r1,
+    OpenSslGroupNameEnum.secp521r1,
+    OpenSslGroupNameEnum.x25519,
+    OpenSslGroupNameEnum.x448,
+    OpenSslGroupNameEnum.brainpoolP256r1tls13,
+    OpenSslGroupNameEnum.brainpoolP384r1tls13,
+    OpenSslGroupNameEnum.brainpoolP512r1tls13,
+    OpenSslGroupNameEnum.curveSM2,
+    OpenSslGroupNameEnum.ffdhe2048,
+    OpenSslGroupNameEnum.ffdhe3072,
+    OpenSslGroupNameEnum.ffdhe4096,
+    OpenSslGroupNameEnum.ffdhe6144,
+    OpenSslGroupNameEnum.ffdhe8192,
+    OpenSslGroupNameEnum.MLKEM512,
+    OpenSslGroupNameEnum.MLKEM768,
+    OpenSslGroupNameEnum.MLKEM1024,
+    OpenSslGroupNameEnum.SecP256r1MLKEM768,
+    OpenSslGroupNameEnum.X25519MLKEM768,
+    OpenSslGroupNameEnum.SecP384r1MLKEM1024,
+    OpenSslGroupNameEnum.curveSM2MLKEM768,
+}
+
+# openssl list -tls1_2 -tls-groups
+_GROUPS_FOR_TLS_1_0_TO_1_2: set[OpenSslGroupNameEnum] = {
+    OpenSslGroupNameEnum.sect163k1,
+    OpenSslGroupNameEnum.sect163r1,
+    OpenSslGroupNameEnum.sect163r2,
+    OpenSslGroupNameEnum.sect193r1,
+    OpenSslGroupNameEnum.sect193r2,
+    OpenSslGroupNameEnum.sect233k1,
+    OpenSslGroupNameEnum.sect233r1,
+    OpenSslGroupNameEnum.sect239k1,
+    OpenSslGroupNameEnum.sect283k1,
+    OpenSslGroupNameEnum.sect283r1,
+    OpenSslGroupNameEnum.sect409k1,
+    OpenSslGroupNameEnum.sect409r1,
+    OpenSslGroupNameEnum.sect571k1,
+    OpenSslGroupNameEnum.sect571r1,
+    OpenSslGroupNameEnum.secp160k1,
+    OpenSslGroupNameEnum.secp160r1,
+    OpenSslGroupNameEnum.secp160r2,
+    OpenSslGroupNameEnum.secp192k1,
+    OpenSslGroupNameEnum.secp192r1,
+    OpenSslGroupNameEnum.secp224k1,
+    OpenSslGroupNameEnum.secp224r1,
+    OpenSslGroupNameEnum.secp256k1,
+    OpenSslGroupNameEnum.secp256r1,
+    OpenSslGroupNameEnum.secp384r1,
+    OpenSslGroupNameEnum.secp521r1,
+    OpenSslGroupNameEnum.brainpoolP256r1,
+    OpenSslGroupNameEnum.brainpoolP384r1,
+    OpenSslGroupNameEnum.brainpoolP512r1,
+    OpenSslGroupNameEnum.x25519,
+    OpenSslGroupNameEnum.x448,
+    OpenSslGroupNameEnum.ffdhe2048,
+    OpenSslGroupNameEnum.ffdhe3072,
+    OpenSslGroupNameEnum.ffdhe4096,
+    OpenSslGroupNameEnum.ffdhe6144,
+    OpenSslGroupNameEnum.ffdhe8192,
+}
+
+
+# This is only needed to retrieve the name of the curve in EcDhEphemeralKeyInfo
+_OPENSSL_NID_TO_GROUP_ENUM = {
+    721: OpenSslGroupNameEnum.sect163k1,
+    722: OpenSslGroupNameEnum.sect163r1,
+    723: OpenSslGroupNameEnum.sect163r2,
+    724: OpenSslGroupNameEnum.sect193r1,
+    725: OpenSslGroupNameEnum.sect193r2,
+    726: OpenSslGroupNameEnum.sect233k1,
+    727: OpenSslGroupNameEnum.sect233r1,
+    728: OpenSslGroupNameEnum.sect239k1,
+    729: OpenSslGroupNameEnum.sect283k1,
+    730: OpenSslGroupNameEnum.sect283r1,
+    731: OpenSslGroupNameEnum.sect409k1,
+    732: OpenSslGroupNameEnum.sect409r1,
+    733: OpenSslGroupNameEnum.sect571k1,
+    734: OpenSslGroupNameEnum.sect571r1,
+    708: OpenSslGroupNameEnum.secp160k1,
+    709: OpenSslGroupNameEnum.secp160r1,
+    710: OpenSslGroupNameEnum.secp160r2,
+    711: OpenSslGroupNameEnum.secp192k1,
+    712: OpenSslGroupNameEnum.secp224k1,
+    713: OpenSslGroupNameEnum.secp224r1,
+    714: OpenSslGroupNameEnum.secp256k1,
+    409: OpenSslGroupNameEnum.secp192r1,
+    415: OpenSslGroupNameEnum.secp256r1,
+    715: OpenSslGroupNameEnum.secp384r1,
+    716: OpenSslGroupNameEnum.secp521r1,
+    1034: OpenSslGroupNameEnum.x25519,
+    1035: OpenSslGroupNameEnum.x448,
+    927: OpenSslGroupNameEnum.brainpoolP256r1,
+    931: OpenSslGroupNameEnum.brainpoolP384r1,
+    933: OpenSslGroupNameEnum.brainpoolP512r1,
 }
 
 
@@ -148,12 +228,12 @@ class EphemeralKeyInfo(ABC):
 
 @dataclass(frozen=True)
 class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
-    curve: OpenSslEcNidEnum
+    curve: int  # OpenSSL NID
     curve_name: str = field(init=False)
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        curve_name = _OPENSSL_NID_TO_SECG_ANSI_X9_62.get(self.curve, f"unknown-curve-with-openssl-id-{self.curve}")
+        curve_name = _OPENSSL_NID_TO_GROUP_ENUM.get(self.curve, f"unknown-curve-with-openssl-nid-{self.curve}")
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(self, "curve_name", curve_name)
 

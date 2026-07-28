@@ -14,7 +14,7 @@ from nassl.base_ssl_client import (
 )
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
-    OpenSslEcNidEnum,
+    OpenSslGroupNameEnum,
     DhEphemeralKeyInfo,
     NistEcDhKeyExchangeInfo,
     EcDhEphemeralKeyInfo,
@@ -229,7 +229,7 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
             assert isinstance(dh_info, NistEcDhKeyExchangeInfo)
             assert dh_info.type == OpenSslEvpPkeyEnum.EC
             assert dh_info.size == 256
-            assert dh_info.curve == OpenSslEcNidEnum.SECP256R1
+            assert dh_info.curve_name == OpenSslGroupNameEnum.secp256r1
             assert len(dh_info.public_bytes) == 65
             assert len(dh_info.x) == 32
             assert len(dh_info.y) == 32
@@ -256,72 +256,8 @@ class TestOnline_SslClient_OpenSSL_1_1_1_and_4_0_0:
             assert isinstance(dh_info, EcDhEphemeralKeyInfo)
             assert dh_info.type == OpenSslEvpPkeyEnum.X25519
             assert dh_info.size == 253
-            assert dh_info.curve == OpenSslEcNidEnum.X25519
+            assert dh_info.curve_name == OpenSslGroupNameEnum.x25519
             assert len(dh_info.public_bytes) == 32
-
-    def test_set_groups_curve_secp192k1(self, ssl_client_cls: _SslClientTypes) -> None:
-        # Given a server that supports a bunch of curves
-        with S_Server_OpenSSL_1_1_1(
-            cipher="ECDHE-RSA-AES256-SHA",
-            groups="X25519:prime256v1:secp384r1:secp192k1",
-        ) as server:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            sock.connect((server.hostname, server.port))
-
-            # And a client that only supports a specific curve: SECP192K1
-            ssl_client = ssl_client_cls(
-                tls_version=TlsVersionEnum.TLS_1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE,
-            )
-
-            configured_curve = OpenSslEcNidEnum.SECP192K1
-            ssl_client.set_groups([configured_curve])
-
-            # When the client connects to the server
-            try:
-                ssl_client.do_handshake()
-            finally:
-                ssl_client.shutdown()
-
-            # The curve enabled in the client is the one that was used
-            dh_info = ssl_client.get_ephemeral_key()
-            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
-            assert dh_info.curve == configured_curve
-
-    def test_set_groups_curve_x448(self, ssl_client_cls: _SslClientTypes) -> None:
-        # Given a server that supports a bunch of curves
-        with S_Server_OpenSSL_1_1_1(
-            cipher="ECDHE-RSA-AES256-SHA",
-            groups="X25519:prime256v1:X448:secp384r1:secp192k1",
-        ) as server:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            sock.connect((server.hostname, server.port))
-
-            # And a client that only supports a specific curve: X448
-            ssl_client = ssl_client_cls(
-                tls_version=TlsVersionEnum.TLS_1_2,
-                underlying_socket=sock,
-                ssl_verify=OpenSslVerifyEnum.NONE,
-            )
-            configured_curve = OpenSslEcNidEnum.X448
-            ssl_client.set_groups([configured_curve])
-
-            # When the client connects to the server
-            try:
-                ssl_client.do_handshake()
-            finally:
-                ssl_client.shutdown()
-
-            # The curve enabled in the client is the one that was used
-            dh_info = ssl_client.get_ephemeral_key()
-            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
-            assert dh_info.curve == configured_curve
-            assert dh_info.type == OpenSslEvpPkeyEnum.X448
-            assert dh_info.size == 448
-            assert len(dh_info.public_bytes) == 56
 
     def test_get_extended_master_secret_not_used(self, ssl_client_cls: _SslClientTypes) -> None:
         # Given a TLS server that does NOT support the Extended Master Secret extension
@@ -648,7 +584,70 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
 
 
 class Test_SslClient_OpenSSL_4_0_0:
-    def test_group_methods(self) -> None:
+    def test_set_groups_secp192k1(self) -> None:
+        # Given a server that supports a bunch of curves
+        with S_Server_OpenSSL_1_1_1(
+            cipher="ECDHE-RSA-AES256-SHA",
+            groups="X25519:prime256v1:secp384r1:secp192k1",
+        ) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that only supports a specific curve: SECP192K1
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            configured_curve = OpenSslGroupNameEnum.secp192k1
+            ssl_client.set_groups_list([configured_curve])
+
+            # When the client connects to the server
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # The curve enabled in the client is the one that was used
+            dh_info = ssl_client.get_ephemeral_key()
+            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
+            assert dh_info.curve_name == configured_curve
+
+    def test_set_groups_x448(self) -> None:
+        # Given a server that supports a bunch of curves
+        with S_Server_OpenSSL_1_1_1(
+            cipher="ECDHE-RSA-AES256-SHA",
+            groups="X25519:prime256v1:X448:secp384r1:secp192k1",
+        ) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that only supports a specific curve: X448
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            configured_curve = OpenSslGroupNameEnum.x448
+            ssl_client.set_groups_list([configured_curve])
+
+            # When the client connects to the server
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # The curve enabled in the client is the one that was used
+            dh_info = ssl_client.get_ephemeral_key()
+            assert isinstance(dh_info, EcDhEphemeralKeyInfo)
+            assert dh_info.curve_name == configured_curve
+            assert dh_info.type == OpenSslEvpPkeyEnum.X448
+            assert dh_info.size == 448
+            assert len(dh_info.public_bytes) == 56
+
+    def test_set_groups_pq(self) -> None:
         # Given a server that supports some TLS 1.3 groups
         with S_Server_OpenSSL_4_0_0(
             cipher="ECDHE-RSA-AES256-SHA",
@@ -658,43 +657,14 @@ class Test_SslClient_OpenSSL_4_0_0:
             sock.settimeout(5)
             sock.connect((server.hostname, server.port))
 
-            # And a client that that supports some groups
+            # And a client that is configured to use a specific group
             ssl_client = SslClient_OpenSSL_4_0_0(
                 tls_version=TlsVersionEnum.TLS_1_3,
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
-
-            # And the list of groups the client supports is what's expected
-            expected_implemented_groups = {
-                "secp256r1",
-                "secp384r1",
-                "secp521r1",
-                "x25519",
-                "x448",
-                "brainpoolP256r1tls13",
-                "brainpoolP384r1tls13",
-                "brainpoolP512r1tls13",
-                "curveSM2",
-                "ffdhe2048",
-                "ffdhe3072",
-                "ffdhe4096",
-                "ffdhe6144",
-                "ffdhe8192",
-                "MLKEM512",
-                "MLKEM768",
-                "MLKEM1024",
-                "SecP256r1MLKEM768",
-                "X25519MLKEM768",
-                "SecP384r1MLKEM1024",
-                "curveSM2MLKEM768",
-            }
-            implemented_groups = ssl_client.get_implemented_groups()
-            assert set(implemented_groups) == expected_implemented_groups
-
-            # And the client is configured to use a specific group
-            configured_group = "X25519MLKEM768"
-            ssl_client.set_groups_list(configured_group)
+            configured_group = OpenSslGroupNameEnum.X25519MLKEM768
+            ssl_client.set_groups_list([configured_group])
 
             # When the client connects to the server
             try:
@@ -704,3 +674,36 @@ class Test_SslClient_OpenSSL_4_0_0:
 
             # The group specified in the client is the one that was used
             assert ssl_client.get_group_name() == configured_group
+
+    def test_set_groups_ffdhe(self) -> None:
+        # Given a server that only supports one of the RFC7919 ffdhe groups
+        with S_Server_OpenSSL_4_0_0(
+            cipher="ECDHE-RSA-AES256-SHA",
+            groups="ffdhe2048",
+        ) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that is configured to only offer that same ffdhe group
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            configured_group = OpenSslGroupNameEnum.ffdhe2048
+            ssl_client.set_groups_list([configured_group])
+
+            # When the client connects to the server, it succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # And the group specified in the client is the one that was used
+            assert ssl_client.get_group_name() == configured_group.name
+
+            # And the right ephemeral key info was returned
+            dh_info = ssl_client.get_ephemeral_key()
+            assert isinstance(dh_info, DhEphemeralKeyInfo)
+            assert dh_info.size == 2048

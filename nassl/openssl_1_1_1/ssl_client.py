@@ -7,7 +7,6 @@ from typing import List, Tuple
 
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
-    OpenSslEcNidEnum,
 )
 
 
@@ -76,10 +75,6 @@ class SslClient_OpenSSL_1_1_1(BaseSslClient):
     def get_peer_signature_nid(self) -> OpenSslDigestNidEnum:
         """Get the digest used for TLS message signing."""
         return OpenSslDigestNidEnum(self._ssl.get_peer_signature_nid())
-
-    def set_groups(self, supported_groups: List[OpenSslEcNidEnum]) -> None:
-        """Specify elliptic curves or DH groups that are supported by the client in descending order."""
-        self._ssl.set1_groups(supported_groups)
 
     def get_extended_master_secret_support(self) -> ExtendedMasterSecretSupportEnum:
         """Indicates whether the current session used extended master secret."""

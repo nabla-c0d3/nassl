@@ -1,20 +1,24 @@
+import pytest
+
 from nassl.ephemeral_key_info import (
     EcDhEphemeralKeyInfo,
-    OpenSslEcNidEnum,
     OpenSslEvpPkeyEnum,
-    _OPENSSL_NID_TO_SECG_ANSI_X9_62,
     _OPENSSL_EVP_PKEY_TO_NAME_MAPPING,
     DhEphemeralKeyInfo,
+    OpenSslGroupNameEnum,
 )
-from nassl.openssl_1_1_1.ssl_client import SslClient_OpenSSL_1_1_1
+from nassl.openssl_4_0_0.ssl_client import SslClient_OpenSSL_4_0_0
+from nassl.tls_version_enum import TlsVersionEnum
 
 
-class TestOpenSslEcNidEnum:
-    def test_supported_by_ssl_client(self) -> None:
-        # Ensure the expected NIDs can be used to configure an SslClient
-        for ec_nid in OpenSslEcNidEnum.get_supported_by_ssl_client():
-            ssl_client = SslClient_OpenSSL_1_1_1()
-            ssl_client.set_groups([ec_nid])
+class TestOpenSslGroupNameEnum:
+    @pytest.mark.parametrize("tls_version", [TlsVersionEnum.TLS_1_3, TlsVersionEnum.TLS_1_2])
+    def test_supported_by_tls_version(self, tls_version: TlsVersionEnum) -> None:
+        # Ensure that for each TLS version, the list of supported groups returned by OpenSSL is as expected
+        ssl_client = SslClient_OpenSSL_4_0_0(tls_version=tls_version)
+        all_supported_groups = ssl_client.get_implemented_groups()
+        all_expected_groups = OpenSslGroupNameEnum.get_supported_by_tls_version(tls_version)
+        assert set(all_supported_groups) == all_expected_groups
 
 
 class TestEphemeralKeyInfo:
@@ -23,25 +27,20 @@ class TestEphemeralKeyInfo:
         for evp_pkey in OpenSslEvpPkeyEnum:
             assert evp_pkey in _OPENSSL_EVP_PKEY_TO_NAME_MAPPING
 
-    def test_ec_nid_to_name_mapping(self) -> None:
-        # Ensure all known NIDs have an associated name
-        for ec_nid in OpenSslEcNidEnum:
-            assert ec_nid in _OPENSSL_NID_TO_SECG_ANSI_X9_62
-
     def test_ec_dh(self) -> None:
         # Given some key info returned by OpenSSL, when parsing it, it succeeds
         key_info = EcDhEphemeralKeyInfo(
             type=OpenSslEvpPkeyEnum.EC,
             size=12,
             public_bytes=bytearray(b"123"),
-            curve=OpenSslEcNidEnum.X448,
+            curve=927,
         )
         assert key_info
 
     def test_ec_dh_unknown_curve(self) -> None:
         # Given some key info returned by OpenSSL with an unknown curve ID, when parsing it, it succeeds
         key_info = EcDhEphemeralKeyInfo(
-            curve=12345,  # type: ignore
+            curve=12345,
             type=OpenSslEvpPkeyEnum.EC,
             size=12,
             public_bytes=bytearray(b"123"),

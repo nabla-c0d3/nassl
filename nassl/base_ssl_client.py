@@ -11,8 +11,8 @@ from typing import Protocol
 
 
 from typing import Optional
+from nassl.tls_version_enum import TlsVersionEnum
 from nassl.ephemeral_key_info import (
-    OpenSslEcNidEnum,
     OpenSslEvpPkeyEnum,
     EphemeralKeyInfo,
     DhEphemeralKeyInfo,
@@ -28,16 +28,6 @@ class OpenSslVerifyEnum(IntEnum):
     PEER = 1
     FAIL_IF_NO_PEER_CERT = 2
     CLIENT_ONCE = 4
-
-
-class TlsVersionEnum(IntEnum):
-    # The values here must match SslProtocolVersion in nassl_SSL_CTX.c
-    SSL_2_0 = 1
-    SSL_3_0 = 2
-    TLS_1_0 = 3
-    TLS_1_1 = 4
-    TLS_1_2 = 5
-    TLS_1_3 = 6
 
 
 class OpenSslFileTypeEnum(IntEnum):
@@ -343,10 +333,8 @@ class BaseSslClient(ABC):
             return NistEcDhKeyExchangeInfo(**dh_info, type=parsed_dh_type)
         elif parsed_dh_type in [OpenSslEvpPkeyEnum.X25519, OpenSslEvpPkeyEnum.X448]:
             # Parse the curve as an IntEnum
-            curve = dh_info.pop("curve")
-            parsed_curve = OpenSslEcNidEnum(curve)
-
-            return EcDhEphemeralKeyInfo(**dh_info, type=parsed_dh_type, curve=parsed_curve)
+            curve_nid = dh_info.pop("curve")
+            return EcDhEphemeralKeyInfo(**dh_info, type=parsed_dh_type, curve=curve_nid)
         else:
             return None
 
