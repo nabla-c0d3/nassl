@@ -258,51 +258,6 @@ static PyObject* nassl_SSL_get_max_early_data(nassl_SSL_Object *self, PyObject *
     return Py_BuildValue("I", returnValue);
 }
 
-static PyObject* nassl_SSL_set1_groups(nassl_SSL_Object *self, PyObject *args)
-{
-    int i = 0;
-    PyObject *pyListOfOpensslNids;
-    Py_ssize_t nidsCount = 0;
-    int *listOfNids;
-
-    // Parse the Python list
-    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &pyListOfOpensslNids))
-    {
-        return NULL;
-    }
-
-    // Extract each NID int from the list
-    nidsCount = PyList_Size(pyListOfOpensslNids);
-    listOfNids = (int *) PyMem_Malloc(nidsCount * sizeof(int));
-    if (listOfNids == NULL)
-    {
-        return PyErr_NoMemory();
-    }
-
-    for (i=0; i<nidsCount; i++)
-    {
-        PyObject *pyNid;
-        int nid;
-
-        pyNid = PyList_GetItem(pyListOfOpensslNids, i);
-        if ((pyNid == NULL) || (!PyLong_Check(pyNid)))
-        {
-            PyMem_Free(listOfNids);
-            return NULL;
-        }
-        nid = PyLong_AsSize_t(pyNid);
-        listOfNids[i] = nid;
-    }
-
-    if (SSL_set1_groups(self->ssl, listOfNids, nidsCount) != 1)
-    {
-        PyMem_Free(listOfNids);
-        return raise_OpenSSL_error();
-    }
-
-    PyMem_Free(listOfNids);
-    Py_RETURN_NONE;
-}
 
 static PyObject *nassl_SSL_get_extms_support(nassl_SSL_Object *self)
 {
@@ -1254,9 +1209,6 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"get_peer_signature_nid", (PyCFunction)nassl_get_peer_signature_nid, METH_NOARGS,
      "OpenSSL's get_peer_signature_nid(). Returns a digest NID"
-    },
-    {"set1_groups", (PyCFunction)nassl_SSL_set1_groups, METH_VARARGS,
-    "OpenSSL's SSL_set1_groups()"
     },
     {"get_extms_support", (PyCFunction)nassl_SSL_get_extms_support, METH_NOARGS,
     "OpenSSL's SSL_get_extms_support()."
