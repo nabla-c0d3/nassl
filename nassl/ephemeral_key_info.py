@@ -106,9 +106,8 @@ class OpenSslGroupNameEnum(str, Enum):
             raise ValueError(f"No groups supported for supplied TLS version {tls_version}")
 
 
-# Groups that are only supported by TLS 1.3
+# Groups that are supported by TLS 1.3
 # openssl list -tls1_3 -tls-groups
-# see also https://github.com/openssl/openssl/blob/60a174cd6cb271c869c1bdfcf04c2d28dcc87016/providers/common/capabilities.c
 _GROUPS_FOR_TLS_1_3: set[OpenSslGroupNameEnum] = {
     OpenSslGroupNameEnum.secp256r1,
     OpenSslGroupNameEnum.secp384r1,
@@ -119,11 +118,6 @@ _GROUPS_FOR_TLS_1_3: set[OpenSslGroupNameEnum] = {
     OpenSslGroupNameEnum.brainpoolP384r1tls13,
     OpenSslGroupNameEnum.brainpoolP512r1tls13,
     OpenSslGroupNameEnum.curveSM2,
-    OpenSslGroupNameEnum.ffdhe2048,
-    OpenSslGroupNameEnum.ffdhe3072,
-    OpenSslGroupNameEnum.ffdhe4096,
-    OpenSslGroupNameEnum.ffdhe6144,
-    OpenSslGroupNameEnum.ffdhe8192,
     OpenSslGroupNameEnum.MLKEM512,
     OpenSslGroupNameEnum.MLKEM768,
     OpenSslGroupNameEnum.MLKEM1024,
@@ -131,6 +125,11 @@ _GROUPS_FOR_TLS_1_3: set[OpenSslGroupNameEnum] = {
     OpenSslGroupNameEnum.X25519MLKEM768,
     OpenSslGroupNameEnum.SecP384r1MLKEM1024,
     OpenSslGroupNameEnum.curveSM2MLKEM768,
+    OpenSslGroupNameEnum.ffdhe2048,
+    OpenSslGroupNameEnum.ffdhe3072,
+    OpenSslGroupNameEnum.ffdhe4096,
+    OpenSslGroupNameEnum.ffdhe6144,
+    OpenSslGroupNameEnum.ffdhe8192,
 }
 
 # openssl list -tls1_2 -tls-groups

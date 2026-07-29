@@ -1101,6 +1101,11 @@ static PyObject* nassl_SSL_set1_groups_list(nassl_SSL_Object *self, PyObject *ar
 static PyObject* nassl_SSL_get0_group_name(nassl_SSL_Object *self, PyObject *args)
     {
         const char *groupNameString = SSL_get0_group_name(self->ssl);
+        if (groupNameString == NULL)
+        {
+            // SSL_get0_group_name() returns NULL when the negotiated group's name could not be determined
+            Py_RETURN_NONE;
+        }
         return PyUnicode_FromString(groupNameString);
     }
 

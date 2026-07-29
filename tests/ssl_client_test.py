@@ -675,11 +675,11 @@ class Test_SslClient_OpenSSL_4_0_0:
             # The group specified in the client is the one that was used
             assert ssl_client.get_group_name() == configured_group
 
-    def test_set_groups_ffdhe(self) -> None:
-        # Given a server that only supports one of the RFC7919 ffdhe groups
+    def test_set_groups_ffdhe_tls_1_3(self) -> None:
+        # Given a server that only supports one of the ffdhe groups with TLS 1.3
+        configured_group = OpenSslGroupNameEnum.ffdhe3072
         with S_Server_OpenSSL_4_0_0(
-            cipher="ECDHE-RSA-AES256-SHA",
-            groups="ffdhe2048",
+            groups=configured_group.value,
         ) as server:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
@@ -691,7 +691,6 @@ class Test_SslClient_OpenSSL_4_0_0:
                 underlying_socket=sock,
                 ssl_verify=OpenSslVerifyEnum.NONE,
             )
-            configured_group = OpenSslGroupNameEnum.ffdhe2048
             ssl_client.set_groups_list([configured_group])
 
             # When the client connects to the server, it succeeds
@@ -703,7 +702,36 @@ class Test_SslClient_OpenSSL_4_0_0:
             # And the group specified in the client is the one that was used
             assert ssl_client.get_group_name() == configured_group.name
 
-            # And the right ephemeral key info was returned
+    def test_set_groups_ffdhe_tls_1_2(self) -> None:
+        # Given a server that only supports one of the ffdhe groups with TLS 1.2
+        configured_group = OpenSslGroupNameEnum.ffdhe3072
+        with S_Server_OpenSSL_4_0_0(
+            groups=configured_group.value,
+        ) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that is configured to only offer that same ffdhe group, over TLS 1.2
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_2,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            ssl_client.set_groups_list([configured_group])
+
+            # When the client connects to the server, the handshake itself succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # And the right ephemeral key info was returned, proving ffdhe was actually negotiated
             dh_info = ssl_client.get_ephemeral_key()
             assert isinstance(dh_info, DhEphemeralKeyInfo)
-            assert dh_info.size == 2048
+            assert dh_info.size == 3072
+
+            # But querying the negotiated group's name fails, because SSL_get0_group_name() cannot resolve
+            #  ffdhe group names for a TLS 1.2 in this OpenSSL build (as a bug)
+            with pytest.raises(ValueError, match="Could not determine the group's name"):
+                ssl_client.get_group_name()
