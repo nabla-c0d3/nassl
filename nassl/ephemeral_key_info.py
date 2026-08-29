@@ -31,6 +31,15 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
 }
 
 
+class OpenSslGroupTypeEnum(str, Enum):
+    """Categories of OpenSslGroupNameEnum."""
+
+    ELLIPTIC_CURVE = "elliptic_curve"
+    FINITE_FIELD_DH = "finite_field_dh"
+    POST_QUANTUM = "post_quantum"
+    POST_QUANTUM_HYBRID = "post_quantum_hybrid"
+
+
 class OpenSslGroupNameEnum(str, Enum):
     """TLS group names, which can be used with SslClient_OpenSSL_4_0_0.set_groups_list()."""
 
@@ -105,6 +114,9 @@ class OpenSslGroupNameEnum(str, Enum):
         else:
             raise ValueError(f"No groups supported for supplied TLS version {tls_version}")
 
+    def get_type(self) -> OpenSslGroupTypeEnum:
+        return _GROUP_NAME_TO_TYPE_MAPPING[self]
+
 
 # Groups that are supported by TLS 1.3
 # openssl list -tls1_3 -tls-groups
@@ -170,6 +182,72 @@ _GROUPS_FOR_TLS_1_0_TO_1_2: set[OpenSslGroupNameEnum] = {
     OpenSslGroupNameEnum.ffdhe6144,
     OpenSslGroupNameEnum.ffdhe8192,
 }
+
+_GROUPS_THAT_ARE_ELLIPTIC_CURVES: set[OpenSslGroupNameEnum] = {
+    OpenSslGroupNameEnum.sect163k1,
+    OpenSslGroupNameEnum.sect163r1,
+    OpenSslGroupNameEnum.sect163r2,
+    OpenSslGroupNameEnum.sect193r1,
+    OpenSslGroupNameEnum.sect193r2,
+    OpenSslGroupNameEnum.sect233k1,
+    OpenSslGroupNameEnum.sect233r1,
+    OpenSslGroupNameEnum.sect239k1,
+    OpenSslGroupNameEnum.sect283k1,
+    OpenSslGroupNameEnum.sect283r1,
+    OpenSslGroupNameEnum.sect409k1,
+    OpenSslGroupNameEnum.sect409r1,
+    OpenSslGroupNameEnum.sect571k1,
+    OpenSslGroupNameEnum.sect571r1,
+    OpenSslGroupNameEnum.secp160k1,
+    OpenSslGroupNameEnum.secp160r1,
+    OpenSslGroupNameEnum.secp160r2,
+    OpenSslGroupNameEnum.secp192k1,
+    OpenSslGroupNameEnum.secp192r1,
+    OpenSslGroupNameEnum.secp224k1,
+    OpenSslGroupNameEnum.secp224r1,
+    OpenSslGroupNameEnum.secp256k1,
+    OpenSslGroupNameEnum.secp256r1,
+    OpenSslGroupNameEnum.secp384r1,
+    OpenSslGroupNameEnum.secp521r1,
+    OpenSslGroupNameEnum.x25519,
+    OpenSslGroupNameEnum.x448,
+    OpenSslGroupNameEnum.brainpoolP256r1,
+    OpenSslGroupNameEnum.brainpoolP384r1,
+    OpenSslGroupNameEnum.brainpoolP512r1,
+    OpenSslGroupNameEnum.brainpoolP256r1tls13,
+    OpenSslGroupNameEnum.brainpoolP384r1tls13,
+    OpenSslGroupNameEnum.brainpoolP512r1tls13,
+    OpenSslGroupNameEnum.curveSM2,
+}
+
+_GROUPS_THAT_ARE_FINITE_FIELD_DH: set[OpenSslGroupNameEnum] = {
+    OpenSslGroupNameEnum.ffdhe2048,
+    OpenSslGroupNameEnum.ffdhe3072,
+    OpenSslGroupNameEnum.ffdhe4096,
+    OpenSslGroupNameEnum.ffdhe6144,
+    OpenSslGroupNameEnum.ffdhe8192,
+}
+
+_GROUPS_THAT_ARE_POST_QUANTUM: set[OpenSslGroupNameEnum] = {
+    OpenSslGroupNameEnum.MLKEM512,
+    OpenSslGroupNameEnum.MLKEM768,
+    OpenSslGroupNameEnum.MLKEM1024,
+}
+
+_GROUPS_THAT_ARE_POST_QUANTUM_HYBRID: set[OpenSslGroupNameEnum] = {
+    OpenSslGroupNameEnum.SecP256r1MLKEM768,
+    OpenSslGroupNameEnum.SecP384r1MLKEM1024,
+    OpenSslGroupNameEnum.X25519MLKEM768,
+    OpenSslGroupNameEnum.curveSM2MLKEM768,
+}
+
+_GROUP_NAME_TO_TYPE_MAPPING: Dict[OpenSslGroupNameEnum, OpenSslGroupTypeEnum] = {
+    **{group: OpenSslGroupTypeEnum.ELLIPTIC_CURVE for group in _GROUPS_THAT_ARE_ELLIPTIC_CURVES},
+    **{group: OpenSslGroupTypeEnum.FINITE_FIELD_DH for group in _GROUPS_THAT_ARE_FINITE_FIELD_DH},
+    **{group: OpenSslGroupTypeEnum.POST_QUANTUM for group in _GROUPS_THAT_ARE_POST_QUANTUM},
+    **{group: OpenSslGroupTypeEnum.POST_QUANTUM_HYBRID for group in _GROUPS_THAT_ARE_POST_QUANTUM_HYBRID},
+}
+assert len(_GROUP_NAME_TO_TYPE_MAPPING) == len(OpenSslGroupNameEnum), "Every group must be classified"
 
 
 # This is only needed to retrieve the name of the curve in EcDhEphemeralKeyInfo
