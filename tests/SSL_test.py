@@ -173,3 +173,16 @@ class TestSSL_OpenSSL_1_0_2:
         test_ssl.set_connect_state()
         with pytest.raises(OpenSSLError, match="bio not set"):
             test_ssl.do_handshake()
+
+
+_SSL_CTX_OpenSSL_4_0_0 = nassl.openssl_4_0_0._nassl.SSL_CTX
+
+
+class TestSSL_OpenSSL_4_0_0:
+    def test_set_options_with_a_64bit_only_flag(self) -> None:
+        # SSL_OP_ECH_GREASE is bit 37, which doesn't fit in a 32-bit C "long" (eg. on Windows);
+        # set_options() must accept/return the full 64-bit OpenSSL option bitmask
+        test_ssl = nassl.openssl_4_0_0._nassl.SSL(_SSL_CTX_OpenSSL_4_0_0())
+        ssl_op_ech_grease = 1 << 37
+        result = test_ssl.set_options(ssl_op_ech_grease)
+        assert result & ssl_op_ech_grease == ssl_op_ech_grease

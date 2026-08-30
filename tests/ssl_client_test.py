@@ -1,4 +1,6 @@
+import base64
 import socket
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -6,6 +8,7 @@ import pytest
 from nassl.openssl_1_1_1 import _nassl
 
 
+from nassl.ech_status_enum import OpenSslEchStatusEnum
 from nassl.errors import OpenSSLError
 from nassl.base_ssl_client import (
     ClientCertificateRequested,
@@ -583,6 +586,19 @@ class TestOnlineTls13_SslClient_Openssl_1_1_1_and_4_0_0:
             ssl_client_early_data.shutdown()
 
 
+def _get_ech_config_list_bytes(pem_path: Path = S_Server_OpenSSL_4_0_0.ECH_CONFIG_PATH) -> bytes:
+    # Extract the raw ECHConfigList bytes from the "ECHCONFIG" PEM section generated using:
+    # openssl ech -public_name localhost -out ech-config.pem
+    pem_text = pem_path.read_text()
+    pem_body = pem_text.split("-----BEGIN ECHCONFIG-----")[1].split("-----END ECHCONFIG-----")[0]
+    return base64.b64decode(pem_body.strip())
+
+
+# A second ECH key/config that was NOT loaded onto S_Server_OpenSSL_4_0_0; used to simulate a client
+# holding a stale ECHConfigList, generated using: openssl ech -public_name localhost -out ech-config-stale.pem
+_STALE_ECH_CONFIG_PATH = S_Server_OpenSSL_4_0_0._ROOT_PATH / "ech-config-stale.pem"
+
+
 class Test_SslClient_OpenSSL_4_0_0:
     def test_set_groups_secp192k1(self) -> None:
         # Given a server that supports a bunch of curves
@@ -735,3 +751,143 @@ class Test_SslClient_OpenSSL_4_0_0:
             #  ffdhe group names for a TLS 1.2 in this OpenSSL build (as a bug)
             with pytest.raises(ValueError, match="Could not determine the group's name"):
                 ssl_client.get_group_name()
+
+    def test_ech_status_success(self) -> None:
+        # Given a server configured with an ECH key/config
+        with S_Server_OpenSSL_4_0_0(enable_ech=True) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client configured to attempt ECH using the server's ECHConfigList
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            ssl_client.set_tlsext_host_name("localhost")
+            ssl_client.set_ech_config(_get_ech_config_list_bytes())
+
+            # When the client connects to the server, the handshake succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # And the ECH status shows that the inner (encrypted) ClientHello was used
+            ech_status, inner_sni, outer_sni = ssl_client.get_ech_status()
+            assert ech_status in (OpenSslEchStatusEnum.SUCCESS, OpenSslEchStatusEnum.BAD_NAME)
+            assert inner_sni == "localhost"
+
+            # And there is no retry config since ECH succeeded
+            assert ssl_client.get_ech_retry_config() is None
+
+    def test_ech_status_not_configured(self) -> None:
+        # Given a server configured with an ECH key/config
+        with S_Server_OpenSSL_4_0_0(enable_ech=True) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that does NOT attempt ECH
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            ssl_client.set_tlsext_host_name("localhost")
+
+            # When the client connects to the server, the handshake succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # The ECH status reflects that ECH was never configured on the client
+            ech_status, inner_sni, outer_sni = ssl_client.get_ech_status()
+            assert ech_status == OpenSslEchStatusEnum.NOT_CONFIGURED
+            assert inner_sni is None
+            assert outer_sni is None
+
+    def test_ech_grease(self) -> None:
+        # Given a server that does NOT support ECH
+        with S_Server_OpenSSL_4_0_0() as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that GREASEs ECH, without setting a real ECHConfig
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            ssl_client.set_tlsext_host_name("localhost")
+            ssl_client.enable_ech_grease()
+
+            # When the client connects to the server, the handshake still succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # And the ECH status reflects that GREASE happened
+            ech_status, inner_sni, outer_sni = ssl_client.get_ech_status()
+            assert ech_status == OpenSslEchStatusEnum.GREASE
+
+    def test_ech_grease_against_an_ech_enabled_server_returns_grease_ech(self) -> None:
+        # Given a server that DOES support ECH
+        with S_Server_OpenSSL_4_0_0(enable_ech=True) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client that GREASEs ECH, without setting a real ECHConfig
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            ssl_client.set_tlsext_host_name("localhost")
+            ssl_client.enable_ech_grease()
+
+            # When the client connects to the server, the handshake still succeeds
+            try:
+                ssl_client.do_handshake()
+            finally:
+                ssl_client.shutdown()
+
+            # The ECH-enabled server could not decrypt the GREASE-d (fake) ECH extension, but, because it does
+            # support ECH, it still returned retry_configs - which the client can detect via GREASE_ECH
+            ech_status, inner_sni, outer_sni = ssl_client.get_ech_status()
+            assert ech_status == OpenSslEchStatusEnum.GREASE_ECH
+            assert ssl_client.get_ech_retry_config() == _get_ech_config_list_bytes()
+
+    def test_ech_retry_config_returned_on_stale_config(self) -> None:
+        # Given a server that supports ECH using one specific ECHConfig
+        with S_Server_OpenSSL_4_0_0(enable_ech=True) as server:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            sock.connect((server.hostname, server.port))
+
+            # And a client configured with a DIFFERENT (stale) ECHConfig that the server never loaded
+            ssl_client = SslClient_OpenSSL_4_0_0(
+                tls_version=TlsVersionEnum.TLS_1_3,
+                underlying_socket=sock,
+                ssl_verify=OpenSslVerifyEnum.NONE,
+            )
+            ssl_client.set_tlsext_host_name("localhost")
+            ssl_client.set_ech_config(_get_ech_config_list_bytes(_STALE_ECH_CONFIG_PATH))
+
+            # When the client connects to the server, the server cannot decrypt the (stale) inner ClientHello and
+            # the connection is aborted, as OpenSSL's ECH client refuses to silently fall back to the outer/cleartext
+            # identity when a real (non-GREASE) ECH attempt failed
+            with pytest.raises(OpenSSLError, match="ech required"):
+                ssl_client.do_handshake()
+            ssl_client.shutdown()
+
+            # But the ECH status shows the failure, and the server's current ECHConfig was returned so that a
+            # real client could retry the connection with it
+            ech_status, inner_sni, outer_sni = ssl_client.get_ech_status()
+            assert ech_status in (OpenSslEchStatusEnum.FAILED_ECH, OpenSslEchStatusEnum.FAILED_ECH_BAD_NAME)
+            assert ssl_client.get_ech_retry_config() == _get_ech_config_list_bytes()

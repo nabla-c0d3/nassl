@@ -264,7 +264,23 @@ class S_Server_OpenSSL_1_1_1(_S_Server):
 
 
 class S_Server_OpenSSL_4_0_0(S_Server_OpenSSL_1_1_1):
+    # Generated using: openssl ech -public_name localhost -out ech-config.pem
+    ECH_CONFIG_PATH = _S_Server._ROOT_PATH / "ech-config.pem"
+
     @classmethod
     def get_openssl_path(cls) -> Path:
         assert CURRENT_PLATFORM
         return OpenSsl_4_0_0_BuildConfig(CURRENT_PLATFORM).exe_path
+
+    def __init__(
+        self,
+        client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+        max_early_data: Optional[int] = None,
+        cipher: Optional[str] = None,
+        prefer_server_order: bool = False,
+        groups: Optional[str] = None,
+        enable_ech: bool = False,
+    ) -> None:
+        super().__init__(client_auth_config, max_early_data, cipher, prefer_server_order, groups)
+        if enable_ech:
+            self._command_line += f" -ech_key {self.ECH_CONFIG_PATH}"

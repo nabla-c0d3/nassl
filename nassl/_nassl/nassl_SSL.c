@@ -11,6 +11,9 @@
 #include <openssl/ocsp.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/ec.h>
+#ifdef NASSL_OSSL_4_0_0
+#include <openssl/ech.h>
+#endif
 
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
@@ -611,12 +614,14 @@ static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args)
 
 static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args)
 {
-    long sslOption = 0;
-    if (!PyArg_ParseTuple(args, "l", &sslOption))
+    // SSL_set_options() takes/returns a uint64_t bitmask (eg. SSL_OP_ECH_GREASE is bit 37),
+    // which does not fit in a C "long" on platforms where long is 32-bit (eg. Windows)
+    unsigned long long sslOption = 0;
+    if (!PyArg_ParseTuple(args, "K", &sslOption))
     {
         return NULL;
     }
-    return Py_BuildValue("I", SSL_set_options(self->ssl, sslOption));
+    return Py_BuildValue("K", SSL_set_options(self->ssl, (uint64_t)sslOption));
 }
 
 
@@ -1109,6 +1114,75 @@ static PyObject* nassl_SSL_get0_group_name(nassl_SSL_Object *self, PyObject *arg
         return PyUnicode_FromString(groupNameString);
     }
 
+
+// Configures the client to attempt ECH (Encrypted Client Hello) using the supplied ECHConfigList
+static PyObject* nassl_SSL_set1_ech_config_list(nassl_SSL_Object *self, PyObject *args)
+    {
+        char *echConfigListBuffer;
+        Py_ssize_t echConfigListSize;
+        if (!PyArg_ParseTuple(args, "s#", &echConfigListBuffer, &echConfigListSize))
+        {
+            return NULL;
+        }
+
+        if (!SSL_set1_ech_config_list(self->ssl, (const uint8_t *)echConfigListBuffer, (size_t)echConfigListSize))
+        {
+            return raise_OpenSSL_error();
+        }
+
+        Py_RETURN_NONE;
+    }
+
+
+// Checks whether ECH succeeded or was rejected during the handshake
+static PyObject* nassl_SSL_ech_get1_status(nassl_SSL_Object *self, PyObject *args)
+    {
+        char *innerSni = NULL;
+        char *outerSni = NULL;
+        int echStatus = SSL_ech_get1_status(self->ssl, &innerSni, &outerSni);
+
+        PyObject *innerSni_PyObject = innerSni != NULL ? PyUnicode_FromString(innerSni) : Py_None;
+        if (innerSni_PyObject == Py_None)
+        {
+            Py_INCREF(Py_None);
+        }
+        PyObject *outerSni_PyObject = outerSni != NULL ? PyUnicode_FromString(outerSni) : Py_None;
+        if (outerSni_PyObject == Py_None)
+        {
+            Py_INCREF(Py_None);
+        }
+
+        OPENSSL_free(innerSni);
+        OPENSSL_free(outerSni);
+
+        PyObject *result = Py_BuildValue("(iOO)", echStatus, innerSni_PyObject, outerSni_PyObject);
+        Py_DECREF(innerSni_PyObject);
+        Py_DECREF(outerSni_PyObject);
+        return result;
+    }
+
+
+// Retrieves the server's ECH retry configuration to use when ECH failed
+static PyObject* nassl_SSL_ech_get1_retry_config(nassl_SSL_Object *self, PyObject *args)
+    {
+        unsigned char *retryConfig = NULL;
+        size_t retryConfigSize = 0;
+
+        if (!SSL_ech_get1_retry_config(self->ssl, &retryConfig, &retryConfigSize))
+        {
+            return raise_OpenSSL_error();
+        }
+
+        if (retryConfig == NULL)
+        {
+            Py_RETURN_NONE;
+        }
+
+        PyObject *result = PyBytes_FromStringAndSize((const char *)retryConfig, (Py_ssize_t)retryConfigSize);
+        OPENSSL_free(retryConfig);
+        return result;
+    }
+
 #endif
 
 
@@ -1232,6 +1306,15 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     },
     {"get0_group_name", (PyCFunction)nassl_SSL_get0_group_name, METH_NOARGS,
      "OpenSSL's SSL_get0_group_name(). Returns a string with the negotiated group name."
+    },
+    {"set1_ech_config_list", (PyCFunction)nassl_SSL_set1_ech_config_list, METH_VARARGS,
+     "OpenSSL's SSL_set1_ech_config_list(). Configures the client to attempt ECH using the supplied ECHConfigList bytes."
+    },
+    {"ech_get1_status", (PyCFunction)nassl_SSL_ech_get1_status, METH_NOARGS,
+     "OpenSSL's SSL_ech_get1_status(). Returns a (status, inner_sni, outer_sni) tuple."
+    },
+    {"ech_get1_retry_config", (PyCFunction)nassl_SSL_ech_get1_retry_config, METH_NOARGS,
+     "OpenSSL's SSL_ech_get1_retry_config(). Returns the server's ECHConfigList bytes to retry with, or None."
     },
 #endif
     {NULL}  // Sentinel
