@@ -39,7 +39,8 @@ jobs:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
           CIBW_ARCHS_LINUX: aarch64  # Specifically build linux aarch64 wheels
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
-          CIBW_BEFORE_ALL: "python -m pip install setuptools invoke && invoke build.deps"
+          # OpenSSL 4 needs some perl libraries, not installed on manylinux2014 (see build_wheels.yml)
+          CIBW_BEFORE_ALL: "(command -v yum > /dev/null 2>&1 && yum install -y perl-IPC-Cmd perl-Time-Piece || true) && python -m pip install setuptools invoke && invoke build.deps"
           CIBW_BEFORE_BUILD: "python -m pip install setuptools invoke && invoke build.nassl"
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "python -m pytest {project}/tests"
