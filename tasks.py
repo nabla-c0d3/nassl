@@ -36,16 +36,6 @@ def package_wheel(ctx: Context) -> None:
 
 
 @task
-def package_windows_wheels(ctx: Context) -> None:
-    """Build the binary wheels for Windows; this expects Python to be installed at specific locations."""
-    for python_exe in [
-        "%userprofile%\\AppData\\Local\\Programs\\Python\\Python37\\python.exe",
-        "%userprofile%\\AppData\\Local\\Programs\\Python\\Python38\\python.exe",
-    ]:
-        ctx.run(f"{python_exe} setup.py bdist_wheel")
-
-
-@task
 def release(ctx: Context) -> None:
     raise NotImplementedError()
     response = input(f'Release version "{__version__}" ? y/n')
@@ -76,7 +66,6 @@ ns.add_task(lint)
 
 package = Collection("package")
 package.add_task(package_linux_wheels, "linux_wheels")
-package.add_task(package_windows_wheels, "windows_wheels")
 package.add_task(package_wheel, "wheel")
 ns.add_collection(package)
 
