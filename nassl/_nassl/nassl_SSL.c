@@ -980,9 +980,9 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
             return NULL;
         };
         
-        // Allocate a buffer for the x coordinate
-        size_t x_buf_size = BN_num_bytes(x);
-        unsigned char* x_buf = (unsigned char*) PyMem_Malloc(x_buf_size);
+        // Allocate zeroed buffers of the field size, so coordinates with leading zero bytes keep their full length
+        size_t x_buf_size = (EC_GROUP_get_degree(ec_group) + 7) / 8;
+        unsigned char* x_buf = (unsigned char*) PyMem_Calloc(x_buf_size, 1);
         if(x_buf == NULL){
             BN_free(y);
             BN_free(x);
@@ -992,9 +992,8 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
             return PyErr_NoMemory();
         }
 
-        // Allocate a buffer for the y coordinate
-        size_t y_buf_size = BN_num_bytes(y);
-        unsigned char* y_buf = (unsigned char*) PyMem_Malloc(y_buf_size);
+        size_t y_buf_size = x_buf_size;
+        unsigned char* y_buf = (unsigned char*) PyMem_Calloc(y_buf_size, 1);
         if(y_buf == NULL){
             PyMem_Free(x_buf);
             BN_free(y);
@@ -1005,9 +1004,9 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
             return PyErr_NoMemory();
         }
 
-        // Convert the x and y coords to a byte array
-        x_buf_size = BN_bn2bin(x, x_buf);
-        y_buf_size = BN_bn2bin(y, y_buf);
+        // Convert the x and y coords to big-endian byte arrays, right-aligned in the buffers
+        BN_bn2bin(x, x_buf + x_buf_size - BN_num_bytes(x));
+        BN_bn2bin(y, y_buf + y_buf_size - BN_num_bytes(y));
 
         // Free resources that can be freed according to OpenSSL docs
         BN_free(y);
