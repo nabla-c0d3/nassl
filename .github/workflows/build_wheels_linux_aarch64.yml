@@ -29,7 +29,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-* cp315-*"
+          CIBW_BUILD: "cp311-* cp312-* cp313-* cp314-* cp315-*"
           CIBW_ARCHS_LINUX: aarch64  # Specifically build linux aarch64 wheels
           CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
           # OpenSSL 4 needs some perl libraries, not installed on manylinux2014 (see build_wheels.yml)

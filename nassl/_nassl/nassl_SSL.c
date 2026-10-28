@@ -981,6 +981,7 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
         };
         
         // Allocate zeroed buffers of the field size, so coordinates with leading zero bytes keep their full length
+        // Explained in more details at https://github.com/nabla-c0d3/nassl/pull/138
         size_t x_buf_size = (EC_GROUP_get_degree(ec_group) + 7) / 8;
         unsigned char* x_buf = (unsigned char*) PyMem_Calloc(x_buf_size, 1);
         if(x_buf == NULL){

@@ -42,7 +42,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-* cp315-*"
+          CIBW_BUILD: "cp311-* cp312-* cp313-* cp314-* cp315-*"
           CIBW_SKIP: "*-win32 pp* *-musllinux_i686"  # Skip win32, PyPy and muslinux32 builds
           CIBW_ARCHS_MACOS: "native"  # macos-14 is apple silicon ie. arm64
           # Build manylinux2014 wheels
