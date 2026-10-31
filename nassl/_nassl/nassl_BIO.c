@@ -121,7 +121,6 @@ static PyObject* nassl_BIO_write(nassl_BIO_Object *self, PyObject *args)
     else
     {
         // Write failed
-        // TODO: Error handling
         PyErr_SetString(PyExc_IOError, "BIO_write() failed");
         return NULL;
     }

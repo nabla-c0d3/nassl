@@ -1,6 +1,17 @@
 from pathlib import Path
+from typing import Protocol
 
-from nassl import _nassl
+from nassl.errors import OpenSSLError
+
+
+class OcspResponseProtocol(Protocol):
+    """The OCSP_RESPONSE object returned by get_tlsext_status_ocsp_resp(); same API for every OpenSSL version."""
+
+    def as_text(self) -> bytes: ...  # Bytes because the text may contain non-UTF-8 characters
+
+    def as_der_bytes(self) -> bytes: ...
+
+    def basic_verify(self, trust_store_path: str) -> None: ...
 
 
 class OcspResponseNotTrustedError(Exception):
@@ -9,7 +20,7 @@ class OcspResponseNotTrustedError(Exception):
         self.trust_store_path = trust_store_path
 
 
-def verify_ocsp_response(ocsp_response: _nassl.OCSP_RESPONSE, trust_store_path: Path) -> None:
+def verify_ocsp_response(ocsp_response: OcspResponseProtocol, trust_store_path: Path) -> None:
     """Verify that the OCSP response is trusted.
 
     Args:
@@ -25,7 +36,7 @@ def verify_ocsp_response(ocsp_response: _nassl.OCSP_RESPONSE, trust_store_path: 
 
     try:
         ocsp_response.basic_verify(str(trust_store_path))
-    except _nassl.OpenSSLError as e:
+    except OpenSSLError as e:
         if "certificate verify error" in str(e):
             raise OcspResponseNotTrustedError(
                 "OCSP Response verification failed: the response is not trusted",

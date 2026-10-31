@@ -31,7 +31,7 @@ static PyObject* nassl_SSL_SESSION_as_text(nassl_SSL_SESSION_Object *self)
     return generic_print_to_string((int (*)(BIO *, const void *)) &SSL_SESSION_print, self->sslSession);
 }
 
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
 static PyObject* nassl_SSL_SESSION_set_max_early_data(nassl_SSL_SESSION_Object *self, PyObject *args)
 {
     int max_early_data = 0;
@@ -65,7 +65,7 @@ static PyMethodDef nassl_SSL_SESSION_Object_methods[] =
     {"as_text", (PyCFunction)nassl_SSL_SESSION_as_text, METH_NOARGS,
      "OpenSSL's SSL_SESSION_print()."
     },
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
     {"set_max_early_data", (PyCFunction)nassl_SSL_SESSION_set_max_early_data, METH_VARARGS,
      "OpenSSL's SSL_SESSION_set_max_early_data()."
     },

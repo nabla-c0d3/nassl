@@ -11,11 +11,13 @@
 #include <openssl/ocsp.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/ec.h>
+#ifdef NASSL_OSSL_4_0_0
+#include <openssl/ech.h>
+#endif
 
 #include "nassl_errors.h"
 #include "nassl_SSL.h"
 #include "nassl_BIO.h"
-#include "nassl_X509.h"
 #include "nassl_SSL_SESSION.h"
 #include "nassl_OCSP_RESPONSE.h"
 #include "openssl_utils.h"
@@ -217,7 +219,7 @@ static PyObject* nassl_SSL_write(nassl_SSL_Object *self, PyObject *args)
     return res;
 }
 
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
 static PyObject* nassl_SSL_write_early_data(nassl_SSL_Object *self, PyObject *args)
 {
     int returnValue;
@@ -259,51 +261,6 @@ static PyObject* nassl_SSL_get_max_early_data(nassl_SSL_Object *self, PyObject *
     return Py_BuildValue("I", returnValue);
 }
 
-static PyObject* nassl_SSL_set1_groups(nassl_SSL_Object *self, PyObject *args)
-{
-    int i = 0;
-    PyObject *pyListOfOpensslNids;
-    Py_ssize_t nidsCount = 0;
-    int *listOfNids;
-
-    // Parse the Python list
-    if (!PyArg_ParseTuple(args, "O!", &PyList_Type, &pyListOfOpensslNids))
-    {
-        return NULL;
-    }
-
-    // Extract each NID int from the list
-    nidsCount = PyList_Size(pyListOfOpensslNids);
-    listOfNids = (int *) PyMem_Malloc(nidsCount * sizeof(int));
-    if (listOfNids == NULL)
-    {
-        return PyErr_NoMemory();
-    }
-
-    for (i=0; i<nidsCount; i++)
-    {
-        PyObject *pyNid;
-        int nid;
-
-        pyNid = PyList_GetItem(pyListOfOpensslNids, i);
-        if ((pyNid == NULL) || (!PyLong_Check(pyNid)))
-        {
-            PyMem_Free(listOfNids);
-            return NULL;
-        }
-        nid = PyLong_AsSize_t(pyNid);
-        listOfNids[i] = nid;
-    }
-
-    if (SSL_set1_groups(self->ssl, listOfNids, nidsCount) != 1)
-    {
-        PyMem_Free(listOfNids);
-        return raise_OpenSSL_error();
-    }
-
-    PyMem_Free(listOfNids);
-    Py_RETURN_NONE;
-}
 
 static PyObject *nassl_SSL_get_extms_support(nassl_SSL_Object *self)
 {
@@ -374,7 +331,7 @@ static PyObject* nassl_SSL_get_available_compression_methods(nassl_SSL_Object *s
             return NULL;
         }
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
         methodPyString = PyUnicode_FromString(method->name);
 #else
         methodPyString = PyUnicode_FromString(SSL_COMP_get0_name(method));
@@ -512,7 +469,7 @@ static PyObject* nassl_SSL_get_cipher_list(nassl_SSL_Object *self, PyObject *arg
 // https://github.com/nabla-c0d3/nassl/pull/15
 static const SSL_CIPHER* get_tmp_new_cipher(nassl_SSL_Object *self)
 {
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
     // TODO: Rewrite this without accessing private members (for example, use get_cipher())
     if (self->ssl == NULL || self->ssl->s3 == NULL)
     {
@@ -657,12 +614,27 @@ static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args)
 
 static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args)
 {
-    long sslOption = 0;
-    if (!PyArg_ParseTuple(args, "l", &sslOption))
+    // The type of the options bitmask taken by SSL_set_options() depends on the OpenSSL version:
+    //   * OpenSSL 1.0.2: long (it is a macro wrapping SSL_ctrl())
+    //   * OpenSSL 1.1.1: unsigned long
+    //   * OpenSSL 3.0+ (including 4.0.0): uint64_t, as some options use bits above 31 (eg. SSL_OP_ECH_GREASE is bit 37)
+    // A long is 32 bits on Windows (and 64 bits on Linux and macOS), so we always use a 64-bit unsigned long long
+    // to fit every version. On 1.0.2 and 1.1.1 on Windows, the input gets truncated to 32 bits, which is harmless as
+    // these versions have no options above bit 31.
+    // The updated bitmask returned by SSL_set_options() is not returned, as nothing needs it.
+    unsigned long long sslOption = 0;
+    if (!PyArg_ParseTuple(args, "K", &sslOption))
     {
         return NULL;
     }
-    return Py_BuildValue("I", SSL_set_options(self->ssl, sslOption));
+#ifdef NASSL_OSSL_1_0_2
+    SSL_set_options(self->ssl, (long)sslOption);
+#elif defined(NASSL_OSSL_1_1_1)
+    SSL_set_options(self->ssl, (unsigned long)sslOption);
+#else
+    SSL_set_options(self->ssl, (uint64_t)sslOption);
+#endif
+    Py_RETURN_NONE;
 }
 
 
@@ -739,7 +711,7 @@ static PyObject* nassl_SSL_get_tlsext_status_ocsp_resp(nassl_SSL_Object *self, P
 }
 
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
 static PyObject* nassl_SSL_state_string_long(nassl_SSL_Object *self, PyObject *args)
 {
     // This is only used for fixing SSLv2 connections when connecting to IIS7 (like in the 90s)
@@ -763,7 +735,7 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
         return NULL;
     }
 
-    // We'll return a Python list containing each certificate
+    // We'll return a Python list containing each certificate as a PEM string
     certChainCount = sk_X509_num(certChain);
     certChainPyList = PyList_New(certChainCount);
     if (certChainPyList == NULL)
@@ -773,35 +745,33 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
 
     for (i=0; i<certChainCount; i++)
     {
-        nassl_X509_Object *x509_Object = NULL;
-        // Copy the certificate as the cert chain is freed automatically
-        X509 *cert = X509_dup(sk_X509_value(certChain, i));
+        PyObject* certAsPem;
+        // No copy needed: the cert is only read here, while the chain is still owned by the SSL object
+        X509 *cert = sk_X509_value(certChain, i);
         if (cert == NULL)
         {
             Py_DECREF(certChainPyList);
             PyErr_SetString(PyExc_ValueError, "Could not extract a certificate. Should not happen ?");
             return NULL;
         }
-
-        // Store the cert in an _nassl.X509 object
-        x509_Object = (nassl_X509_Object *)nassl_X509_Type.tp_alloc(&nassl_X509_Type, 0);
-        if (x509_Object == NULL)
+        // Convert the cert to a PEM string
+        certAsPem = generic_print_to_string((int (*)(BIO *, const void *)) &PEM_write_bio_X509, cert);
+        if (certAsPem == NULL)
         {
             Py_DECREF(certChainPyList);
-            return PyErr_NoMemory();
+            return NULL;
         }
-        x509_Object->x509 = cert;
 
-        // Add the X509 object to the final list
-        PyList_SET_ITEM(certChainPyList, i,  (PyObject *)x509_Object);
+        // Add the PEM string to the final list
+        PyList_SET_ITEM(certChainPyList, i, certAsPem);
     }
 
     return certChainPyList;
 }
 
 
-#ifndef LEGACY_OPENSSL
-// SSL_set_ciphersuites() is only available in OpenSSL 1.1.1
+#ifndef NASSL_OSSL_1_0_2
+// SSL_set_ciphersuites() is only available in OpenSSL 1.1.1+
 static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *args)
 {
     char *cipherList;
@@ -819,7 +789,7 @@ static PyObject* nassl_SSL_set_ciphersuites(nassl_SSL_Object *self, PyObject *ar
 }
 
 
-// SSL_set1_sigalgs() is only available in OpenSSL 1.1.1
+// SSL_set1_sigalgs() is only available in OpenSSL 1.1.1+
 static PyObject* nassl_SSL_set1_sigalgs(nassl_SSL_Object *self, PyObject *args)
 {
     int i = 0;
@@ -878,28 +848,6 @@ static PyObject* nassl_get_peer_signature_nid(nassl_SSL_Object *self)
     return PyLong_FromUnsignedLong((long)psig_nid);
 }
 
-
-static PyObject* nassl_SSL_get0_verified_chain(nassl_SSL_Object *self, PyObject *args)
-{
-    STACK_OF(X509) *verifiedCertChain = NULL;
-    PyObject* certChainPyList = NULL;
-
-    // Get the peer's certificate chain
-    verifiedCertChain = SSL_get0_verified_chain(self->ssl); // automatically freed
-    if (verifiedCertChain == NULL)
-    {
-        PyErr_SetString(PyExc_ValueError, "Error getting the peer's verified certificate chain.");
-        return NULL;
-    }
-
-    // We'll return a Python list containing each certificate
-    certChainPyList = stackOfX509ToPyList(verifiedCertChain);
-    if (certChainPyList == NULL)
-    {
-        return NULL;
-    }
-    return certChainPyList;
-}
 #endif
 
 
@@ -921,7 +869,7 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
         // Common variables to store the parameters
         const BIGNUM *p, *g, *pub_key;
 
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
         // Get the DH params from the pkey directly in legacy OpenSSL
         DH *dh = key->pkey.dh;
         p = dh->p;
@@ -1050,9 +998,10 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
             return NULL;
         };
         
-        // Allocate a buffer for the x coordinate
-        size_t x_buf_size = BN_num_bytes(x);
-        unsigned char* x_buf = (unsigned char*) PyMem_Malloc(x_buf_size);
+        // Allocate zeroed buffers of the field size, so coordinates with leading zero bytes keep their full length
+        // Explained in more details at https://github.com/nabla-c0d3/nassl/pull/138
+        size_t x_buf_size = (EC_GROUP_get_degree(ec_group) + 7) / 8;
+        unsigned char* x_buf = (unsigned char*) PyMem_Calloc(x_buf_size, 1);
         if(x_buf == NULL){
             BN_free(y);
             BN_free(x);
@@ -1062,9 +1011,8 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
             return PyErr_NoMemory();
         }
 
-        // Allocate a buffer for the y coordinate
-        size_t y_buf_size = BN_num_bytes(y);
-        unsigned char* y_buf = (unsigned char*) PyMem_Malloc(y_buf_size);
+        size_t y_buf_size = x_buf_size;
+        unsigned char* y_buf = (unsigned char*) PyMem_Calloc(y_buf_size, 1);
         if(y_buf == NULL){
             PyMem_Free(x_buf);
             BN_free(y);
@@ -1075,9 +1023,9 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
             return PyErr_NoMemory();
         }
 
-        // Convert the x and y coords to a byte array
-        x_buf_size = BN_bn2bin(x, x_buf);
-        y_buf_size = BN_bn2bin(y, y_buf);
+        // Convert the x and y coords to big-endian byte arrays, right-aligned in the buffers
+        BN_bn2bin(x, x_buf + x_buf_size - BN_num_bytes(x));
+        BN_bn2bin(y, y_buf + y_buf_size - BN_num_bytes(y));
 
         // Free resources that can be freed according to OpenSSL docs
         BN_free(y);
@@ -1099,7 +1047,7 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
         EVP_PKEY_free(key);
         return return_dict;
     }
-#ifndef LEGACY_OPENSSL
+#ifndef NASSL_OSSL_1_0_2
     else if(key_id == EVP_PKEY_X25519 || key_id == EVP_PKEY_X448){
         
         // If the connection uses X25519 or X448
@@ -1149,6 +1097,102 @@ static PyObject *nassl_SSL_get_dh_info(nassl_SSL_Object *self)
         return NULL;
     }
 }
+
+
+#ifdef NASSL_OSSL_4_0_0
+
+// SSL_set1_groups cannot be used to set groups such as X25519MLKEM768
+// https://github.com/openssl/openssl/issues/27834
+// Hence we also expose SSL_set1_groups_list()
+static PyObject* nassl_SSL_set1_groups_list(nassl_SSL_Object *self, PyObject *args)
+    {
+        char *groupsListAsStr;
+        if (!PyArg_ParseTuple(args, "s", &groupsListAsStr))
+        {
+            return NULL;
+        }
+
+        if (!SSL_set1_groups_list(self->ssl, groupsListAsStr))
+        {
+            return raise_OpenSSL_error();
+        }
+
+        Py_RETURN_NONE;
+    }
+
+
+static PyObject* nassl_SSL_get0_group_name(nassl_SSL_Object *self, PyObject *args)
+    {
+        const char *groupNameString = SSL_get0_group_name(self->ssl);
+        if (groupNameString == NULL)
+        {
+            // SSL_get0_group_name() returns NULL when the negotiated group's name could not be determined
+            Py_RETURN_NONE;
+        }
+        return PyUnicode_FromString(groupNameString);
+    }
+
+
+// Configures the client to attempt ECH (Encrypted Client Hello) using the supplied ECHConfigList
+static PyObject* nassl_SSL_set1_ech_config_list(nassl_SSL_Object *self, PyObject *args)
+    {
+        char *echConfigListBuffer;
+        Py_ssize_t echConfigListSize;
+        // "y#" only accepts bytes-like objects, as the ECHConfigList is binary data
+        if (!PyArg_ParseTuple(args, "y#", &echConfigListBuffer, &echConfigListSize))
+        {
+            return NULL;
+        }
+
+        if (!SSL_set1_ech_config_list(self->ssl, (const uint8_t *)echConfigListBuffer, (size_t)echConfigListSize))
+        {
+            return raise_OpenSSL_error();
+        }
+
+        Py_RETURN_NONE;
+    }
+
+
+// Checks whether ECH succeeded or was rejected during the handshake
+static PyObject* nassl_SSL_ech_get1_status(nassl_SSL_Object *self, PyObject *args)
+    {
+        char *innerSni = NULL;
+        char *outerSni = NULL;
+        int echStatus = SSL_ech_get1_status(self->ssl, &innerSni, &outerSni);
+
+        // The "z" format converts a NULL string to None; if building the tuple fails, it returns NULL with an
+        // exception set
+        PyObject *result = Py_BuildValue("(izz)", echStatus, innerSni, outerSni);
+
+        OPENSSL_free(innerSni);
+        OPENSSL_free(outerSni);
+        return result;
+    }
+
+
+// Retrieves the server's ECH retry configuration to use when ECH failed
+static PyObject* nassl_SSL_ech_get1_retry_config(nassl_SSL_Object *self, PyObject *args)
+    {
+        unsigned char *retryConfig = NULL;
+        size_t retryConfigSize = 0;
+
+        if (!SSL_ech_get1_retry_config(self->ssl, &retryConfig, &retryConfigSize))
+        {
+            return raise_OpenSSL_error();
+        }
+
+        if (retryConfig == NULL)
+        {
+            Py_RETURN_NONE;
+        }
+
+        PyObject *result = PyBytes_FromStringAndSize((const char *)retryConfig, (Py_ssize_t)retryConfigSize);
+        OPENSSL_free(retryConfig);
+        return result;
+    }
+
+#endif
+
 
 static PyMethodDef nassl_SSL_Object_methods[] =
 {
@@ -1222,7 +1266,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
      "OpenSSL's SSL_set_session(). Argument is an _nassl.SSL_SESSION object."
     },
     {"set_options", (PyCFunction)nassl_SSL_set_options, METH_VARARGS,
-     "OpenSSL's SSL_set_options()."
+     "OpenSSL's SSL_set_options(). Returns None."
     },
     {"set_tlsext_status_type", (PyCFunction)nassl_SSL_set_tlsext_status_type, METH_VARARGS,
      "OpenSSL's SSL_set_tlsext_status_type()."
@@ -1230,7 +1274,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_tlsext_status_ocsp_resp", (PyCFunction)nassl_SSL_get_tlsext_status_ocsp_resp, METH_NOARGS,
      "OpenSSL's SSL_get_tlsext_status_ocsp_resp(). Returns an _nassl.OCSP_RESPONSE object."
     },
-#ifdef LEGACY_OPENSSL
+#ifdef NASSL_OSSL_1_0_2
     {"state_string_long", (PyCFunction)nassl_SSL_state_string_long, METH_NOARGS,
      "OpenSSL's SSL_state_string_long()."
     },
@@ -1253,12 +1297,6 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_peer_signature_nid", (PyCFunction)nassl_get_peer_signature_nid, METH_NOARGS,
      "OpenSSL's get_peer_signature_nid(). Returns a digest NID"
     },
-    {"get0_verified_chain", (PyCFunction)nassl_SSL_get0_verified_chain, METH_NOARGS,
-     "OpenSSL's SSL_get0_verified_chain(). Returns an array of _nassl.X509 objects."
-    },
-    {"set1_groups", (PyCFunction)nassl_SSL_set1_groups, METH_VARARGS,
-    "OpenSSL's SSL_set1_groups()"
-    },
     {"get_extms_support", (PyCFunction)nassl_SSL_get_extms_support, METH_NOARGS,
     "OpenSSL's SSL_get_extms_support()."
     },
@@ -1269,6 +1307,24 @@ static PyMethodDef nassl_SSL_Object_methods[] =
     {"get_dh_info", (PyCFunction)nassl_SSL_get_dh_info, METH_NOARGS,
      "Returns Diffie-Hellman / Elliptic curve Diffie-Hellman parameters as a dictionary."
     },
+#ifdef NASSL_OSSL_4_0_0
+
+    {"set1_groups_list", (PyCFunction)nassl_SSL_set1_groups_list, METH_VARARGS,
+     "OpenSSL's SSL_set1_groups_list(). Takes a colon-separated list of group names."
+    },
+    {"get0_group_name", (PyCFunction)nassl_SSL_get0_group_name, METH_NOARGS,
+     "OpenSSL's SSL_get0_group_name(). Returns a string with the negotiated group name."
+    },
+    {"set1_ech_config_list", (PyCFunction)nassl_SSL_set1_ech_config_list, METH_VARARGS,
+     "OpenSSL's SSL_set1_ech_config_list(). Configures the client to attempt ECH using the supplied ECHConfigList bytes."
+    },
+    {"ech_get1_status", (PyCFunction)nassl_SSL_ech_get1_status, METH_NOARGS,
+     "OpenSSL's SSL_ech_get1_status(). Returns a (status, inner_sni, outer_sni) tuple."
+    },
+    {"ech_get1_retry_config", (PyCFunction)nassl_SSL_ech_get1_retry_config, METH_NOARGS,
+     "OpenSSL's SSL_ech_get1_retry_config(). Returns the server's ECHConfigList bytes to retry with, or None."
+    },
+#endif
     {NULL}  // Sentinel
 };
 /*
@@ -1332,6 +1388,4 @@ void module_add_SSL(PyObject* m)
 
     Py_INCREF(&nassl_SSL_Type);
     PyModule_AddObject(m, "SSL", (PyObject *)&nassl_SSL_Type);
-
-    // TODO: Add constants
 }

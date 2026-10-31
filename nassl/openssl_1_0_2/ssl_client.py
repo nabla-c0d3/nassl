@@ -1,33 +1,28 @@
 import socket
 from pathlib import Path
 
-from nassl._nassl import WantReadError, WantX509LookupError
 
-from nassl.ssl_client import (
+from nassl.base_ssl_client import (
     ClientCertificateRequested,
-    OpenSslVersionEnum,
+    TlsVersionEnum,
     OpenSslVerifyEnum,
     OpenSslFileTypeEnum,
     BaseSslClient,
 )
 from typing import List
 from typing import Optional
-import sys
+
+import nassl.openssl_1_0_2._nassl
+from nassl.errors import WantReadError, WantX509LookupError
 
 
-from nassl import _nassl_legacy  # type: ignore
-
-
-class LegacySslClient(BaseSslClient):
-    """An insecure SSL client with additional debug methods that no one should ever use (insecure renegotiation, etc.)."""
-
-    # The legacy client uses the legacy OpenSSL
-    _NASSL_MODULE = _nassl_legacy
+class SslClient_OpenSSL_1_0_2(BaseSslClient):
+    _NASSL_MODULE = nassl.openssl_1_0_2._nassl
 
     def __init__(
         self,
         underlying_socket: Optional[socket.socket] = None,
-        ssl_version: OpenSslVersionEnum = OpenSslVersionEnum.SSLV23,
+        tls_version: TlsVersionEnum = TlsVersionEnum.TLS_1_2,
         ssl_verify: OpenSslVerifyEnum = OpenSslVerifyEnum.PEER,
         ssl_verify_locations: Optional[Path] = None,
         client_certificate_chain: Optional[Path] = None,
@@ -38,7 +33,7 @@ class LegacySslClient(BaseSslClient):
     ) -> None:
         super().__init__(
             underlying_socket,
-            ssl_version,
+            tls_version,
             ssl_verify,
             ssl_verify_locations,
             client_certificate_chain,
@@ -51,7 +46,7 @@ class LegacySslClient(BaseSslClient):
         # Specific servers do not reply to a client hello that is bigger than 255 bytes
         # See http://rt.openssl.org/Ticket/Display.html?id=2771&user=guest&pass=guest
         # So we make the default cipher list smaller (to make the client hello smaller)
-        if ssl_version != OpenSslVersionEnum.SSLV2:  # This makes SSLv2 fail
+        if tls_version != TlsVersionEnum.SSL_2_0:  # This makes SSLv2 fail
             self._ssl.set_cipher_list("HIGH:-aNULL:-eNULL:-3DES:-SRP:-PSK:-CAMELLIA")
         else:
             # Handshake workaround for SSL2 + IIS 7
@@ -67,7 +62,7 @@ class LegacySslClient(BaseSslClient):
     @staticmethod
     def get_available_compression_methods() -> List[str]:
         """Returns the list of SSL compression methods supported by SslClient."""
-        return _nassl_legacy.SSL.get_available_compression_methods()
+        return nassl.openssl_1_0_2._nassl.SSL.get_available_compression_methods()
 
     def do_renegotiate(self) -> None:
         """Initiate an SSL renegotiation."""
@@ -111,18 +106,10 @@ class LegacySslClient(BaseSslClient):
                         # response, and then send the data packet
                         # if '\x02' in handshake_data_out[2]:  # Make sure we're looking at the CMK message
                         message_type = handshake_data_out[2]
-                        IS_PYTHON_2 = sys.version_info < (3, 0)
-                        if IS_PYTHON_2:
-                            message_type = ord(message_type)
-
                         if message_type == 2:  # Make sure we're looking at the CMK message
                             # cmk_size = handshake_data_out[0:2]
-                            if IS_PYTHON_2:
-                                first_byte = ord(handshake_data_out[0])
-                                second_byte = ord(handshake_data_out[1])
-                            else:
-                                first_byte = int(handshake_data_out[0])
-                                second_byte = int(handshake_data_out[1])
+                            first_byte = int(handshake_data_out[0])
+                            second_byte = int(handshake_data_out[1])
                             first_byte = (first_byte & 0x7F) << 8
                             size = first_byte + second_byte
                             # Manually split the two records to force them to be sent separately

@@ -1,12 +1,11 @@
 #!/bin/bash
 
-# Python 3.9+ arm64 is required
-python -m pip install "cibuildwheel>=3.2.1,<3.3"
+python -m pip install "cibuildwheel>=4.3.1,<4.4"
 
 export CIBW_ARCHS_MACOS="arm64"
 export CIBW_BEFORE_ALL='python -m pip install invoke && invoke build.deps'
-export CIBW_BEFORE_BUILD='python -m pip install invoke && invoke build.nassl'
-export CIBW_BUILD='cp310-* cp311-* cp312-* cp313-* cp314-*'
+export CIBW_BEFORE_BUILD='python -m pip install invoke setuptools && invoke build.nassl'
+export CIBW_BUILD='cp311-* cp312-* cp313-* cp314-* cp315-*'
 export CIBW_TEST_COMMAND='python -m pytest {project}/tests'
 export CIBW_TEST_REQUIRES="pytest"
 

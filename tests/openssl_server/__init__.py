@@ -11,9 +11,10 @@ from threading import Thread
 from typing import IO, Any, Optional, List
 
 from build_config import (
-    ModernOpenSslBuildConfig,
-    LegacyOpenSslBuildConfig,
+    OpenSsl_1_1_1_BuildConfig,
+    OpenSsl_1_0_2_BuildConfig,
     CURRENT_PLATFORM,
+    OpenSsl_4_0_0_BuildConfig,
     SupportedPlatformEnum,
 )
 
@@ -29,7 +30,7 @@ class ClientAuthConfigEnum(Enum):
     REQUIRED = 3
 
 
-class _OpenSslServerIOManager:
+class _S_Server_IOManager:
     """Thread to log all output from s_server and reply to incoming connections."""
 
     def __init__(self, s_server_stdout: IO[bytes], s_server_stdin: IO[bytes]) -> None:
@@ -50,7 +51,7 @@ class _OpenSslServerIOManager:
                         self.s_server_stdin.write(b"\n")
                         self.s_server_stdin.flush()
 
-                    if _OpenSslServer.HELLO_MSG in s_server_out:
+                    if _S_Server.HELLO_MSG in s_server_out:
                         # When receiving the special message, we want s_server to reply
                         self.s_server_stdin.write(b"Hey there")
                         self.s_server_stdin.flush()
@@ -69,7 +70,7 @@ class _OpenSslServerIOManager:
         # self.thread.join()
 
 
-class _OpenSslServer(ABC):
+class _S_Server(ABC):
     """A wrapper around OpenSSL's s_server CLI."""
 
     # On Windows with modern OpenSSL, trying to use ports below 10k will fail for some reason
@@ -126,7 +127,7 @@ class _OpenSslServer(ABC):
         # Retrieve one of the available local ports; set.pop() is thread safe
         self.port = self._AVAILABLE_LOCAL_PORTS.pop()
         self._process: subprocess.Popen | None = None
-        self._server_io_manager: _OpenSslServerIOManager | None = None
+        self._server_io_manager: _S_Server_IOManager | None = None
         final_cipher = cipher if cipher else "ALL:COMPLEMENTOFALL"
 
         self._command_line = self._S_SERVER_CMD.format(
@@ -139,7 +140,7 @@ class _OpenSslServer(ABC):
             cipher=final_cipher,
         )
 
-    def __enter__(self) -> "_OpenSslServer":
+    def __enter__(self) -> "_S_Server":
         _logger.warning(f'Running s_server with command: "{self._command_line}"')
         args: str | list[str]
         if CURRENT_PLATFORM in [
@@ -158,7 +159,7 @@ class _OpenSslServer(ABC):
             )
             assert self._process.stdin
             assert self._process.stdout
-            self._server_io_manager = _OpenSslServerIOManager(self._process.stdout, self._process.stdin)
+            self._server_io_manager = _S_Server_IOManager(self._process.stdout, self._process.stdin)
 
             # Block until s_server is ready to accept requests
             attempts_count = 0
@@ -194,9 +195,7 @@ class _OpenSslServer(ABC):
         self._AVAILABLE_LOCAL_PORTS.add(self.port)
 
 
-class LegacyOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.0.0e s_server binary."""
-
+class S_Server_OpenSSL_1_0_2(_S_Server):
     def __init__(
         self,
         client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
@@ -213,7 +212,7 @@ class LegacyOpenSslServer(_OpenSslServer):
     @classmethod
     def get_openssl_path(cls) -> Path:
         assert CURRENT_PLATFORM
-        return LegacyOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+        return OpenSsl_1_0_2_BuildConfig(CURRENT_PLATFORM).exe_path
 
     @classmethod
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
@@ -225,13 +224,11 @@ class LegacyOpenSslServer(_OpenSslServer):
         return options[client_auth_config]
 
 
-class ModernOpenSslServer(_OpenSslServer):
-    """A wrapper around the OpenSSL 1.1.1 s_server binary."""
-
+class S_Server_OpenSSL_1_1_1(_S_Server):
     @classmethod
     def get_openssl_path(cls) -> Path:
         assert CURRENT_PLATFORM
-        return ModernOpenSslBuildConfig(CURRENT_PLATFORM).exe_path
+        return OpenSsl_1_1_1_BuildConfig(CURRENT_PLATFORM).exe_path
 
     @classmethod
     def get_verify_argument(cls, client_auth_config: ClientAuthConfigEnum) -> str:
@@ -264,3 +261,26 @@ class ModernOpenSslServer(_OpenSslServer):
             extra_args += ["-early_data", f"-max_early_data {max_early_data}"]
 
         super().__init__(client_auth_config, extra_args, cipher)
+
+
+class S_Server_OpenSSL_4_0_0(S_Server_OpenSSL_1_1_1):
+    # Generated using: openssl ech -public_name localhost -out ech-config.pem
+    ECH_CONFIG_PATH = _S_Server._ROOT_PATH / "ech-config.pem"
+
+    @classmethod
+    def get_openssl_path(cls) -> Path:
+        assert CURRENT_PLATFORM
+        return OpenSsl_4_0_0_BuildConfig(CURRENT_PLATFORM).exe_path
+
+    def __init__(
+        self,
+        client_auth_config: ClientAuthConfigEnum = ClientAuthConfigEnum.DISABLED,
+        max_early_data: Optional[int] = None,
+        cipher: Optional[str] = None,
+        prefer_server_order: bool = False,
+        groups: Optional[str] = None,
+        enable_ech: bool = False,
+    ) -> None:
+        super().__init__(client_auth_config, max_early_data, cipher, prefer_server_order, groups)
+        if enable_ech:
+            self._command_line += f" -ech_key {self.ECH_CONFIG_PATH}"

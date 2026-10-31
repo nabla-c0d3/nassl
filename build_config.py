@@ -242,7 +242,7 @@ class OpenSslBuildConfig(BuildConfig, ABC):
             ctx.run("make")  # Only build the libs as it is faster - not available on Windows
 
 
-class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
+class OpenSsl_1_0_2_BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
         return "OpenSSL_1_0_2e"
@@ -306,7 +306,7 @@ class LegacyOpenSslBuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
-class ModernOpenSslBuildConfig(OpenSslBuildConfig):
+class OpenSsl_1_1_1_BuildConfig(OpenSslBuildConfig):
     @property
     def _openssl_git_tag(self) -> str:
         return "OpenSSL_1_1_1w"
@@ -362,14 +362,95 @@ class ModernOpenSslBuildConfig(OpenSslBuildConfig):
             return self.src_path / "apps" / "openssl"
 
 
+class OpenSsl_4_0_0_BuildConfig(OpenSslBuildConfig):
+    @property
+    def _openssl_git_tag(self) -> str:
+        return "openssl-4.0.0"
+
+    _OPENSSL_CONF_CMD = (
+        "perl Configure {target} zlib no-zlib-dynamic no-shared enable-weak-ssl-ciphers enable-rc5 enable-md2 "
+        "enable-tls-deprecated-ec enable-ec_explicit_curves  "
+        "--with-zlib-include={zlib_include_path} "
+        "--with-zlib-lib={zlib_lib_path} {extra_args} no-async"
+    )
+
+    def fetch_source(self) -> None:
+        super().fetch_source()
+        # Workaround for an OpenSSL bug: this perlasm script does not close its pipe to arm-xlate.pl, so make can
+        # compile the .S file before it is written (seen on manylinux2014 aarch64)
+        sve2_script_path = self.src_path / "crypto" / "poly1305" / "asm" / "poly1305-armv9-sve2.pl"
+        sve2_script = sve2_script_path.read_text()
+        buggy_line = "\n STDOUT or die"
+        if buggy_line not in sve2_script:
+            raise RuntimeError(f"Could not apply the workaround to {sve2_script_path}; remove it if OpenSSL fixed it")
+        sve2_script_path.write_text(sve2_script.replace(buggy_line, "\nclose STDOUT or die"))
+
+    def _run_build_steps(self, ctx: "Context") -> None:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            ctx.run("nmake clean", warn=True)
+            ctx.run("nmake")
+        else:
+            return super()._run_build_steps(ctx)
+
+    @property
+    def libcrypto_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "libcrypto.lib"
+        else:
+            return self.src_path / "libcrypto.a"
+
+    @property
+    def libssl_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "libssl.lib"
+        else:
+            return self.src_path / "libssl.a"
+
+    @property
+    def include_path(self) -> Path:
+        return self.src_path / "include"
+
+    @property
+    def exe_path(self) -> Path:
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return self.src_path / "apps" / "openssl.exe"
+        else:
+            return self.src_path / "apps" / "openssl"
+
+
 class ZlibBuildConfig(BuildConfig):
     @property
     def src_tar_gz_url(self) -> str:
-        return "https://www.zlib.net/fossils/zlib-1.2.13.tar.gz"
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            # Zlib 1.3.2 and 1.3.1 do not seem to build on Windows
+            return "https://www.zlib.net/fossils/zlib-1.3.tar.gz"
+        else:
+            return "https://www.zlib.net/fossils/zlib-1.3.2.tar.gz"
 
     @property
     def src_path(self) -> Path:
-        return _DEPS_PATH / "zlib-1.2.13"
+        if self.platform in [
+            SupportedPlatformEnum.WINDOWS_32,
+            SupportedPlatformEnum.WINDOWS_64,
+        ]:
+            return _DEPS_PATH / "zlib-1.3"
+        else:
+            return _DEPS_PATH / "zlib-1.3.2"
 
     def build(self, ctx: "Context") -> None:
         if self.platform in [
@@ -381,10 +462,14 @@ class ZlibBuildConfig(BuildConfig):
             else:
                 build_platform = "x64"
 
-            # Assuming default path for Visual Studio 2022
+            # Assuming default paths for Visual Studio 2022
             msbuild_path = Path(
                 "C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe"
             )
+            if not msbuild_path.exists():
+                msbuild_path = Path(
+                    "C:\\Program Files (x86)\\Microsoft Visual Studio\\2022\\BuildTools\\MSBuild\\Current\\Bin\\MSBuild.exe"
+                )
             assert msbuild_path.exists()
 
             vs_contrib_path = self.src_path / "contrib" / "vstudio"
