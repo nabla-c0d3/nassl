@@ -14,7 +14,9 @@ can_only_run_on_linux_64 = pytest.mark.skipif(
 
 class TestBuildConfig:
     @can_only_run_on_linux_64
-    @pytest.mark.parametrize("nassl_module", [nassl.openssl_1_0_2._nassl, nassl.openssl_1_1_1._nassl, nassl.openssl_4_0_0._nassl])
+    @pytest.mark.parametrize(
+        "nassl_module", [nassl.openssl_1_0_2._nassl, nassl.openssl_1_1_1._nassl, nassl.openssl_4_0_0._nassl]
+    )
     def test_internal_openssl_symbols_are_hidden(self, nassl_module: ModuleType) -> None:
         # Given the compiled _nassl module
         # When looking at the module's shared library's symbol table
