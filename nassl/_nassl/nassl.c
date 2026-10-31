@@ -48,9 +48,13 @@ static struct PyModuleDef moduledef =
         PyModuleDef_HEAD_INIT,
 
 #ifdef NASSL_OSSL_1_0_2
-        "openssl_1_0_2._nassl",
+        "nassl.openssl_1_0_2._nassl",
+#elif defined(NASSL_OSSL_1_1_1)
+        "nassl.openssl_1_1_1._nassl",
+#elif defined(NASSL_OSSL_4_0_0)
+        "nassl.openssl_4_0_0._nassl",
 #else
-        "openssl_1_1_1._nassl",
+#error "One of NASSL_OSSL_1_0_2, NASSL_OSSL_1_1_1 or NASSL_OSSL_4_0_0 must be defined"
 #endif
 
         NULL,

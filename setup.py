@@ -1,6 +1,7 @@
 import copy
 import sys
 from pathlib import Path
+from typing import Any
 
 from build_config import (
     OpenSsl_4_0_0_BuildConfig,
@@ -15,20 +16,20 @@ from setuptools import setup, Extension, find_packages
 
 SHOULD_BUILD_FOR_DEBUG = False
 
+if CURRENT_PLATFORM is None:
+    raise RuntimeError("Unsupported platform: cannot build nassl")
 
-NASSL_SETUP = {
+
+NASSL_SETUP: dict[str, Any] = {
     "name": "nassl",
     "version": __version__,
     "packages": find_packages(exclude=["docs", "tests"]),
-    "package_data": {"nassl": ["py.typed", "_nassl.pyi", "_nassl_legacy.pyi"]},
-    "py_modules": [
-        "nassl.__init__",
-        "nassl.ssl_client",
-        "nassl.ephemeral_key_info",
-        "nassl.legacy_ssl_client",
-        "nassl.ocsp_response",
-        "nassl.cert_chain_verifier",
-    ],
+    "package_data": {
+        "nassl": ["py.typed"],
+        "nassl.openssl_1_0_2": ["_nassl.pyi"],
+        "nassl.openssl_1_1_1": ["_nassl.pyi"],
+        "nassl.openssl_4_0_0": ["_nassl.pyi"],
+    },
     "description": "Experimental OpenSSL wrapper for Python 3.11+ and SSLyze.",
     "author": __author__,
     "author_email": "nabla.c0d3@gmail.com",
@@ -58,7 +59,7 @@ NASSL_SETUP = {
 #   * one wrapping OpenSSL 1.1.1
 #   * one wrapping OpenSSL 4.0.0
 # First setup the common settings for all extensions
-BASE_NASSL_EXT_SETUP = {
+BASE_NASSL_EXT_SETUP: dict[str, Any] = {
     "extra_compile_args": [],
     "extra_link_args": [],
     "sources": [
@@ -133,6 +134,7 @@ openssl_1_1_1_config = OpenSsl_1_1_1_BuildConfig(CURRENT_PLATFORM)
 
 NASSL_OSSL_1_1_1_EXT_SETUP = copy.deepcopy(BASE_NASSL_EXT_SETUP)
 NASSL_OSSL_1_1_1_EXT_SETUP["name"] = "nassl.openssl_1_1_1._nassl"
+NASSL_OSSL_1_1_1_EXT_SETUP["define_macros"] = [("NASSL_OSSL_1_1_1", "1")]
 NASSL_OSSL_1_1_1_EXT_SETUP.update(
     {
         "include_dirs": [str(openssl_1_1_1_config.include_path)],
