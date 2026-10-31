@@ -11,6 +11,7 @@ from typing import Protocol
 
 
 from typing import Optional
+from nassl.ocsp_response import OcspResponseProtocol
 from nassl.tls_version_enum import TlsVersionEnum
 from nassl.ephemeral_key_info import (
     OpenSslEvpPkeyEnum,
@@ -379,7 +380,7 @@ class BaseSslClient(ABC):
         """Enable the OCSP Stapling extension."""
         self._ssl.set_tlsext_status_type(self._TLSEXT_STATUSTYPE_ocsp)
 
-    def get_tlsext_status_ocsp_resp(self) -> Optional["NasslModuleProtocol.OCSP_RESPONSE"]:
+    def get_tlsext_status_ocsp_resp(self) -> Optional[OcspResponseProtocol]:
         """Retrieve the server's OCSP response.
 
         Will return None if OCSP Stapling was not enabled before the handshake or if the server did not return
