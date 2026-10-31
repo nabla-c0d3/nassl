@@ -8,7 +8,7 @@
 #include "python_utils.h"
 
 
-// The values here must match OpenSslVersionEnum
+// The values here must match TlsVersionEnum
 typedef enum
 {
 	unused,
