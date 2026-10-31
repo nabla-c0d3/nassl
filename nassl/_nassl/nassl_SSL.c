@@ -1297,7 +1297,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
 #ifdef NASSL_OSSL_4_0_0
 
     {"set1_groups_list", (PyCFunction)nassl_SSL_set1_groups_list, METH_VARARGS,
-     "OpenSSL's SSL_set1_groups_list(). Returns a string with the negotiated group name."
+     "OpenSSL's SSL_set1_groups_list(). Takes a colon-separated list of group names."
     },
     {"get0_group_name", (PyCFunction)nassl_SSL_get0_group_name, METH_NOARGS,
      "OpenSSL's SSL_get0_group_name(). Returns a string with the negotiated group name."
