@@ -117,7 +117,9 @@ static int convertProtoVersion(int sslVersion)
         	PyErr_SetString(PyExc_ValueError, "SSL v2 is not supported by this version of OpenSSL");
 			return -1;
 		case sslv3:
-#ifdef NASSL_OSSL_4_0_0
+// OpenSSL 4.0.0 removed SSL v3 entirely; OpenSSL 1.1.1 is built without it (the default), in which case
+// SSL_CTX_set_min/max_proto_version() would still accept SSL3_VERSION and the handshake would fail later
+#if defined(NASSL_OSSL_4_0_0) || defined(NASSL_OSSL_1_1_1)
         	PyErr_SetString(PyExc_ValueError, "SSL v3 is not supported by this version of OpenSSL");
 			return -1;
 #else

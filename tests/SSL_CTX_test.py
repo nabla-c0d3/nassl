@@ -211,3 +211,21 @@ Aa90JFIAvU4MWQCKNoWp
             test_ssl_ctx.check_private_key()
 
     # TODO: add get_ca_list tests
+
+
+@pytest.mark.parametrize("nassl_module", [nassl.openssl_1_1_1._nassl, nassl.openssl_4_0_0._nassl])
+class TestSSL_CTX_ProtoVersion:
+    def test_set_proto_version(self, nassl_module: ModuleType) -> None:
+        test_ssl_ctx = nassl_module.SSL_CTX()
+        test_ssl_ctx.set_min_proto_version(TlsVersionEnum.TLS_1_0.value)
+        test_ssl_ctx.set_max_proto_version(TlsVersionEnum.TLS_1_3.value)
+
+    @pytest.mark.parametrize("tls_version", [TlsVersionEnum.SSL_2_0, TlsVersionEnum.SSL_3_0])
+    def test_set_proto_version_not_compiled_in(self, nassl_module: ModuleType, tls_version: TlsVersionEnum) -> None:
+        # SSL 2.0 and 3.0 are not available in these builds of OpenSSL, so an error is raised right away instead of
+        # the handshake failing later with "no protocols available"
+        test_ssl_ctx = nassl_module.SSL_CTX()
+        with pytest.raises(ValueError, match="not supported by this version of OpenSSL"):
+            test_ssl_ctx.set_min_proto_version(tls_version.value)
+        with pytest.raises(ValueError, match="not supported by this version of OpenSSL"):
+            test_ssl_ctx.set_max_proto_version(tls_version.value)
