@@ -614,21 +614,27 @@ static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args)
 
 static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args)
 {
-    // The type of the options bitmask taken and returned by SSL_set_options() depends on the OpenSSL version:
+    // The type of the options bitmask taken by SSL_set_options() depends on the OpenSSL version:
     //   * OpenSSL 1.0.2: long (it is a macro wrapping SSL_ctrl())
     //   * OpenSSL 1.1.1: unsigned long
     //   * OpenSSL 3.0+ (including 4.0.0): uint64_t, as some options use bits above 31 (eg. SSL_OP_ECH_GREASE is bit 37)
     // A long is 32 bits on Windows (and 64 bits on Linux and macOS), so we always use a 64-bit unsigned long long
     // to fit every version. On 1.0.2 and 1.1.1 on Windows, the input gets truncated to 32 bits, which is harmless as
     // these versions have no options above bit 31.
+    // The updated bitmask returned by SSL_set_options() is not returned, as nothing needs it.
     unsigned long long sslOption = 0;
     if (!PyArg_ParseTuple(args, "K", &sslOption))
     {
         return NULL;
     }
-    // The cast is required: the "K" format reads an unsigned long long, so passing a 32-bit long would make
-    // Py_BuildValue() read garbage
-    return Py_BuildValue("K", (unsigned long long)SSL_set_options(self->ssl, (uint64_t)sslOption));
+#ifdef NASSL_OSSL_1_0_2
+    SSL_set_options(self->ssl, (long)sslOption);
+#elif defined(NASSL_OSSL_1_1_1)
+    SSL_set_options(self->ssl, (unsigned long)sslOption);
+#else
+    SSL_set_options(self->ssl, (uint64_t)sslOption);
+#endif
+    Py_RETURN_NONE;
 }
 
 
@@ -1260,7 +1266,7 @@ static PyMethodDef nassl_SSL_Object_methods[] =
      "OpenSSL's SSL_set_session(). Argument is an _nassl.SSL_SESSION object."
     },
     {"set_options", (PyCFunction)nassl_SSL_set_options, METH_VARARGS,
-     "OpenSSL's SSL_set_options()."
+     "OpenSSL's SSL_set_options(). Returns None."
     },
     {"set_tlsext_status_type", (PyCFunction)nassl_SSL_set_tlsext_status_type, METH_VARARGS,
      "OpenSSL's SSL_set_tlsext_status_type()."
