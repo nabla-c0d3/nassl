@@ -733,8 +733,8 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
     for (i=0; i<certChainCount; i++)
     {
         PyObject* certAsPem;
-        // Copy the certificate as the cert chain is freed automatically
-        X509 *cert = X509_dup(sk_X509_value(certChain, i));
+        // No copy needed: the cert is only read here, while the chain is still owned by the SSL object
+        X509 *cert = sk_X509_value(certChain, i);
         if (cert == NULL)
         {
             Py_DECREF(certChainPyList);
@@ -743,6 +743,11 @@ static PyObject* nassl_SSL_get_peer_cert_chain(nassl_SSL_Object *self, PyObject 
         }
         // Convert the cert to a PEM string
         certAsPem = generic_print_to_string((int (*)(BIO *, const void *)) &PEM_write_bio_X509, cert);
+        if (certAsPem == NULL)
+        {
+            Py_DECREF(certChainPyList);
+            return NULL;
+        }
 
         // Add the PEM string to the final list
         PyList_SET_ITEM(certChainPyList, i, certAsPem);
