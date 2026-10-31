@@ -18,7 +18,7 @@ class SslClient_OpenSSL_4_0_0(SslClient_OpenSSL_1_1_1):
         if group_name_as_str is None:
             # Happens with ffdhe groups and TLS 1.2; bug in OpenSSL
             raise ValueError("Could not determine the group's name: OpenSSL returned NULL")
-        return OpenSslGroupNameEnum[self._ssl.get0_group_name()]
+        return OpenSslGroupNameEnum[group_name_as_str]
 
     def set_groups_list(self, all_groups: list[OpenSslGroupNameEnum]) -> None:
         """Set the groups to be used in the handshake.
