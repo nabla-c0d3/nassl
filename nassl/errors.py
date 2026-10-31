@@ -6,13 +6,13 @@ class SslError(OpenSSLError):
     pass
 
 
-class WantReadError(OpenSSLError):
+class WantReadError(SslError):
     pass
 
 
-class WantWriteError(OpenSSLError):
+class WantWriteError(SslError):
     pass
 
 
-class WantX509LookupError(OpenSSLError):
+class WantX509LookupError(SslError):
     pass
