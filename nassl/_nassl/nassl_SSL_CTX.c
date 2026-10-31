@@ -117,7 +117,12 @@ static int convertProtoVersion(int sslVersion)
         	PyErr_SetString(PyExc_ValueError, "SSL v2 is not supported by this version of OpenSSL");
 			return -1;
 		case sslv3:
+#ifdef NASSL_OSSL_4_0_0
+        	PyErr_SetString(PyExc_ValueError, "SSL v3 is not supported by this version of OpenSSL");
+			return -1;
+#else
             return SSL3_VERSION;
+#endif
 		case tlsv1:
             return TLS1_VERSION;
 		case tlsv1_1:
