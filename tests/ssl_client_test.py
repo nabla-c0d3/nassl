@@ -691,6 +691,9 @@ class Test_SslClient_OpenSSL_4_0_0:
             # The group specified in the client is the one that was used
             assert ssl_client.get_group_name() == configured_group
 
+            # And no ephemeral key is returned, as the server sends an encapsulated secret instead of a public key
+            assert ssl_client.get_ephemeral_key() is None
+
     def test_set_groups_ffdhe_tls_1_3(self) -> None:
         # Given a server that only supports one of the ffdhe groups with TLS 1.3
         configured_group = OpenSslGroupNameEnum.ffdhe3072

@@ -314,6 +314,13 @@ class BaseSslClient(ABC):
         return self._ssl.get_cipher_bits()
 
     def get_ephemeral_key(self) -> Optional[EphemeralKeyInfo]:
+        """Get the server's ephemeral (EC)DH public key used for the key exchange.
+
+        Returns None if no ephemeral key was used or if it could not be retrieved. This includes connections that used
+        a post-quantum group (ML-KEM, or a hybrid such as X25519MLKEM768): with these KEM-based groups, the server
+        does not send a public key but an encapsulated secret (ciphertext). With the OpenSSL 4.0.0 client, use
+        get_group_name() to find out which group was negotiated.
+        """
         try:
             dh_info = self._ssl.get_dh_info()
         except TypeError:
