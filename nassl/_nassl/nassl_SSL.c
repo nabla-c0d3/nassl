@@ -1125,7 +1125,8 @@ static PyObject* nassl_SSL_set1_ech_config_list(nassl_SSL_Object *self, PyObject
     {
         char *echConfigListBuffer;
         Py_ssize_t echConfigListSize;
-        if (!PyArg_ParseTuple(args, "s#", &echConfigListBuffer, &echConfigListSize))
+        // "y#" only accepts bytes-like objects, as the ECHConfigList is binary data
+        if (!PyArg_ParseTuple(args, "y#", &echConfigListBuffer, &echConfigListSize))
         {
             return NULL;
         }
