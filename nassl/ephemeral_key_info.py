@@ -1,6 +1,6 @@
 from abc import ABC
 
-from enum import Enum, IntEnum
+from enum import IntEnum, StrEnum
 from dataclasses import dataclass, field
 from typing import Dict
 
@@ -31,7 +31,7 @@ _OPENSSL_EVP_PKEY_TO_NAME_MAPPING: Dict[OpenSslEvpPkeyEnum, str] = {
 }
 
 
-class OpenSslGroupTypeEnum(str, Enum):
+class OpenSslGroupTypeEnum(StrEnum):
     """Categories of OpenSslGroupNameEnum."""
 
     ELLIPTIC_CURVE = "elliptic_curve"
@@ -40,7 +40,7 @@ class OpenSslGroupTypeEnum(str, Enum):
     POST_QUANTUM_HYBRID = "post_quantum_hybrid"
 
 
-class OpenSslGroupNameEnum(str, Enum):
+class OpenSslGroupNameEnum(StrEnum):
     """TLS group names, which can be used with SslClient_OpenSSL_4_0_0.set_groups_list()."""
 
     # RFC8422
