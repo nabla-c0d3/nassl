@@ -1146,23 +1146,12 @@ static PyObject* nassl_SSL_ech_get1_status(nassl_SSL_Object *self, PyObject *arg
         char *outerSni = NULL;
         int echStatus = SSL_ech_get1_status(self->ssl, &innerSni, &outerSni);
 
-        PyObject *innerSni_PyObject = innerSni != NULL ? PyUnicode_FromString(innerSni) : Py_None;
-        if (innerSni_PyObject == Py_None)
-        {
-            Py_INCREF(Py_None);
-        }
-        PyObject *outerSni_PyObject = outerSni != NULL ? PyUnicode_FromString(outerSni) : Py_None;
-        if (outerSni_PyObject == Py_None)
-        {
-            Py_INCREF(Py_None);
-        }
+        // The "z" format converts a NULL string to None; if building the tuple fails, it returns NULL with an
+        // exception set
+        PyObject *result = Py_BuildValue("(izz)", echStatus, innerSni, outerSni);
 
         OPENSSL_free(innerSni);
         OPENSSL_free(outerSni);
-
-        PyObject *result = Py_BuildValue("(iOO)", echStatus, innerSni_PyObject, outerSni_PyObject);
-        Py_DECREF(innerSni_PyObject);
-        Py_DECREF(outerSni_PyObject);
         return result;
     }
 
