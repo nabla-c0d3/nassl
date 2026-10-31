@@ -380,7 +380,10 @@ class OpenSsl_4_0_0_BuildConfig(OpenSslBuildConfig):
         # compile the .S file before it is written (seen on manylinux2014 aarch64)
         sve2_script_path = self.src_path / "crypto" / "poly1305" / "asm" / "poly1305-armv9-sve2.pl"
         sve2_script = sve2_script_path.read_text()
-        sve2_script_path.write_text(sve2_script.replace("\n STDOUT or die", "\nclose STDOUT or die"))
+        buggy_line = "\n STDOUT or die"
+        if buggy_line not in sve2_script:
+            raise RuntimeError(f"Could not apply the workaround to {sve2_script_path}; remove it if OpenSSL fixed it")
+        sve2_script_path.write_text(sve2_script.replace(buggy_line, "\nclose STDOUT or die"))
 
     def _run_build_steps(self, ctx: "Context") -> None:
         if self.platform in [
