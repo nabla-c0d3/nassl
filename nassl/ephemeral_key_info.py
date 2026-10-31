@@ -251,6 +251,8 @@ assert len(_GROUP_NAME_TO_TYPE_MAPPING) == len(OpenSslGroupNameEnum), "Every gro
 
 
 # This is only needed to retrieve the name of the curve in EcDhEphemeralKeyInfo
+# The TLS 1.3 brainpool groups (brainpoolP256r1tls13, etc.) use the same NIDs as their TLS 1.2 counterparts, so they
+# are reported as brainpoolP256r1, etc.
 _OPENSSL_NID_TO_GROUP_ENUM = {
     721: OpenSslGroupNameEnum.sect163k1,
     722: OpenSslGroupNameEnum.sect163r1,
@@ -310,7 +312,7 @@ class EcDhEphemeralKeyInfo(EphemeralKeyInfo):
 
     def __post_init__(self) -> None:
         super().__post_init__()
-        curve_name = _OPENSSL_NID_TO_GROUP_ENUM.get(self.curve, f"unknown-curve-with-openssl-nid-{self.curve}")
+        curve_name = _OPENSSL_NID_TO_GROUP_ENUM.get(self.curve, f"unknown-curve-with-openssl-id-{self.curve}")
         # Required because of frozen=True; https://docs.python.org/3/library/dataclasses.html#frozen-instances
         object.__setattr__(self, "curve_name", curve_name)
 
