@@ -340,9 +340,7 @@ class BaseSslClient(ABC):
         elif parsed_dh_type == OpenSslEvpPkeyEnum.EC:
             return NistEcDhKeyExchangeInfo(**dh_info, type=parsed_dh_type)
         elif parsed_dh_type in [OpenSslEvpPkeyEnum.X25519, OpenSslEvpPkeyEnum.X448]:
-            # Parse the curve as an IntEnum
-            curve_nid = dh_info.pop("curve")
-            return EcDhEphemeralKeyInfo(**dh_info, type=parsed_dh_type, curve=curve_nid)
+            return EcDhEphemeralKeyInfo(**dh_info, type=parsed_dh_type)
         else:
             return None
 
