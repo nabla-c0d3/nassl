@@ -614,14 +614,21 @@ static PyObject* nassl_SSL_set_session(nassl_SSL_Object *self, PyObject *args)
 
 static PyObject* nassl_SSL_set_options(nassl_SSL_Object *self, PyObject *args)
 {
-    // SSL_set_options() takes/returns a uint64_t bitmask (eg. SSL_OP_ECH_GREASE is bit 37),
-    // which does not fit in a C "long" on platforms where long is 32-bit (eg. Windows)
+    // The type of the options bitmask taken and returned by SSL_set_options() depends on the OpenSSL version:
+    //   * OpenSSL 1.0.2: long (it is a macro wrapping SSL_ctrl())
+    //   * OpenSSL 1.1.1: unsigned long
+    //   * OpenSSL 3.0+ (including 4.0.0): uint64_t, as some options use bits above 31 (eg. SSL_OP_ECH_GREASE is bit 37)
+    // A long is 32 bits on Windows (and 64 bits on Linux and macOS), so we always use a 64-bit unsigned long long
+    // to fit every version. On 1.0.2 and 1.1.1 on Windows, the input gets truncated to 32 bits, which is harmless as
+    // these versions have no options above bit 31.
     unsigned long long sslOption = 0;
     if (!PyArg_ParseTuple(args, "K", &sslOption))
     {
         return NULL;
     }
-    return Py_BuildValue("K", SSL_set_options(self->ssl, (uint64_t)sslOption));
+    // The cast is required: the "K" format reads an unsigned long long, so passing a 32-bit long would make
+    // Py_BuildValue() read garbage
+    return Py_BuildValue("K", (unsigned long long)SSL_set_options(self->ssl, (uint64_t)sslOption));
 }
 
 
